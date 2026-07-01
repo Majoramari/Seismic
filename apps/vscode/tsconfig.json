@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "strict": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "sourceMap": true,
+    "lib": [
+      "ES2022"
+    ],
+    "types": [
+      "vscode",
+      "node",
+      "bun"
+    ]
+  },
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

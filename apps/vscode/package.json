@@ -1,0 +1,73 @@
+{
+  "name": "seismic",
+  "displayName": "Seismic",
+  "description": "Track your coding time. Own your story.",
+  "version": "0.1.0",
+  "publisher": "seismic",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "seismic.setApiKey",
+        "title": "Seismic: Set API Key"
+      },
+      {
+        "command": "seismic.openDashboard",
+        "title": "Seismic: Open Dashboard"
+      },
+      {
+        "command": "seismic.enable",
+        "title": "Seismic: Enable Tracking"
+      },
+      {
+        "command": "seismic.disable",
+        "title": "Seismic: Disable Tracking"
+      }
+    ],
+    "configuration": {
+      "title": "Seismic",
+      "properties": {
+        "seismic.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Your Seismic API key from seismic.icu/settings"
+        },
+        "seismic.apiUrl": {
+          "type": "string",
+          "default": "https://api.seismic.icu",
+          "description": "Seismic API URL"
+        },
+        "seismic.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable Seismic time tracking"
+        },
+        "seismic.statusBarEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show today's coding time in the status bar"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "bun build src/extension.ts --outdir dist --target node --external vscode",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.1",
+    "@types/bun": "^1.3.14",
+    "@types/node": "latest",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5"
+  }
+}
