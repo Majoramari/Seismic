@@ -11,8 +11,11 @@ import (
 func main() {
 	cfg := config.Load()
 	pool := db.Connect(cfg.DatabaseURL)
-
 	defer pool.Close()
+
+	if err := db.RunMigrations(pool); err != nil {
+		log.Fatalf("Migration failed: %v\n", err)
+	}
 
 	app := fiber.New()
 
