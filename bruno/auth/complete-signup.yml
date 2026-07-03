@@ -1,0 +1,54 @@
+info:
+  name: Complete Signup
+  type: http
+  seq: 3
+  tags:
+    - auth
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/auth/complete-signup"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "signupToken": "{{signupToken}}",
+        "username": "{{username}}",
+        "displayName": "{{displayName}}"
+      }
+
+runtime:
+  variables:
+    - name: username
+      value: test_unit_1
+    - name: displayName
+      value: TestUnit
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.body && res.body.data && res.body.data.accessToken) {
+          bru.setVar("accessToken", res.body.data.accessToken);
+        }
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.success
+      operator: eq
+      value: "true"
+    - expression: res.body.data.accessToken
+      operator: isString
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates the user account after a new user's email has been verified.
+
+  Uses `signupToken` from `Verify Magic Link` and stores `data.accessToken` for protected requests.

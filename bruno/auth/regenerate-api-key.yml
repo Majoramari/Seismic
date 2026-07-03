@@ -1,0 +1,42 @@
+info:
+  name: Regenerate API Key
+  type: http
+  seq: 6
+  tags:
+    - auth
+    - protected
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/auth/apikey/regenerate"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.body && res.body.data && res.body.data.apiKey) {
+          bru.setVar("apiKey", res.body.data.apiKey);
+        }
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.success
+      operator: eq
+      value: "true"
+    - expression: res.body.data.apiKey
+      operator: isString
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Generates a new API key for the authenticated user and invalidates the old key.
+
+  Requires `Authorization: Bearer {{accessToken}}`.

@@ -1,0 +1,49 @@
+info:
+  name: Verify Magic Link
+  type: http
+  seq: 2
+  tags:
+    - auth
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/auth/verify?token={{magicLinkToken}}"
+  params:
+    - name: token
+      value: "{{magicLinkToken}}"
+      type: query
+
+runtime:
+  variables:
+    - name: magicLinkToken
+      value: 77ec9727-ae0c-4d54-93ce-bb2356e3a021
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.body && res.body.data) {
+          if (res.body.data.signupToken) {
+            bru.setVar("signupToken", res.body.data.signupToken);
+          }
+
+          if (res.body.data.accessToken) {
+            bru.setVar("accessToken", res.body.data.accessToken);
+          }
+        }
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.success
+      operator: eq
+      value: "true"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Verifies a magic-link token.
+
+  Existing users receive `data.accessToken`; new users receive `data.signupToken`.

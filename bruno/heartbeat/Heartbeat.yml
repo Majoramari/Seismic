@@ -1,0 +1,32 @@
+info:
+  name: Heartbeat
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/heartbeat"
+  body:
+    type: json
+    data: |-
+      {
+        "file": "/home/muhannad/seismic/main.go",
+        "project": "seismic",
+        "language": "go",
+        "editor": "vscode",
+        "time": {{timestamp}}
+      }
+  auth:
+    type: bearer
+    token: "{{apiKey}}"
+
+runtime:
+  scripts:
+    - type: before-request
+      code: bru.setVar("timestamp", Date.now());
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

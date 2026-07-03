@@ -1,0 +1,42 @@
+info:
+  name: Get API Key
+  type: http
+  seq: 5
+  tags:
+    - auth
+    - protected
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/auth/apikey"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.body && res.body.data && res.body.data.apiKey) {
+          bru.setVar("apiKey", res.body.data.apiKey);
+        }
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.success
+      operator: eq
+      value: "true"
+    - expression: res.body.data.apiKey
+      operator: isString
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns the authenticated user's API key.
+  Requires `Authorization: Bearer {{accessToken}}`.
+  Saves the key to {{apiKey}} for use in other requests.

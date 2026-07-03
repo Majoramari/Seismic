@@ -1,7 +1,9 @@
 opencollection: 1.0.0
 
 info:
-  name: seismic-api
+  name: Seismic API
+  version: 1.0.0
+  description: Bruno OpenCollection for the Go API in apps/api.
 
 request: {}
 bundled: false

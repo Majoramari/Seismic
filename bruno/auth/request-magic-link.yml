@@ -1,0 +1,39 @@
+info:
+  name: Request Magic Link
+  type: http
+  seq: 1
+  tags:
+    - auth
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/auth/magic-link"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{email}}"
+      }
+
+runtime:
+  variables:
+    - name: email
+      value: glacier-axis-train@duck.com
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.success
+      operator: eq
+      value: "true"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Creates a one-time magic-link token for `email` and sends it using the configured SMTP service.
