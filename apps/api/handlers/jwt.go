@@ -7,11 +7,11 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// generateJWT creates a signed login token for a user.
-func generateJWT(userID string, secret string, expiryHours int) (string, error) {
+// generateJWT creates a short-lived access token, valid for 15 minutes.
+func generateJWT(userID string, secret string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
-		"exp": time.Now().Add(time.Duration(expiryHours) * time.Hour).Unix(),
+		"exp": time.Now().Add(15 * time.Minute).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
