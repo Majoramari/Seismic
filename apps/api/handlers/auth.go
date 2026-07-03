@@ -22,8 +22,7 @@ type magicLinkRequest struct {
 	Email string `json:"email"`
 }
 
-// RequestMagicLink handles POST /api/auth/magic-link.
-// Creates a login token tied to the email and sends it,
+// RequestMagicLink Creates a login token tied to the email and sends it,
 // regardless of whether the user already exists.
 func (h *AuthHandler) RequestMagicLink(c *fiber.Ctx) error {
 	var body magicLinkRequest
@@ -51,8 +50,7 @@ func (h *AuthHandler) RequestMagicLink(c *fiber.Ctx) error {
 	return helpers.Success(c, "Check your email for a login link", nil)
 }
 
-// VerifyMagicLink handles GET /api/auth/verify.
-// Validates the token. If the user already exists, logs them
+// VerifyMagicLink Validates the token. If the user already exists, logs them
 // in. If not, returns a signup token so the frontend can show
 // an onboarding screen to pick a username.
 func (h *AuthHandler) VerifyMagicLink(c *fiber.Ctx) error {
@@ -124,8 +122,7 @@ type completeSignupRequest struct {
 	DisplayName string `json:"displayName"`
 }
 
-// CompleteSignup handles POST /api/auth/complete-signup.
-// Finishes creating the account once a new user picks a
+// CompleteSignup Finishes creating the account once a new user picks a
 // username, using the signup token from VerifyMagicLink.
 func (h *AuthHandler) CompleteSignup(c *fiber.Ctx) error {
 	var body completeSignupRequest
@@ -172,8 +169,7 @@ func (h *AuthHandler) CompleteSignup(c *fiber.Ctx) error {
 	})
 }
 
-// RefreshAccessToken handles POST /api/auth/refresh.
-// Reads the refresh token from an httpOnly cookie, validates
+// RefreshAccessToken Reads the refresh token from an httpOnly cookie, validates
 // it, issues a new access token, and rotates the refresh token.
 func (h *AuthHandler) RefreshAccessToken(c *fiber.Ctx) error {
 	rawToken := c.Cookies("refresh_token")
@@ -222,5 +218,36 @@ func setRefreshTokenCookie(c *fiber.Ctx, token string) {
 		SameSite: "Strict",
 		Path:     "/api/auth",
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
+	})
+}
+
+// GetAPIKey Returns the logged-in user's API key
+func (h *AuthHandler) GetAPIKey(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+
+	ctx := c.Context()
+	user, err := models.FindUserByID(ctx, h.Pool, userID)
+	if err != nil || user == nil {
+		return helpers.Error(c, fiber.StatusNotFound, "User not found")
+	}
+
+	return helpers.Success(c, "API key retrieved", fiber.Map{
+		"apiKey": user.APIKey,
+	})
+}
+
+// RegenerateAPIKey Replaces the user's API key, invalidating any
+// plugins that still using the old one.
+func (h *AuthHandler) RegenerateAPIKey(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+
+	ctx := c.Context()
+	newKey, err := models.RegenerateAPIKey(ctx, h.Pool, userID)
+	if err != nil {
+		return helpers.Error(c, fiber.StatusInternalServerError, "Failed to regenerate api key")
+	}
+
+	return helpers.Success(c, "API key regenerated", fiber.Map{
+		"apiKey": newKey,
 	})
 }
