@@ -6,34 +6,69 @@
     <p class="text-danger">{{ error() }}</p>
   } @else if (isNewUser()) {
     <div class="card" style="max-width: 400px; width: 100%;">
-      <h1>Welcome to Seismic</h1>
-      <p class="text-muted">{{ email() }}</p>
 
-      <input
-        type="text"
-        class="input"
-        placeholder="Choose a username"
-        [(ngModel)]="username"
-      />
+      @if (step() === 'username') {
+        <h1>Welcome to Seismic</h1>
+        <p class="text-muted">{{ email() }}</p>
 
-      <input
-        type="text"
-        class="input"
-        placeholder="Display name (optional)"
-        [(ngModel)]="displayName"
-      />
+        <input
+          type="text"
+          class="input"
+          placeholder="Choose a username"
+          [ngModel]="username()"
+          (ngModelChange)="onUsernameInput($event)"
+        />
 
-      @if (signupError()) {
-        <p class="text-danger">{{ signupError() }}</p>
+        @switch (usernameStatus()) {
+          @case ('checking') {
+            <p class="text-muted">Checking...</p>
+          }
+          @case ('available') {
+            <p class="text-success">✓ Available</p>
+          }
+          @case ('taken') {
+            <p class="text-danger">✗ Already taken</p>
+          }
+          @case ('invalid') {
+            <p class="text-danger">✗ 3-20 chars, start with a letter</p>
+          }
+        }
+
+        <button
+          class="btn-primary"
+          [disabled]="usernameStatus() !== 'available'"
+          (click)="goToProfileStep()"
+        >
+          Continue
+        </button>
       }
 
-      <button
-        class="btn-primary"
-        [disabled]="signupLoading()"
-        (click)="completeSignup()"
-      >
-        {{ signupLoading() ? 'Creating account...' : 'Create Account' }}
-      </button>
+      @if (step() === 'profile') {
+        <button class="btn-ghost" (click)="backToUsernameStep()">← Back</button>
+
+        <h1>Almost done</h1>
+        <p class="text-muted">&#64;{{ username() }}</p>
+
+        <input
+          type="text"
+          class="input"
+          placeholder="Display name (optional)"
+          [(ngModel)]="displayName"
+        />
+
+        @if (signupError()) {
+          <p class="text-danger">{{ signupError() }}</p>
+        }
+
+        <button
+          class="btn-primary"
+          [disabled]="signupLoading()"
+          (click)="completeSignup()"
+        >
+          {{ signupLoading() ? 'Creating account...' : 'Create Account' }}
+        </button>
+      }
+
     </div>
   }
 
