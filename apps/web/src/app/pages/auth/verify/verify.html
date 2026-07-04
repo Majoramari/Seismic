@@ -1,0 +1,7 @@
+<div class="page flex-center">
+  @if (loading()) {
+    <p>Logging you in...</p>
+  } @else if (error()) {
+    <p class="text-danger">{{ error() }}</p>
+  }
+</div>

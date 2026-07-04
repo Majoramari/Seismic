@@ -1,0 +1,32 @@
+<div class="page flex-center">
+  <div class="card" style="max-width: 400px; width: 100%;">
+
+    @if (!sent()) {
+      <h1>Log in to Seismic</h1>
+      <p class="text-muted">Enter your email to get a magic link</p>
+
+      <input
+        type="email"
+        class="input"
+        placeholder="you@example.com"
+        [(ngModel)]="email"
+      />
+
+      @if (error()) {
+        <p class="text-danger">{{ error() }}</p>
+      }
+
+      <button
+        class="btn-primary"
+        [disabled]="loading()"
+        (click)="requestMagicLink()"
+      >
+        {{ loading() ? 'Sending...' : 'Send Magic Link' }}
+      </button>
+    } @else {
+      <h1>Check your email</h1>
+      <p class="text-muted">We sent a login link to {{ email() }}</p>
+    }
+
+  </div>
+</div>
