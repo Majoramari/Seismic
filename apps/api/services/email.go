@@ -16,7 +16,7 @@ type EmailConfig struct {
 }
 
 func SendMagicLinkEmail(cfg EmailConfig, toEmail, token string) error {
-	link := fmt.Sprintf("%s/auth/verify?token=%s", cfg.AppURL, token)
+	link := fmt.Sprintf("%s/verify?token=%s", cfg.AppURL, token)
 
 	htmlBody, err := buildMagicLinkHTML(link)
 	if err != nil {
