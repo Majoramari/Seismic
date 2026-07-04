@@ -22,6 +22,31 @@ definitions:
       success:
         type: boolean
     type: object
+  models.Heartbeat:
+    properties:
+      branch:
+        type: string
+      cursorLine:
+        type: integer
+      editor:
+        type: string
+      file:
+        type: string
+      language:
+        type: string
+      lines:
+        type: integer
+      machine:
+        type: string
+      os:
+        type: string
+      project:
+        type: string
+      time:
+        type: integer
+      timezone:
+        type: string
+    type: object
 info:
   contact:
     email: hello@seismic.icu
@@ -29,6 +54,26 @@ info:
   title: Seismic API
   version: "1.0"
 paths:
+  /api/admin/process-sessions:
+    post:
+      description: Runs the session processor immediately instead of waiting for the
+        5 minute timer. For testing only.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Manually trigger session processing
+      tags:
+      - admin
   /api/auth/apikey:
     get:
       description: Returns the logged-in user's API key, used to configure editor
@@ -177,6 +222,110 @@ paths:
       summary: Verify a magic link token
       tags:
       - auth
+  /api/heartbeat:
+    post:
+      consumes:
+      - application/json
+      description: Called by editor plugins every 2 minutes to record coding activity.
+        Requires an API key, not a JWT.
+      parameters:
+      - description: Heartbeat payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Heartbeat'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Send a heartbeat
+      tags:
+      - heartbeat
+  /api/stats/heatmap:
+    get:
+      description: Returns daily coding totals for the last 365 days, like a GitHub
+        contribution graph.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get coding heatmap
+      tags:
+      - stats
+  /api/stats/languages:
+    get:
+      description: Returns time spent per programming language for a time range.
+      parameters:
+      - default: week
+        description: today, week, month, or all
+        in: query
+        name: range
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get language breakdown
+      tags:
+      - stats
+  /api/stats/summary:
+    get:
+      description: Returns total time, top language, top project, daily average, and
+        current streak for a time range.
+      parameters:
+      - default: today
+        description: today, week, month, or all
+        in: query
+        name: range
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get stats summary
+      tags:
+      - stats
   /health:
     get:
       description: Returns ok if the server is running
