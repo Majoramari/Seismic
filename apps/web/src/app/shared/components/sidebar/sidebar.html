@@ -1,5 +1,27 @@
 <aside class="sidebar">
-  <div class="sidebar-logo">Seismic</div>
+  <div class="sidebar-logo">
+    <img
+      ngSrc="images/seismic-logo.png"
+      alt="Seismic"
+      width="24"
+      height="24"
+    />
+    Seismic
+  </div>
+
+  <div class="sidebar-header">
+    <div class="sidebar-avatar">
+      {{ userService.user()?.username?.charAt(0)?.toUpperCase() || '?' }}
+    </div>
+    <span class="sidebar-username">{{ userService.user()?.username || 'Loading...' }}</span>
+  </div>
+
+  @if (userService.streak() > 0) {
+    <div class="streak-badge">
+      <lucide-angular [img]="FlameIcon" [size]="14" />
+      {{ userService.streak() }} day streak
+    </div>
+  }
 
   <nav class="sidebar-nav">
     <a routerLink="/dashboard" routerLinkActive="sidebar-link-active" class="sidebar-link">

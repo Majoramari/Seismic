@@ -1,6 +1,14 @@
 <nav class="navbar">
   <div class="navbar-inner">
-    <a routerLink="/" class="navbar-logo">Seismic</a>
+    <a routerLink="/" class="navbar-logo">
+      <img
+        ngSrc="images/seismic-logo.png"
+        alt="Seismic"
+        width="24"
+        height="24"
+      />
+      Seismic
+    </a>
 
     <div class="navbar-links">
       @if (auth.isLoggedIn()) {

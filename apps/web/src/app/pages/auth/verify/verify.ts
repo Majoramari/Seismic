@@ -134,7 +134,7 @@ export class Verify implements OnInit {
         next: (data) => {
           this.auth.setToken(data.accessToken);
           this.userService.load();
-          this.router.navigate(['/dashboard']);
+          void this.router.navigate(['/dashboard']);
         },
         error: (err) => {
           this.signupLoading.set(false);
