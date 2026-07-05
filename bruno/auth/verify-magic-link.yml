@@ -16,7 +16,7 @@ http:
 runtime:
   variables:
     - name: magicLinkToken
-      value: 77ec9727-ae0c-4d54-93ce-bb2356e3a021
+      value: 3b53feb1-9f04-46ab-b2ca-0e9d510462f4
   scripts:
     - type: after-response
       code: |-
