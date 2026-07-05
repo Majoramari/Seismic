@@ -1,0 +1,16 @@
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a routerLink="/" class="navbar-logo">Seismic</a>
+
+    <div class="navbar-links">
+      @if (auth.isLoggedIn()) {
+        <a routerLink="/dashboard" class="navbar-link">Dashboard</a>
+        <a routerLink="/leaderboard" class="navbar-link">Leaderboard</a>
+        <button class="btn-ghost" (click)="logout()">Logout</button>
+      } @else {
+        <a routerLink="/leaderboard" class="navbar-link">Leaderboard</a>
+        <a routerLink="/login" class="btn-primary btn-sm">Get Started</a>
+      }
+    </div>
+  </div>
+</nav>

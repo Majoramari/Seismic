@@ -1,0 +1,23 @@
+<aside class="sidebar">
+  <div class="sidebar-logo">Seismic</div>
+
+  <nav class="sidebar-nav">
+    <a routerLink="/dashboard" routerLinkActive="sidebar-link-active" class="sidebar-link">
+      <lucide-angular [img]="GaugeIcon" [size]="18" class="sidebar-icon" />
+      Dashboard
+    </a>
+    <a routerLink="/leaderboard" routerLinkActive="sidebar-link-active" class="sidebar-link">
+      <lucide-angular [img]="TrophyIcon" [size]="18" class="sidebar-icon" />
+      Leaderboard
+    </a>
+    <a routerLink="/settings" routerLinkActive="sidebar-link-active" class="sidebar-link">
+      <lucide-angular [img]="SettingsIcon" [size]="18" class="sidebar-icon" />
+      Settings
+    </a>
+  </nav>
+
+  <button class="sidebar-logout" (click)="logout()">
+    <lucide-angular [img]="LogOutIcon" [size]="16" />
+    Logout
+  </button>
+</aside>
