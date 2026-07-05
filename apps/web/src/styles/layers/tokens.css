@@ -9,9 +9,9 @@
   --color-text: #e8e8f0;
   --color-text-secondary: #9999b0;
   --color-text-muted: #666680;
-  --color-accent: #6c63ff;
-  --color-accent-light: #8b85ff;
-  --color-accent-glow: rgba(108, 99, 255, 0.25);
+  --color-accent: #d97757;
+  --color-accent-light: #e8a07f;
+  --color-accent-glow: rgba(217, 119, 87, 0.25);
   --color-success: #22c55e;
   --color-warning: #f59e0b;
   --color-danger: #ef4444;
@@ -25,9 +25,14 @@
   --text-lg: 1.125rem;
   --text-xl: 1.25rem;
   --text-2xl: 1.5rem;
-  --text-3xl: 1.875rem;
-  --text-4xl: 2.25rem;
-  --text-5xl: 3rem;
+  --text-3xl: 2rem;
+  --text-4xl: 2.5rem;
+  --text-5xl: 3.5rem;
+  --text-6xl: 4.5rem;
+
+  --leading-tight: 1.1;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
 
   /* Spacing */
   --space-1: 0.25rem;
@@ -36,6 +41,7 @@
   --space-4: 1rem;
   --space-6: 1.5rem;
   --space-8: 2rem;
+  --space-10: 2.5rem;
   --space-12: 3rem;
   --space-16: 4rem;
   --space-24: 6rem;

@@ -4,6 +4,15 @@
 @import "./layers/tokens.css" layer(tokens);
 @import "./layers/base.css" layer(base);
 @import "./layers/layout.css" layer(layout);
-@import "./layers/components.css" layer(components);
+
+@import "./layers/components/buttons.css" layer(components);
+@import "./layers/components/inputs.css" layer(components);
+@import "./layers/components/card.css" layer(components);
+@import "./layers/components/navbar.css" layer(components);
+@import "./layers/components/sidebar.css" layer(components);
+@import "./layers/components/login.css" layer(components);
+@import "./layers/components/onboarding.css" layer(components);
+@import "./layers/components/toast.css" layer(components);
+
 @import "./layers/utilities.css" layer(utilities);
 @import "./layers/animations.css" layer(animations);

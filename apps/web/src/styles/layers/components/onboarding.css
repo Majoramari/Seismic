@@ -1,0 +1,68 @@
+.onboarding-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  min-height: 320px;
+}
+
+.onboarding-progress {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.progress-dot {
+  height: 4px;
+  flex: 1;
+  border-radius: var(--radius-full);
+  background: var(--color-border-strong);
+  transition: var(--transition-normal);
+}
+
+.progress-dot.active {
+  background: var(--color-accent);
+}
+
+.onboarding-title {
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-2);
+}
+
+.onboarding-field {
+  margin-top: var(--space-6);
+}
+
+.step-next {
+  position: absolute;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  font-size: var(--text-lg);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.step-next:hover:not(:disabled) {
+  background: var(--color-accent-light);
+  box-shadow: var(--shadow-glow-sm);
+}
+
+.step-next:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.step-back {
+  position: absolute;
+  bottom: var(--space-6);
+  left: var(--space-6);
+}
