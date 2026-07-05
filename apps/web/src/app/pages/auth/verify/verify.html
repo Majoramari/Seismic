@@ -5,67 +5,80 @@
   } @else if (error()) {
     <p class="text-danger">{{ error() }}</p>
   } @else if (isNewUser()) {
-    <div class="card" style="max-width: 400px; width: 100%;">
+    <div class="onboarding-card">
+
+      <div class="onboarding-progress">
+        <div class="progress-dot" [class.active]="step() === 'username'"></div>
+        <div class="progress-dot" [class.active]="step() === 'profile'"></div>
+      </div>
 
       @if (step() === 'username') {
-        <h1>Welcome to Seismic</h1>
+        <h1 class="onboarding-title">Welcome to Seismic</h1>
         <p class="text-muted">{{ email() }}</p>
 
-        <input
-          type="text"
-          class="input"
-          placeholder="Choose a username"
-          [ngModel]="username()"
-          (ngModelChange)="onUsernameInput($event)"
-        />
+        <div class="onboarding-field">
+          <input
+            type="text"
+            class="input"
+            placeholder="Choose a username"
+            [ngModel]="username()"
+            (ngModelChange)="onUsernameInput($event)"
+            (keydown.enter)="goToProfileStep()"
+          />
 
-        @switch (usernameStatus()) {
-          @case ('checking') {
-            <p class="text-muted">Checking...</p>
+          @switch (usernameStatus()) {
+            @case ('checking') {
+              <p class="field-hint text-muted">Checking...</p>
+            }
+            @case ('available') {
+              <p class="field-hint text-success">✓ Available</p>
+            }
+            @case ('taken') {
+              <p class="field-hint text-danger">✗ Already taken</p>
+            }
+            @case ('invalid') {
+              <p class="field-hint text-danger">✗ 3-20 chars, start with a letter</p>
+            }
           }
-          @case ('available') {
-            <p class="text-success">✓ Available</p>
-          }
-          @case ('taken') {
-            <p class="text-danger">✗ Already taken</p>
-          }
-          @case ('invalid') {
-            <p class="text-danger">✗ 3-20 chars, start with a letter</p>
-          }
-        }
+        </div>
 
         <button
-          class="btn-primary"
+          class="step-next"
           [disabled]="usernameStatus() !== 'available'"
           (click)="goToProfileStep()"
+          aria-label="Continue"
         >
-          Continue
+          →
         </button>
       }
 
       @if (step() === 'profile') {
-        <button class="btn-ghost" (click)="backToUsernameStep()">← Back</button>
+        <button class="btn-ghost step-back" (click)="backToUsernameStep()">← Back</button>
 
-        <h1>Almost done</h1>
+        <h1 class="onboarding-title">Almost done</h1>
         <p class="text-muted">&#64;{{ username() }}</p>
 
-        <input
-          type="text"
-          class="input"
-          placeholder="Display name (optional)"
-          [(ngModel)]="displayName"
-        />
+        <div class="onboarding-field">
+          <input
+            type="text"
+            class="input"
+            placeholder="Display name (optional)"
+            [(ngModel)]="displayName"
+            (keydown.enter)="completeSignup()"
+          />
+        </div>
 
         @if (signupError()) {
-          <p class="text-danger">{{ signupError() }}</p>
+          <p class="text-danger text-sm">{{ signupError() }}</p>
         }
 
         <button
-          class="btn-primary"
+          class="step-next"
           [disabled]="signupLoading()"
           (click)="completeSignup()"
+          aria-label="Create account"
         >
-          {{ signupLoading() ? 'Creating account...' : 'Create Account' }}
+          {{ signupLoading() ? '...' : '→' }}
         </button>
       }
 
