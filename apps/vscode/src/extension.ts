@@ -35,9 +35,10 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Send a heartbeat when the VS Code window gains/loses focus
   context.subscriptions.push(
-    vscode.window.onDidChangeWindowState(() => {
+    vscode.window.onDidChangeWindowState((state) => {
+      if (!state.focused) return; // only care about gaining focus, not losing it
       const editor = vscode.window.activeTextEditor;
-      if (editor) heartbeat.handleActivity(editor.document, true);
+      if (editor) heartbeat.handleActivity(editor.document, false); // respect throttle
     }),
   );
 
