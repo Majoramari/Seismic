@@ -39,7 +39,7 @@ func (h *AuthHandler) RequestMagicLink(c *fiber.Ctx) error {
 		return helpers.Error(c, fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	email := strings.TrimSpace(strings.ToLower(body.Email))
+	email := helpers.NormalizeEmail(body.Email)
 	if email == "" || !strings.Contains(email, "@") {
 		return helpers.Error(c, fiber.StatusBadRequest, "Please provide a valid email address")
 	}
@@ -123,7 +123,7 @@ func (h *AuthHandler) VerifyMagicLink(c *fiber.Ctx) error {
 	if err != nil {
 		return helpers.Error(c, fiber.StatusInternalServerError, "Failed to create session")
 	}
-	setRefreshTokenCookie(c, refreshToken)
+	setRefreshTokenCookie(c, refreshToken, strings.HasPrefix(h.EmailCfg.AppURL, "https"))
 
 	return helpers.Success(c, "Logged in successfully", fiber.Map{
 		"newUser":     false,
@@ -190,7 +190,7 @@ func (h *AuthHandler) CompleteSignup(c *fiber.Ctx) error {
 	if err != nil {
 		return helpers.Error(c, fiber.StatusInternalServerError, "Failed to create session")
 	}
-	setRefreshTokenCookie(c, refreshToken)
+	setRefreshTokenCookie(c, refreshToken, strings.HasPrefix(h.EmailCfg.AppURL, "https"))
 
 	return helpers.Success(c, "Account created", fiber.Map{
 		"accessToken": accessToken,
@@ -230,7 +230,7 @@ func (h *AuthHandler) RefreshAccessToken(c *fiber.Ctx) error {
 	if err != nil {
 		return helpers.Error(c, fiber.StatusInternalServerError, "Something went wrong")
 	}
-	setRefreshTokenCookie(c, newRawToken)
+	setRefreshTokenCookie(c, newRawToken, strings.HasPrefix(h.EmailCfg.AppURL, "https"))
 
 	accessToken, err := generateJWT(stored.UserID, h.JWTSecret)
 	if err != nil {
@@ -244,12 +244,14 @@ func (h *AuthHandler) RefreshAccessToken(c *fiber.Ctx) error {
 
 // setRefreshTokenCookie sets the refresh token as an httpOnly
 // cookie so client-side JavaScript can never read it directly.
-func setRefreshTokenCookie(c *fiber.Ctx, token string) {
+// Secure is disabled for local http testing, enabled in
+// production where everything runs over https.
+func setRefreshTokenCookie(c *fiber.Ctx, token string, secure bool) {
 	c.Cookie(&fiber.Cookie{
 		Name:     "refresh_token",
 		Value:    token,
 		HTTPOnly: true,
-		Secure:   true,
+		Secure:   secure,
 		SameSite: "Strict",
 		Path:     "/api/auth",
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
@@ -345,4 +347,25 @@ func (h *AuthHandler) CheckUsername(c *fiber.Ctx) error {
 	return helpers.Success(c, "Username available", fiber.Map{
 		"available": true,
 	})
+}
+
+// GetMe godoc
+// @Summary      Get current user
+// @Description  Returns the logged-in user's profile information.
+// @Tags         auth
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200 {object} helpers.APIResponse
+// @Failure      401 {object} helpers.APIResponse
+// @Router       /api/auth/me [get]
+func (h *AuthHandler) GetMe(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+
+	ctx := c.Context()
+	user, err := models.FindUserByID(ctx, h.Pool, userID)
+	if err != nil || user == nil {
+		return helpers.Error(c, fiber.StatusNotFound, "User not found")
+	}
+
+	return helpers.Success(c, "User retrieved", user)
 }
