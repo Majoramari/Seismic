@@ -8,9 +8,14 @@ import { guestGuard } from './core/auth/guest.guard';
 import { Settings } from './pages/settings/settings';
 
 export const routes: Routes = [
-  { path: 'login', component: Login, canActivate: [guestGuard] },
-  { path: 'verify', component: Verify },
-  { path: 'dashboard', component: Dashboard, canActivate: [authGuard] },
-  { path: 'leaderboard', component: Leaderboard },
-  { path: 'settings', component: Settings },
+  { path: 'login', component: Login, canActivate: [guestGuard], title: 'Log in — Seismic' },
+  { path: 'verify', component: Verify, title: 'Verifying — Seismic' },
+  {
+    path: 'dashboard',
+    component: Dashboard,
+    canActivate: [authGuard],
+    title: 'Dashboard — Seismic',
+  },
+  { path: 'leaderboard', component: Leaderboard, title: 'Leaderboard — Seismic' },
+  { path: 'settings', component: Settings, canActivate: [authGuard], title: 'Settings — Seismic' },
 ];

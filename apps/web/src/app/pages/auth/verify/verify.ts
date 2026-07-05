@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api/api.service';
 import { AuthService } from '../../../core/auth/auth.service';
+import { UserService } from '../../../core/auth/user.service';
 import { debounceTime, Subject } from 'rxjs';
 
 interface VerifyResponse {
@@ -34,6 +35,7 @@ type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 export class Verify implements OnInit {
   private api = inject(ApiService);
   private auth = inject(AuthService);
+  private userService = inject(UserService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -75,6 +77,7 @@ export class Verify implements OnInit {
           this.email.set(data.email ?? '');
         } else if (data.accessToken) {
           this.auth.setToken(data.accessToken);
+          this.userService.load();
           this.router.navigate(['/dashboard']);
         }
       },
@@ -130,6 +133,7 @@ export class Verify implements OnInit {
       .subscribe({
         next: (data) => {
           this.auth.setToken(data.accessToken);
+          this.userService.load();
           this.router.navigate(['/dashboard']);
         },
         error: (err) => {
