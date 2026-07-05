@@ -1,32 +1,55 @@
-<div class="page flex-center">
-  <div class="card" style="max-width: 400px; width: 100%;">
+<div class="split-login">
 
-    @if (!sent()) {
-      <h1>Log in to Seismic</h1>
-      <p class="text-muted">Enter your email to get a magic link</p>
+  <div class="split-login-left">
+    <div class="split-login-content">
+      <div class="split-login-logo">Seismic</div>
 
-      <input
-        type="email"
-        class="input"
-        placeholder="you@example.com"
-        [(ngModel)]="email"
-      />
+      @if (!sent()) {
+        <h1 class="login-title">Log in</h1>
+        <p class="login-subtitle">Your code speaks. We listen.</p>
 
-      @if (error()) {
-        <p class="text-danger">{{ error() }}</p>
+        <div class="login-form">
+          <label class="field-label">Email</label>
+          <input
+            type="email"
+            class="input"
+            placeholder="you@example.com"
+            [(ngModel)]="email"
+            (keydown.enter)="requestMagicLink()"
+          />
+
+          <button
+            class="btn-primary btn-full"
+            [disabled]="loading() || !email()"
+            (click)="requestMagicLink()"
+          >
+            {{ loading() ? 'Sending...' : 'Continue with email' }}
+          </button>
+        </div>
+
+        <p class="login-footer">
+          By continuing, you agree to Seismic's
+          <a routerLink="/terms">Terms</a> and
+          <a routerLink="/privacy">Privacy Policy</a>.
+        </p>
+      } @else {
+        <div class="login-confirmation">
+          <div class="login-confirmation-icon">✉</div>
+          <h1 class="login-title">Check your email</h1>
+          <p class="login-subtitle">We sent a login link to<br><strong>{{ email() }}</strong></p>
+        </div>
       }
-
-      <button
-        class="btn-primary"
-        [disabled]="loading()"
-        (click)="requestMagicLink()"
-      >
-        {{ loading() ? 'Sending...' : 'Send Magic Link' }}
-      </button>
-    } @else {
-      <h1>Check your email</h1>
-      <p class="text-muted">We sent a login link to {{ email() }}</p>
-    }
-
+    </div>
   </div>
+
+  <div class="split-login-right">
+    <img
+      ngSrc="images/login-hero.png"
+      alt=""
+      fill
+      priority
+      class="split-hero-image"
+    />
+  </div>
+
 </div>

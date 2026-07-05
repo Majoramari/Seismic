@@ -1,0 +1,16 @@
+.login-confirmation {
+  text-align: center;
+}
+
+.login-confirmation-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-6);
+  font-size: 28px;
+  border-radius: 50%;
+  background: var(--color-accent-glow);
+  color: var(--color-accent-light);
+}
