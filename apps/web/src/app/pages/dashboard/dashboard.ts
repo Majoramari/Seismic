@@ -1,7 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ApiService } from '../../core/api/api.service';
-import { AuthService } from '../../core/auth/auth.service';
-import { Router } from '@angular/router';
 
 interface StatsSummary {
   totalSeconds: number;
@@ -18,8 +16,6 @@ interface StatsSummary {
 })
 export class Dashboard implements OnInit {
   private api = inject(ApiService);
-  private auth = inject(AuthService);
-  private router = inject(Router);
 
   stats = signal<StatsSummary | null>(null);
   loading = signal(true);
@@ -39,10 +35,5 @@ export class Dashboard implements OnInit {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-  }
-
-  logout() {
-    this.auth.logout();
-    void this.router.navigate(['/login']);
   }
 }

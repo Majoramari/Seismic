@@ -49,7 +49,7 @@ export class Sidebar {
 
   logout() {
     this.auth.logout();
-    this.router.navigate(['/login']);
+    void this.router.navigate(['/login']);
   }
 }
 

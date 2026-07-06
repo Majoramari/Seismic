@@ -1,0 +1,28 @@
+<div class="goal-card">
+  <div class="goal-card-main">
+    <p class="goal-progress-text">
+      <span class="goal-progress-current">{{ progressText().split('/')[0] }}</span>
+      <span class="text-muted">/{{ progressText().split('/')[1] }}</span>
+    </p>
+    <p class="text-muted text-sm">{{ label() }}</p>
+
+    <div class="goal-bar-track">
+      <div class="goal-bar-fill" [style.width.%]="goal().percentage"></div>
+    </div>
+  </div>
+
+  <div class="goal-card-side">
+    <p class="text-muted text-xs">Daily goal</p>
+    <p class="text-muted text-xs">{{ timeLeft() }}</p>
+
+    <svg class="goal-ring" viewBox="0 0 40 40">
+      <circle class="goal-ring-track" cx="20" cy="20" r="18" />
+      <circle
+        class="goal-ring-progress"
+        cx="20" cy="20" r="18"
+        [style.stroke-dashoffset]="circleOffset()"
+      />
+      <text x="20" y="24" class="goal-ring-text" text-anchor="middle">{{ goal().percentage }}%</text>
+    </svg>
+  </div>
+</div>

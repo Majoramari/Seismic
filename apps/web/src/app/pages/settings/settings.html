@@ -13,6 +13,10 @@
               (click)="setSection('privacy')">
         Privacy & Security
       </button>
+      <button class="settings-sidebar-item" [class.active]="activeSection() === 'goals'"
+              (click)="setSection('goals')">
+        Goals
+      </button>
       <button class="settings-sidebar-item" [class.active]="activeSection() === 'account'"
               (click)="setSection('account')">
         Account
@@ -53,6 +57,130 @@
           <p class="text-muted text-sm mt-2">
             Regenerating invalidates your old key immediately. You'll need to update it in every editor.
           </p>
+        </div>
+      }
+
+      @if (activeSection() === 'goals') {
+        <div class="settings-pills">
+          <span class="settings-pill active">Programming goals</span>
+        </div>
+
+        <div class="card goals-list-card">
+          <div class="goals-list-header">
+            <h2 class="settings-section-title">Programming Goals</h2>
+            <p class="text-muted">Set up to 5 goals for your daily or weekly coding targets.</p>
+          </div>
+
+          @if (goals().length > 0) {
+            <p class="goals-count text-muted text-sm">
+              {{ goals().length }} ACTIVE GOAL{{ goals().length === 1 ? '' : 'S' }}
+            </p>
+
+            @for (goal of goals(); track goal.id) {
+              <div class="goal-list-row">
+                <div>
+                  <p class="goal-list-title">
+                    {{ goal.period === 'daily' ? 'Daily' : 'Weekly' }}: {{ formatGoalTime(goal) }}
+                  </p>
+                  <p class="text-muted text-sm">{{ goalLabel(goal) }}</p>
+                </div>
+                <div class="goal-list-actions">
+                  <button class="btn-ghost btn-sm" (click)="openEditGoalModal(goal)">Edit</button>
+                  <button class="btn-ghost btn-sm" (click)="deleteGoal(goal.id)">Delete</button>
+                </div>
+              </div>
+            }
+          } @else {
+            <p class="goals-empty-text text-muted">No goals yet. Set one to stay accountable.</p>
+          }
+
+          <div class="goals-list-footer">
+            <p class="text-muted text-sm">Add a goal to stay accountable across languages and projects.</p>
+            <button class="btn-primary" [disabled]="goals().length >= 5" (click)="openNewGoalModal()">
+              New goal
+            </button>
+          </div>
+        </div>
+      }
+
+      @if (showGoalModal()) {
+        <div class="modal-overlay" (click)="closeGoalModal()">
+          <div class="modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h2>{{ editingGoalId() ? 'Edit target' : 'Set a new target' }}</h2>
+              <button class="modal-close" (click)="closeGoalModal()">&times;</button>
+            </div>
+
+            <div class="goal-amount-row">
+              <label class="field-label">I want to code for</label>
+              <div class="goal-amount-inputs">
+                <input type="number" min="1" class="input goal-amount-input" [(ngModel)]="goalAmount" />
+                <select class="input goal-unit-select" [(ngModel)]="goalUnit">
+                  <option value="minutes">Minutes</option>
+                  <option value="hours">Hours</option>
+                </select>
+                <span class="goal-per-label">per</span>
+                <select class="input goal-period-select" [(ngModel)]="goalPeriod">
+                  <option value="daily">Day</option>
+                  <option value="weekly">Week</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="quick-pick-row">
+              <button type="button" class="quick-pick-btn" [class.active]="isQuickPickActive(15)"
+                      (click)="setQuickPick(15)">15m
+              </button>
+              <button type="button" class="quick-pick-btn" [class.active]="isQuickPickActive(30)"
+                      (click)="setQuickPick(30)">30m
+              </button>
+              <button type="button" class="quick-pick-btn" [class.active]="isQuickPickActive(60)"
+                      (click)="setQuickPick(60)">1h
+              </button>
+              <button type="button" class="quick-pick-btn" [class.active]="isQuickPickActive(120)"
+                      (click)="setQuickPick(120)">2h
+              </button>
+              <button type="button" class="quick-pick-btn" [class.active]="isQuickPickActive(240)"
+                      (click)="setQuickPick(240)">4h
+              </button>
+            </div>
+
+            <div class="goal-filter-row">
+              <div>
+                <label class="field-label">Languages (optional)</label>
+                <select class="input" [ngModel]="goalLanguage" (ngModelChange)="onLanguageChange($event)">
+                  <option value="">Filter by language...</option>
+                  @for (lang of languages(); track lang) {
+                    <option [value]="lang">{{ lang }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label class="field-label">Projects (optional)</label>
+                <select class="input" [ngModel]="goalProject" (ngModelChange)="onProjectChange($event)">
+                  <option value="">Filter by project...</option>
+                  @for (proj of projects(); track proj) {
+                    <option [value]="proj">{{ proj }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="goal-reminders-row">
+              <label class="switch">
+                <input type="checkbox" [(ngModel)]="goalReminders" />
+                <span class="switch-track"></span>
+              </label>
+              <span class="text-sm text-muted">Email reminders for this goal</span>
+            </div>
+
+            <div class="modal-footer">
+              <button class="btn-ghost" (click)="closeGoalModal()">Cancel</button>
+              <button class="btn-primary" [disabled]="savingGoal()" (click)="saveGoal()">
+                {{ savingGoal() ? 'Saving...' : (editingGoalId() ? 'Save changes' : 'Create Goal') }}
+              </button>
+            </div>
+          </div>
         </div>
       }
 

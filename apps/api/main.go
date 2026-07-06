@@ -68,8 +68,9 @@ func main() {
 	heartbeatHandler := &handlers.HeartbeatHandler{Pool: pool}
 	adminHandler := &handlers.AdminHandler{Pool: pool}
 	statsHandler := &handlers.StatsHandler{Pool: pool}
+	filtersHandler := &handlers.FiltersHandler{Pool: pool}
 
-	routes.Setup(app, authHandler, heartbeatHandler, adminHandler, statsHandler, cfg.JWTSecret, pool)
+	routes.Setup(app, authHandler, heartbeatHandler, adminHandler, statsHandler, filtersHandler, cfg.JWTSecret, pool)
 
 	go func() {
 		ticker := time.NewTicker(5 * time.Minute)

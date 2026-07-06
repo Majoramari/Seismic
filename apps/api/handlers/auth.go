@@ -252,7 +252,7 @@ func setRefreshTokenCookie(c *fiber.Ctx, token string, secure bool) {
 		Value:    token,
 		HTTPOnly: true,
 		Secure:   secure,
-		SameSite: "Strict",
+		SameSite: "None",
 		Path:     "/api/auth",
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})

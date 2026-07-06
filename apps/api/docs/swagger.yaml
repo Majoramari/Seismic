@@ -197,7 +197,7 @@ paths:
       - auth
   /api/auth/me:
     get:
-      description: Returns the logged-in user's own profile info.
+      description: Returns the logged-in user's profile information.
       produces:
       - application/json
       responses:
@@ -260,6 +260,92 @@ paths:
       summary: Verify a magic link token
       tags:
       - auth
+  /api/filters/languages:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get distinct languages coded
+      tags:
+      - filters
+  /api/filters/projects:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get distinct projects coded
+      tags:
+      - filters
+  /api/goals:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get active goals with progress
+      tags:
+      - goals
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new goal
+      tags:
+      - goals
+  /api/goals/{id}:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a goal
+      tags:
+      - goals
+    put:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a goal
+      tags:
+      - goals
   /api/heartbeat:
     post:
       consumes:

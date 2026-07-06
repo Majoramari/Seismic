@@ -9,6 +9,8 @@
 @import "./layers/components/inputs.css" layer(components);
 @import "./layers/components/leaderboard.css" layer(components);
 @import "./layers/components/card.css" layer(components);
+@import "./layers/components/goal-card.css" layer(components);
+@import "./layers/components/goal-modal.css" layer(components);
 @import "./layers/components/navbar.css" layer(components);
 @import "./layers/components/sidebar.css" layer(components);
 @import "./layers/components/login.css" layer(components);

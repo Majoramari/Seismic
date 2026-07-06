@@ -187,3 +187,47 @@ func GetCurrentStreak(ctx context.Context, pool *pgxpool.Pool, userID string) (i
 
 	return streak, nil
 }
+
+// GetDistinctLanguages returns every language a user has
+// coded in, used to populate goal filter dropdowns.
+func GetDistinctLanguages(ctx context.Context, pool *pgxpool.Pool, userID string) ([]string, error) {
+	rows, err := pool.Query(ctx, `
+		SELECT DISTINCT language FROM sessions WHERE user_id = $1 ORDER BY language ASC
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var languages []string
+	for rows.Next() {
+		var l string
+		if err := rows.Scan(&l); err != nil {
+			return nil, err
+		}
+		languages = append(languages, l)
+	}
+	return languages, nil
+}
+
+// GetDistinctProjects returns every project a user has
+// coded in, used to populate goal filter dropdowns.
+func GetDistinctProjects(ctx context.Context, pool *pgxpool.Pool, userID string) ([]string, error) {
+	rows, err := pool.Query(ctx, `
+		SELECT DISTINCT project FROM sessions WHERE user_id = $1 ORDER BY project ASC
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var projects []string
+	for rows.Next() {
+		var p string
+		if err := rows.Scan(&p); err != nil {
+			return nil, err
+		}
+		projects = append(projects, p)
+	}
+	return projects, nil
+}
