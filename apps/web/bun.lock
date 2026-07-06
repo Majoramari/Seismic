@@ -11,6 +11,7 @@
         "@angular/forms": "^22.0.0",
         "@angular/platform-browser": "^22.0.0",
         "@angular/router": "^22.0.0",
+        "fdir": "^6.5.0",
         "lucide-angular": "^1.0.0",
         "rxjs": "~7.8.0",
         "tslib": "^2.3.0",

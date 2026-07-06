@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: seismic
+      POSTGRES_PASSWORD: seismic
+      POSTGRES_DB: seismic
+    volumes:
+      - seismic-pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://seismic:seismic@db:5432/seismic
+      - JWT_SECRET=replace-with-long-secret
+      - PORT=5024
+      - APP_URL=http://localhost:4200
+      - ALLOWED_ORIGINS=http://localhost:4200
+    ports:
+      - "5024:5024"
+    depends_on:
+      - db
+
+volumes:
+  seismic-pgdata:

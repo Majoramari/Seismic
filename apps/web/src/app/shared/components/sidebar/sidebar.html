@@ -9,28 +9,26 @@
     Seismic
   </div>
 
-  <div class="sidebar-header">
-    <div class="sidebar-avatar">
-      {{ userService.user()?.username?.charAt(0)?.toUpperCase() || '?' }}
-    </div>
-    <span class="sidebar-username">{{ userService.user()?.username || 'Loading...' }}</span>
-  </div>
-
-  @if (userService.streak() > 0) {
-    <div class="streak-badge">
-      <lucide-angular [img]="FlameIcon" [size]="14" />
-      {{ userService.streak() }} day streak
-    </div>
-  }
-
   <nav class="sidebar-nav">
     <a routerLink="/dashboard" routerLinkActive="sidebar-link-active" class="sidebar-link">
       <lucide-angular [img]="GaugeIcon" [size]="18" class="sidebar-icon" />
       Dashboard
     </a>
+    <a routerLink="/stats" routerLinkActive="sidebar-link-active" class="sidebar-link">
+      <lucide-angular [img]="StatsIcon" [size]="18" class="sidebar-icon" />
+      Stats
+    </a>
     <a routerLink="/leaderboard" routerLinkActive="sidebar-link-active" class="sidebar-link">
       <lucide-angular [img]="TrophyIcon" [size]="18" class="sidebar-icon" />
       Leaderboard
+    </a>
+    <a routerLink="/projects" routerLinkActive="sidebar-link-active" class="sidebar-link">
+      <lucide-angular [img]="ProjectsIcon" [size]="18" class="sidebar-icon" />
+      Projects
+    </a>
+    <a routerLink="/profile" routerLinkActive="sidebar-link-active" class="sidebar-link">
+      <lucide-angular [img]="ProfileIcon" [size]="18" class="sidebar-icon" />
+      Profile
     </a>
     <a routerLink="/settings" routerLinkActive="sidebar-link-active" class="sidebar-link">
       <lucide-angular [img]="SettingsIcon" [size]="18" class="sidebar-icon" />
@@ -38,8 +36,37 @@
     </a>
   </nav>
 
-  <button class="sidebar-logout" (click)="logout()">
-    <lucide-angular [img]="LogOutIcon" [size]="16" />
-    Logout
-  </button>
+  <!-- Bottom Section -->
+  <div class="sidebar-bottom">
+    <!-- VS Code Extension -->
+    <div class="sidebar-vscode">
+      <lucide-angular [img]="MonitorIcon" [size]="16" class="vscode-icon" />
+      <span class="vscode-text">VS Code Extension</span>
+      <span class="vscode-status">
+        <span class="vscode-dot"></span>
+        Connected
+      </span>
+    </div>
+
+    <!-- Dark Mode Toggle -->
+    <div class="sidebar-theme-toggle">
+      <lucide-angular [img]="MoonIcon" [size]="16" />
+      <span>Dark mode</span>
+      <button class="toggle-switch" [class.active]="darkMode()" (click)="toggleDarkMode()">
+        <span class="toggle-thumb"></span>
+      </button>
+    </div>
+
+    <!-- User Profile Widget -->
+    <div class="sidebar-user-widget">
+      <div class="sidebar-avatar">
+        {{ userService.user()?.username?.charAt(0)?.toUpperCase() || '?' }}
+      </div>
+      <div class="sidebar-user-info">
+        <span class="sidebar-username">{{ userService.user()?.username || 'Loading...' }}</span>
+        <span class="sidebar-view-profile">View profile</span>
+      </div>
+      <lucide-angular [img]="ChevronDownIcon" [size]="16" class="sidebar-chevron" />
+    </div>
+  </div>
 </aside>

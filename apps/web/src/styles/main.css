@@ -15,6 +15,7 @@
 @import "./layers/components/settings.css" layer(components);
 @import "./layers/components/onboarding.css" layer(components);
 @import "./layers/components/toast.css" layer(components);
+@import "./layers/components/profile.css" layer(components);
 
 @import "./layers/utilities.css" layer(utilities);
 @import "./layers/animations.css" layer(animations);

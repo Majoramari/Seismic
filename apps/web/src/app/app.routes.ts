@@ -6,6 +6,7 @@ import { Leaderboard } from './pages/leaderboard/leaderboard';
 import { authGuard } from './core/auth/auth.guard';
 import { guestGuard } from './core/auth/guest.guard';
 import { Settings } from './pages/settings/settings';
+import { Profile } from './pages/profile/profile';
 
 export const routes: Routes = [
   { path: 'login', component: Login, canActivate: [guestGuard], title: 'Log in — Seismic' },
@@ -18,4 +19,6 @@ export const routes: Routes = [
   },
   { path: 'leaderboard', component: Leaderboard, title: 'Leaderboard — Seismic' },
   { path: 'settings', component: Settings, canActivate: [authGuard], title: 'Settings — Seismic' },
+  { path: 'profile', component: Profile, canActivate: [authGuard], title: 'Profile — Seismic' },
 ];
+
