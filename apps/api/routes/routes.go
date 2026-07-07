@@ -15,6 +15,7 @@ func Setup(app *fiber.App, authHandler *handlers.AuthHandler, heartbeatHandler *
 	auth.Get("/verify", authHandler.VerifyMagicLink)
 	auth.Post("/complete-signup", authHandler.CompleteSignup)
 	auth.Post("/refresh", authHandler.RefreshAccessToken)
+	auth.Post("/logout", authHandler.Logout)
 	auth.Get("/apikey", middleware.RequireAuth(jwtSecret), authHandler.GetAPIKey)
 	auth.Post("/apikey/regenerate", middleware.RequireAuth(jwtSecret), authHandler.RegenerateAPIKey)
 	auth.Post("/magic-link", middleware.AuthRateLimit(), authHandler.RequestMagicLink)

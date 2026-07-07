@@ -237,9 +237,43 @@ func (h *AuthHandler) RefreshAccessToken(c *fiber.Ctx) error {
 		return helpers.Error(c, fiber.StatusInternalServerError, "Something went wrong")
 	}
 
+	// Clean up expired tokens periodically (non-blocking)
+	_, _ = models.CleanupExpiredRefreshTokens(ctx, h.Pool)
+
 	return helpers.Success(c, "Token refreshed", fiber.Map{
 		"accessToken": accessToken,
 	})
+}
+
+// Logout godoc
+// @Summary      Log out current user
+// @Description  Revokes the refresh token cookie and clears it from the browser.
+// @Tags         auth
+// @Produce      json
+// @Success      200 {object} helpers.APIResponse
+// @Router       /api/auth/logout [post]
+func (h *AuthHandler) Logout(c *fiber.Ctx) error {
+	rawToken := c.Cookies("refresh_token")
+	if rawToken != "" {
+		ctx := c.Context()
+		stored, err := models.FindValidRefreshToken(ctx, h.Pool, rawToken)
+		if err == nil && stored != nil {
+			_ = models.RevokeRefreshToken(ctx, h.Pool, stored.ID)
+		}
+	}
+
+	// Clear the cookie
+	c.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		HTTPOnly: true,
+		Secure:   strings.HasPrefix(h.EmailCfg.AppURL, "https"),
+		SameSite: "None",
+		Path:     "/api/auth",
+		Expires:  time.Now().Add(-1 * time.Hour),
+	})
+
+	return helpers.Success(c, "Logged out", nil)
 }
 
 // setRefreshTokenCookie sets the refresh token as an httpOnly
