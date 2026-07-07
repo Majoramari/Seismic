@@ -171,7 +171,10 @@ func (h *AuthHandler) CompleteSignup(c *fiber.Ctx) error {
 
 	ctx := c.Context()
 
-	existing, _ := models.FindUserByUsername(ctx, h.Pool, username)
+	existing, err := models.FindUserByUsername(ctx, h.Pool, username)
+	if err != nil {
+		return helpers.Error(c, fiber.StatusInternalServerError, "Something went wrong")
+	}
 	if existing != nil {
 		return helpers.Error(c, fiber.StatusConflict, "Username is already taken")
 	}
@@ -268,7 +271,7 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 		Value:    "",
 		HTTPOnly: true,
 		Secure:   strings.HasPrefix(h.EmailCfg.AppURL, "https"),
-		SameSite: "None",
+		SameSite: "Lax",
 		Path:     "/api/auth",
 		Expires:  time.Now().Add(-1 * time.Hour),
 	})
@@ -278,15 +281,14 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 
 // setRefreshTokenCookie sets the refresh token as an httpOnly
 // cookie so client-side JavaScript can never read it directly.
-// Secure is disabled for local http testing, enabled in
-// production where everything runs over https.
+// Secure is enabled when the app URL uses HTTPS and disabled otherwise.
 func setRefreshTokenCookie(c *fiber.Ctx, token string, secure bool) {
 	c.Cookie(&fiber.Cookie{
 		Name:     "refresh_token",
 		Value:    token,
 		HTTPOnly: true,
 		Secure:   secure,
-		SameSite: "None",
+		SameSite: "Lax",
 		Path:     "/api/auth",
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
@@ -302,7 +304,10 @@ func setRefreshTokenCookie(c *fiber.Ctx, token string, secure bool) {
 // @Failure      401 {object} helpers.APIResponse
 // @Router       /api/auth/apikey [get]
 func (h *AuthHandler) GetAPIKey(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
 
 	ctx := c.Context()
 	user, err := models.FindUserByID(ctx, h.Pool, userID)
@@ -325,7 +330,10 @@ func (h *AuthHandler) GetAPIKey(c *fiber.Ctx) error {
 // @Failure      401 {object} helpers.APIResponse
 // @Router       /api/auth/apikey/regenerate [post]
 func (h *AuthHandler) RegenerateAPIKey(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
 
 	ctx := c.Context()
 	newKey, err := models.RegenerateAPIKey(ctx, h.Pool, userID)
@@ -393,7 +401,10 @@ func (h *AuthHandler) CheckUsername(c *fiber.Ctx) error {
 // @Failure      401 {object} helpers.APIResponse
 // @Router       /api/auth/me [get]
 func (h *AuthHandler) GetMe(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
 
 	ctx := c.Context()
 	user, err := models.FindUserByID(ctx, h.Pool, userID)

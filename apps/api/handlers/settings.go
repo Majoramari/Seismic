@@ -20,7 +20,10 @@ type SettingsHandler struct {
 // @Success      200 {object} helpers.APIResponse
 // @Router       /api/settings/privacy [get]
 func (h *SettingsHandler) GetPrivacy(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
 
 	ctx := c.Context()
 	settings, err := models.GetPrivacySettings(ctx, h.Pool, userID)
@@ -40,7 +43,10 @@ func (h *SettingsHandler) GetPrivacy(c *fiber.Ctx) error {
 // @Success      200 {object} helpers.APIResponse
 // @Router       /api/settings/privacy [post]
 func (h *SettingsHandler) UpdatePrivacy(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
 
 	var body map[string]bool
 	if err := c.BodyParser(&body); err != nil {
@@ -63,7 +69,10 @@ func (h *SettingsHandler) UpdatePrivacy(c *fiber.Ctx) error {
 // @Success      200 {object} helpers.APIResponse
 // @Router       /api/settings/reset-timers [post]
 func (h *SettingsHandler) ResetTimers(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
 
 	ctx := c.Context()
 	if err := models.ResetUserTimers(ctx, h.Pool, userID); err != nil {
@@ -81,7 +90,10 @@ func (h *SettingsHandler) ResetTimers(c *fiber.Ctx) error {
 // @Success      200 {object} helpers.APIResponse
 // @Router       /api/settings/account [post]
 func (h *SettingsHandler) DeleteAccount(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
 
 	ctx := c.Context()
 	if err := models.DeleteUserAccount(ctx, h.Pool, userID); err != nil {

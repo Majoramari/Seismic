@@ -20,7 +20,10 @@ type FiltersHandler struct {
 // @Success      200 {object} helpers.APIResponse
 // @Router       /api/filters/languages [get]
 func (h *FiltersHandler) GetLanguages(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
 	ctx := c.Context()
 
 	languages, err := models.GetDistinctLanguages(ctx, h.Pool, userID)
@@ -38,7 +41,10 @@ func (h *FiltersHandler) GetLanguages(c *fiber.Ctx) error {
 // @Success      200 {object} helpers.APIResponse
 // @Router       /api/filters/projects [get]
 func (h *FiltersHandler) GetProjects(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
 	ctx := c.Context()
 
 	projects, err := models.GetDistinctProjects(ctx, h.Pool, userID)

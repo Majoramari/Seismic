@@ -11,6 +11,7 @@ import (
 
 const sessionGap = 2 * time.Minute
 const maxSessionLength = 6 * time.Hour
+const sessionProcessorLockKey = 918273 // arbitrary constant for this lock
 
 type rawHeartbeat struct {
 	ID       string
@@ -23,11 +24,33 @@ type rawHeartbeat struct {
 // ProcessSessions groups unprocessed heartbeats into sessions
 // and stores them. Meant to run periodically in the background.
 func ProcessSessions(ctx context.Context, pool *pgxpool.Pool) error {
-	rows, err := pool.Query(ctx, `
+	var gotLock bool
+	err := pool.QueryRow(ctx, `SELECT pg_try_advisory_lock($1)`, sessionProcessorLockKey).Scan(&gotLock)
+	if err != nil {
+		return err
+	}
+	if !gotLock {
+		log.Printf("Session processor: skipped run because another run is already in progress")
+		return nil
+	}
+	defer func() {
+		_, unlockErr := pool.Exec(ctx, `SELECT pg_advisory_unlock($1)`, sessionProcessorLockKey)
+		if unlockErr != nil {
+			log.Printf("Session processor: failed to release advisory lock: %v\n", unlockErr)
+		}
+	}()
+
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	rows, err := tx.Query(ctx, `
 		SELECT id, user_id, project, language, time
 		FROM heartbeats
 		WHERE processed = false
-		ORDER BY user_id, project, time ASC
+		ORDER BY user_id, time ASC
 	`)
 	if err != nil {
 		return err
@@ -42,11 +65,14 @@ func ProcessSessions(ctx context.Context, pool *pgxpool.Pool) error {
 		}
 		heartbeats = append(heartbeats, h)
 	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
 
 	sessions := buildSessions(heartbeats)
 
 	for _, s := range sessions {
-		_, err := pool.Exec(ctx, `
+		_, err := tx.Exec(ctx, `
 			INSERT INTO sessions (user_id, project, language, start_time, end_time, duration_seconds)
 			VALUES ($1, $2, $3, $4, $5, $6)
 		`, s.UserID, s.Project, s.Language, s.Start, s.End, s.DurationSeconds)
@@ -60,10 +86,14 @@ func ProcessSessions(ctx context.Context, pool *pgxpool.Pool) error {
 		ids[i] = h.ID
 	}
 	if len(ids) > 0 {
-		_, err = pool.Exec(ctx, `UPDATE heartbeats SET processed = true WHERE id = ANY($1)`, ids)
+		_, err = tx.Exec(ctx, `UPDATE heartbeats SET processed = true WHERE id = ANY($1)`, ids)
 		if err != nil {
 			return err
 		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return err
 	}
 
 	// Update cached profile stats for affected users

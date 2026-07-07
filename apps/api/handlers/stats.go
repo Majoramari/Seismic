@@ -23,7 +23,10 @@ type StatsHandler struct {
 // @Failure      401 {object} helpers.APIResponse
 // @Router       /api/stats/summary [get]
 func (h *StatsHandler) GetSummary(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
 	rangeParam := c.Query("range", "today")
 
 	ctx := c.Context()
@@ -46,7 +49,10 @@ func (h *StatsHandler) GetSummary(c *fiber.Ctx) error {
 // @Failure      401 {object} helpers.APIResponse
 // @Router       /api/stats/languages [get]
 func (h *StatsHandler) GetLanguages(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
 	rangeParam := c.Query("range", "week")
 
 	ctx := c.Context()
@@ -68,7 +74,10 @@ func (h *StatsHandler) GetLanguages(c *fiber.Ctx) error {
 // @Failure      401 {object} helpers.APIResponse
 // @Router       /api/stats/heatmap [get]
 func (h *StatsHandler) GetHeatmap(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
 
 	ctx := c.Context()
 	days, err := models.GetHeatmap(ctx, h.Pool, userID)

@@ -2,8 +2,10 @@ package models
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -25,6 +27,9 @@ func GetProfileStats(ctx context.Context, pool *pgxpool.Pool, userID string) (*U
 		FROM user_profile_stats
 		WHERE user_id = $1
 	`, userID).Scan(&s.UserID, &s.TotalCodingSeconds, &s.TotalActiveDays, &s.CurrentStreak, &s.MaxStreak, &s.UpdatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -35,14 +40,20 @@ func GetProfileStats(ctx context.Context, pool *pgxpool.Pool, userID string) (*U
 // and upserts them into user_profile_stats for the given user.
 func UpdateProfileStats(ctx context.Context, pool *pgxpool.Pool, userID string) error {
 	var totalSeconds int64
-	_ = pool.QueryRow(ctx, `
+	err := pool.QueryRow(ctx, `
 		SELECT COALESCE(SUM(duration_seconds), 0) FROM sessions WHERE user_id = $1
 	`, userID).Scan(&totalSeconds)
+	if err != nil {
+		return err
+	}
 
 	var totalDays int
-	_ = pool.QueryRow(ctx, `
+	err = pool.QueryRow(ctx, `
 		SELECT COUNT(DISTINCT start_time::date) FROM sessions WHERE user_id = $1
 	`, userID).Scan(&totalDays)
+	if err != nil {
+		return err
+	}
 
 	currentStreak, _ := GetCurrentStreak(ctx, pool, userID)
 
@@ -56,7 +67,7 @@ func UpdateProfileStats(ctx context.Context, pool *pgxpool.Pool, userID string) 
 		maxStreak = currentStreak
 	}
 
-	_, err := pool.Exec(ctx, `
+	_, err = pool.Exec(ctx, `
 		INSERT INTO user_profile_stats (user_id, total_coding_seconds, total_active_days, current_streak, max_streak, updated_at)
 		VALUES ($1, $2, $3, $4, $5, NOW())
 		ON CONFLICT (user_id) DO UPDATE SET

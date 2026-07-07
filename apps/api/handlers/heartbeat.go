@@ -45,7 +45,10 @@ func (h *HeartbeatHandler) Receive(c *fiber.Ctx) error {
 		return helpers.Error(c, fiber.StatusBadRequest, "Timestamp too far in the past")
 	}
 
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
 	ctx := c.Context()
 
 	isDuplicate, err := models.HasRecentDuplicate(ctx, h.Pool, userID, hb.File, hb.Time)

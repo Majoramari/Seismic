@@ -20,7 +20,10 @@ type GoalsHandler struct {
 // @Success      200 {object} helpers.APIResponse
 // @Router       /api/goals [get]
 func (h *GoalsHandler) GetGoals(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
 
 	ctx := c.Context()
 	goals, err := models.GetActiveGoalsWithProgress(ctx, h.Pool, userID)
@@ -40,7 +43,10 @@ func (h *GoalsHandler) GetGoals(c *fiber.Ctx) error {
 // @Success      200 {object} helpers.APIResponse
 // @Router       /api/goals [post]
 func (h *GoalsHandler) CreateGoal(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
 
 	var input models.CreateGoalInput
 	if err := c.BodyParser(&input); err != nil {
@@ -69,7 +75,10 @@ func (h *GoalsHandler) CreateGoal(c *fiber.Ctx) error {
 // @Success      200 {object} helpers.APIResponse
 // @Router       /api/goals/{id} [put]
 func (h *GoalsHandler) UpdateGoal(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
 	goalID := c.Params("id")
 
 	var input models.CreateGoalInput
@@ -94,7 +103,10 @@ func (h *GoalsHandler) UpdateGoal(c *fiber.Ctx) error {
 // @Success      200 {object} helpers.APIResponse
 // @Router       /api/goals/{id} [delete]
 func (h *GoalsHandler) DeleteGoal(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
 	goalID := c.Params("id")
 
 	ctx := c.Context()
