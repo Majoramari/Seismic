@@ -15,20 +15,11 @@ type User struct {
 	Username       string     `json:"username"`
 	Email          string     `json:"email"`
 	APIKey         string     `json:"apiKey"`
-	DisplayName    *string    `json:"displayName"`
-	FirstName      *string    `json:"firstName"`
-	Role           *string    `json:"role"`
-	Location       *string    `json:"location"`
-	University     *string    `json:"university"`
 	Country        *string    `json:"country"`
 	Bio            *string    `json:"bio"`
 	Website        *string    `json:"website"`
-	TimeZone       *string    `json:"timeZone"`
-	Gender         *string    `json:"gender"`
-	Languages      []string   `json:"languages"`
 	AvatarURL      *string    `json:"avatarUrl"`
 	AvatarPublicID *string    `json:"-"`
-	LastActiveAt   *time.Time `json:"lastActiveAt"`
 	CreatedAt      time.Time  `json:"createdAt"`
 	DeletedAt      *time.Time `json:"-"`
 }
@@ -41,13 +32,13 @@ func FindUserByEmail(ctx context.Context, pool *pgxpool.Pool, email string) (*Us
 	var u User
 
 	err := pool.QueryRow(ctx, `
-		SELECT id, username, email, api_key, display_name, first_name, role, location, university, country, bio, website,
-		       time_zone, gender, languages, avatar_url, avatar_public_id, last_active_at, created_at, deleted_at
+		SELECT id, username, email, api_key, country, bio, website,
+		       avatar_url, avatar_public_id, created_at, deleted_at
 		FROM users
 		WHERE email = $1 AND deleted_at IS NULL
 	`, email).Scan(
-		&u.ID, &u.Username, &u.Email, &u.APIKey, &u.DisplayName, &u.FirstName, &u.Role, &u.Location, &u.University, &u.Country, &u.Bio,
-		&u.Website, &u.TimeZone, &u.Gender, &u.Languages, &u.AvatarURL, &u.AvatarPublicID, &u.LastActiveAt, &u.CreatedAt, &u.DeletedAt,
+		&u.ID, &u.Username, &u.Email, &u.APIKey, &u.Country, &u.Bio,
+		&u.Website, &u.AvatarURL, &u.AvatarPublicID, &u.CreatedAt, &u.DeletedAt,
 	)
 
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -67,13 +58,13 @@ func FindUserByUsername(ctx context.Context, pool *pgxpool.Pool, username string
 	var u User
 
 	err := pool.QueryRow(ctx, `
-		SELECT id, username, email, api_key, display_name, first_name, role, location, university, country, bio, website,
-		       time_zone, gender, languages, avatar_url, avatar_public_id, last_active_at, created_at, deleted_at
+		SELECT id, username, email, api_key, country, bio, website,
+		       avatar_url, avatar_public_id, created_at, deleted_at
 		FROM users
 		WHERE username = $1 AND deleted_at IS NULL
 	`, username).Scan(
-		&u.ID, &u.Username, &u.Email, &u.APIKey, &u.DisplayName, &u.FirstName, &u.Role, &u.Location, &u.University, &u.Country, &u.Bio,
-		&u.Website, &u.TimeZone, &u.Gender, &u.Languages, &u.AvatarURL, &u.AvatarPublicID, &u.LastActiveAt, &u.CreatedAt, &u.DeletedAt,
+		&u.ID, &u.Username, &u.Email, &u.APIKey, &u.Country, &u.Bio,
+		&u.Website, &u.AvatarURL, &u.AvatarPublicID, &u.CreatedAt, &u.DeletedAt,
 	)
 
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -91,13 +82,13 @@ func FindUserByID(ctx context.Context, pool *pgxpool.Pool, id string) (*User, er
 	var u User
 
 	err := pool.QueryRow(ctx, `
-		SELECT id, username, email, api_key, display_name, first_name, role, location, university, country, bio, website,
-		       time_zone, gender, languages, avatar_url, avatar_public_id, last_active_at, created_at, deleted_at
+		SELECT id, username, email, api_key, country, bio, website,
+		       avatar_url, avatar_public_id, created_at, deleted_at
 		FROM users
 		WHERE id = $1 AND deleted_at IS NULL
 	`, id).Scan(
-		&u.ID, &u.Username, &u.Email, &u.APIKey, &u.DisplayName, &u.FirstName, &u.Role, &u.Location, &u.University, &u.Country, &u.Bio,
-		&u.Website, &u.TimeZone, &u.Gender, &u.Languages, &u.AvatarURL, &u.AvatarPublicID, &u.LastActiveAt, &u.CreatedAt, &u.DeletedAt,
+		&u.ID, &u.Username, &u.Email, &u.APIKey, &u.Country, &u.Bio,
+		&u.Website, &u.AvatarURL, &u.AvatarPublicID, &u.CreatedAt, &u.DeletedAt,
 	)
 
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -116,13 +107,13 @@ func FindUserByAPIKey(ctx context.Context, pool *pgxpool.Pool, apiKey string) (*
 	var u User
 
 	err := pool.QueryRow(ctx, `
-		SELECT id, username, email, api_key, display_name, first_name, role, location, university, country, bio, website,
-		       time_zone, gender, languages, avatar_url, avatar_public_id, last_active_at, created_at, deleted_at
+		SELECT id, username, email, api_key, country, bio, website,
+		       avatar_url, avatar_public_id, created_at, deleted_at
 		FROM users
 		WHERE api_key = $1 AND deleted_at IS NULL
 	`, apiKey).Scan(
-		&u.ID, &u.Username, &u.Email, &u.APIKey, &u.DisplayName, &u.FirstName, &u.Role, &u.Location, &u.University, &u.Country, &u.Bio,
-		&u.Website, &u.TimeZone, &u.Gender, &u.Languages, &u.AvatarURL, &u.AvatarPublicID, &u.LastActiveAt, &u.CreatedAt, &u.DeletedAt,
+		&u.ID, &u.Username, &u.Email, &u.APIKey, &u.Country, &u.Bio,
+		&u.Website, &u.AvatarURL, &u.AvatarPublicID, &u.CreatedAt, &u.DeletedAt,
 	)
 
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -143,11 +134,11 @@ func CreateUser(ctx context.Context, pool *pgxpool.Pool, email, username, displa
 	err := pool.QueryRow(ctx, `
 		INSERT INTO users (email, username, display_name)
 		VALUES ($1, $2, $3)
-		RETURNING id, username, email, api_key, display_name, first_name, role, location, university, country, bio, website,
-		          time_zone, gender, languages, avatar_url, avatar_public_id, last_active_at, created_at, deleted_at
+		RETURNING id, username, email, api_key, country, bio, website,
+		          avatar_url, avatar_public_id, created_at, deleted_at
 	`, email, username, displayName).Scan(
-		&u.ID, &u.Username, &u.Email, &u.APIKey, &u.DisplayName, &u.FirstName, &u.Role, &u.Location, &u.University, &u.Country, &u.Bio,
-		&u.Website, &u.TimeZone, &u.Gender, &u.Languages, &u.AvatarURL, &u.AvatarPublicID, &u.LastActiveAt, &u.CreatedAt, &u.DeletedAt,
+		&u.ID, &u.Username, &u.Email, &u.APIKey, &u.Country, &u.Bio,
+		&u.Website, &u.AvatarURL, &u.AvatarPublicID, &u.CreatedAt, &u.DeletedAt,
 	)
 
 	if err != nil {

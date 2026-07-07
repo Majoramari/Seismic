@@ -95,25 +95,3 @@ func RevokeRefreshToken(ctx context.Context, pool *pgxpool.Pool, id string) erro
 	`, id)
 	return err
 }
-
-// RevokeAllUserRefreshTokens revokes every non-revoked token for a user.
-// Useful when rotating all tokens (e.g. password change, account compromise).
-func RevokeAllUserRefreshTokens(ctx context.Context, pool *pgxpool.Pool, userID string) error {
-	_, err := pool.Exec(ctx, `
-		UPDATE refresh_tokens SET revoked = true
-		WHERE user_id = $1 AND revoked = false
-	`, userID)
-	return err
-}
-
-// CleanupExpiredRefreshTokens deletes all expired tokens from the database.
-// Should be called periodically to prevent the table from growing unbounded.
-func CleanupExpiredRefreshTokens(ctx context.Context, pool *pgxpool.Pool) (int64, error) {
-	res, err := pool.Exec(ctx, `
-		DELETE FROM refresh_tokens WHERE expires_at < NOW()
-	`)
-	if err != nil {
-		return 0, err
-	}
-	return res.RowsAffected(), nil
-}

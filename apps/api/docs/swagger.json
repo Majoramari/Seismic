@@ -548,7 +548,8 @@
                 }
             }
         },
-
+<<<<<<< HEAD
+=======
         "/api/profile": {
             "get": {
                 "security": [
@@ -580,7 +581,7 @@
                 }
             }
         },
-
+>>>>>>> cb826e2 (feat: add user profile page and improve Swagger API documentation)
         "/api/settings/account": {
             "post": {
                 "security": [
@@ -848,7 +849,8 @@
                 }
             }
         },
-
+<<<<<<< HEAD
+=======
         "models.Achievement": {
             "type": "object",
             "properties": {
@@ -883,7 +885,7 @@
                 }
             }
         },
-
+>>>>>>> cb826e2 (feat: add user profile page and improve Swagger API documentation)
         "models.Heartbeat": {
             "type": "object",
             "properties": {
@@ -921,7 +923,8 @@
                     "type": "string"
                 }
             }
-
+<<<<<<< HEAD
+=======
         },
         "models.HeatmapCell": {
             "type": "object",
@@ -1059,7 +1062,7 @@
                     "type": "string"
                 }
             }
-
+>>>>>>> cb826e2 (feat: add user profile page and improve Swagger API documentation)
         }
     },
     "securityDefinitions": {

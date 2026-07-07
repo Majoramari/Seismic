@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/majoramari/seismic/apps/api/models"
 )
 
 const sessionGap = 2 * time.Minute
@@ -63,17 +62,6 @@ func ProcessSessions(ctx context.Context, pool *pgxpool.Pool) error {
 		_, err = pool.Exec(ctx, `UPDATE heartbeats SET processed = true WHERE id = ANY($1)`, ids)
 		if err != nil {
 			return err
-		}
-	}
-
-	// Update cached profile stats for affected users
-	userIDs := make(map[string]struct{})
-	for _, h := range heartbeats {
-		userIDs[h.UserID] = struct{}{}
-	}
-	for uid := range userIDs {
-		if err := models.UpdateProfileStats(ctx, pool, uid); err != nil {
-			log.Printf("Session processor: failed to update profile stats for user %s: %v\n", uid, err)
 		}
 	}
 
