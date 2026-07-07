@@ -1,0 +1,16 @@
+@if (bars().length > 0) {
+  <div class="project-bars-list">
+    @for (bar of bars(); track bar.project) {
+      <div class="project-bar-row">
+        <span class="project-bar-label">{{ bar.project }}</span>
+        <div class="project-bar-track">
+          <div class="project-bar-fill" [style.width.%]="bar.widthPercent">
+            <span class="project-bar-time">{{ bar.formattedTime }}</span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+} @else {
+  <p class="text-muted project-bars-empty">No project data yet.</p>
+}

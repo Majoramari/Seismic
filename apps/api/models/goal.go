@@ -101,6 +101,8 @@ func getGoalProgress(ctx context.Context, pool *pgxpool.Pool, userID string, g G
 	periodSQL := "start_time >= CURRENT_DATE"
 	if g.Period == "weekly" {
 		periodSQL = "start_time >= date_trunc('week', CURRENT_DATE)"
+	} else if g.Period == "monthly" {
+		periodSQL = "start_time >= date_trunc('month', CURRENT_DATE)"
 	}
 
 	scopeSQL := ""

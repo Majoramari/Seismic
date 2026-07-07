@@ -1,0 +1,15 @@
+<div class="heatmap-scroll">
+  <div class="heatmap-grid">
+    @for (week of weeks(); track $index) {
+      <div class="heatmap-week">
+        @for (day of week; track day.date) {
+          <div
+            class="heatmap-day"
+            [attr.data-level]="day.level"
+            [title]="formatTooltip(day)"
+          ></div>
+        }
+      </div>
+    }
+  </div>
+</div>

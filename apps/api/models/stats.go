@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -22,6 +23,11 @@ type LanguageStat struct {
 
 type HeatmapDay struct {
 	Date    string `json:"date"`
+	Seconds int    `json:"seconds"`
+}
+
+type ProjectStat struct {
+	Project string `json:"project"`
 	Seconds int    `json:"seconds"`
 }
 
@@ -230,4 +236,98 @@ func GetDistinctProjects(ctx context.Context, pool *pgxpool.Pool, userID string)
 		projects = append(projects, p)
 	}
 	return projects, nil
+}
+
+// GetProjectBreakdown returns time spent per project.
+func GetProjectBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string, rangeSQL string) ([]ProjectStat, error) {
+	rows, err := pool.Query(ctx, `
+		SELECT project, SUM(duration_seconds) as seconds
+		FROM sessions
+		WHERE user_id = $1 AND `+rangeSQL+`
+		GROUP BY project
+		ORDER BY seconds DESC
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stats []ProjectStat
+	for rows.Next() {
+		var s ProjectStat
+		if err := rows.Scan(&s.Project, &s.Seconds); err != nil {
+			return nil, err
+		}
+		stats = append(stats, s)
+	}
+	return stats, nil
+}
+
+type EditorStat struct {
+	Editor  string `json:"editor"`
+	Seconds int    `json:"seconds"`
+}
+
+// GetEditorBreakdown returns time spent per editor. Uses
+// heartbeats directly since sessions don't currently store
+// which editor was used.
+func GetEditorBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string, rangeSQL string) ([]EditorStat, error) {
+	heartbeatRangeSQL := strings.ReplaceAll(rangeSQL, "start_time", "received_at")
+
+	rows, err := pool.Query(ctx, `
+		SELECT editor, COUNT(*) as heartbeat_count
+		FROM heartbeats
+		WHERE user_id = $1 AND `+heartbeatRangeSQL+`
+		GROUP BY editor
+		ORDER BY heartbeat_count DESC
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stats []EditorStat
+	for rows.Next() {
+		var e EditorStat
+		var count int
+		if err := rows.Scan(&e.Editor, &count); err != nil {
+			return nil, err
+		}
+		// Approximate: each heartbeat represents up to 2 minutes
+		e.Seconds = count * 120
+		stats = append(stats, e)
+	}
+	return stats, nil
+}
+
+type TimelineDay struct {
+	Date    string `json:"date"`
+	Seconds int    `json:"seconds"`
+}
+
+// GetTimeline returns daily totals for the last N days,
+// used for the project timeline bar chart.
+func GetTimeline(ctx context.Context, pool *pgxpool.Pool, userID string, days int) ([]TimelineDay, error) {
+	rows, err := pool.Query(ctx, `
+		SELECT start_time::date as day, SUM(duration_seconds) as seconds
+		FROM sessions
+		WHERE user_id = $1 AND start_time >= CURRENT_DATE - ($2 || ' days')::interval
+		GROUP BY day
+		ORDER BY day ASC
+	`, userID, days)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var timeline []TimelineDay
+	for rows.Next() {
+		var day time.Time
+		var seconds int
+		if err := rows.Scan(&day, &seconds); err != nil {
+			return nil, err
+		}
+		timeline = append(timeline, TimelineDay{Date: day.Format("2006-01-02"), Seconds: seconds})
+	}
+	return timeline, nil
 }

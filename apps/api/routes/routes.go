@@ -27,6 +27,9 @@ func Setup(app *fiber.App, authHandler *handlers.AuthHandler, heartbeatHandler *
 	stats.Get("/summary", statsHandler.GetSummary)
 	stats.Get("/languages", statsHandler.GetLanguages)
 	stats.Get("/heatmap", statsHandler.GetHeatmap)
+	stats.Get("/projects", statsHandler.GetProjects)
+	stats.Get("/editors", statsHandler.GetEditors)
+	stats.Get("/timeline", statsHandler.GetTimeline)
 
 	leaderboardHandler := &handlers.LeaderboardHandler{Pool: pool}
 	app.Get("/api/leaderboard", middleware.OptionalAuth(pool, jwtSecret), leaderboardHandler.GetLeaderboard)

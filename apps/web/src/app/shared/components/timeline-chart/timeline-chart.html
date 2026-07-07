@@ -1,0 +1,16 @@
+<div class="timeline-chart">
+  <div class="timeline-y-axis">
+    @for (label of yAxisLabels(); track label) {
+      <span class="timeline-y-label">{{ label }}h</span>
+    }
+  </div>
+
+  <div class="timeline-bars">
+    @for (bar of bars(); track bar.date) {
+      <div class="timeline-bar-col" [title]="bar.label + ': ' + (bar.seconds / 3600 | number: '1.1-1') + 'h'">
+        <div class="timeline-bar" [style.height.%]="bar.heightPercent"></div>
+        <span class="timeline-x-label">{{ bar.label }}</span>
+      </div>
+    }
+  </div>
+</div>

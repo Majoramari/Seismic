@@ -1,0 +1,31 @@
+<idea-plugin>
+    <id>icu.seismic.plugin</id>
+    <name>Seismic</name>
+    <vendor>Seismic</vendor>
+    <description>Automatic coding time tracking for Seismic.</description>
+    <depends>com.intellij.modules.platform</depends>
+    <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity implementation="icu.seismic.plugin.startup.SeismicStartupActivity"/>
+        <statusBarWidgetFactory implementation="icu.seismic.plugin.statusbar.SeismicStatusBarWidgetFactory"
+                                id="SeismicStatusBarWidget"/>
+        <notificationGroup id="Seismic Notifications" displayType="BALLOON"/>
+        <applicationService serviceImplementation="icu.seismic.plugin.HeartbeatService"/>
+        <applicationConfigurable
+                parentId="tools"
+                instance="icu.seismic.plugin.settings.SeismicConfigurable"
+                id="icu.seismic.plugin.settings.SeismicConfigurable"
+                displayName="Seismic"/>
+    </extensions>
+    <applicationListeners/>
+    <actions>
+        <group id="Seismic.ActionGroup" text="Seismic" popup="true">
+            <action id="Seismic.SetApiKey" class="icu.seismic.plugin.actions.SetApiKeyAction" text="Set API Key..."/>
+            <action id="Seismic.OpenDashboard" class="icu.seismic.plugin.actions.OpenDashboardAction"
+                    text="Open Dashboard"/>
+            <action id="Seismic.Enable" class="icu.seismic.plugin.actions.EnableTrackingAction" text="Enable Tracking"/>
+            <action id="Seismic.Disable" class="icu.seismic.plugin.actions.DisableTrackingAction"
+                    text="Disable Tracking"/>
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </group>
+    </actions>
+</idea-plugin>

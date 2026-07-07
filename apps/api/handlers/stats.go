@@ -78,3 +78,41 @@ func (h *StatsHandler) GetHeatmap(c *fiber.Ctx) error {
 
 	return helpers.Success(c, "Heatmap retrieved", days)
 }
+
+func (h *StatsHandler) GetProjects(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+	rangeParam := c.Query("range", "week")
+
+	ctx := c.Context()
+	stats, err := models.GetProjectBreakdown(ctx, h.Pool, userID, models.RangeSQL(rangeParam))
+	if err != nil {
+		return helpers.Error(c, fiber.StatusInternalServerError, "Failed to fetch stats")
+	}
+
+	return helpers.Success(c, "Project breakdown retrieved", stats)
+}
+
+func (h *StatsHandler) GetEditors(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+	rangeParam := c.Query("range", "week")
+
+	ctx := c.Context()
+	stats, err := models.GetEditorBreakdown(ctx, h.Pool, userID, models.RangeSQL(rangeParam))
+	if err != nil {
+		return helpers.Error(c, fiber.StatusInternalServerError, "Failed to fetch stats")
+	}
+
+	return helpers.Success(c, "Editor breakdown retrieved", stats)
+}
+
+func (h *StatsHandler) GetTimeline(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+
+	ctx := c.Context()
+	timeline, err := models.GetTimeline(ctx, h.Pool, userID, 90)
+	if err != nil {
+		return helpers.Error(c, fiber.StatusInternalServerError, "Failed to fetch timeline")
+	}
+
+	return helpers.Success(c, "Timeline retrieved", timeline)
+}

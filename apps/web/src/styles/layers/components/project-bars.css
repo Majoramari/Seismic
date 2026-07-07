@@ -1,0 +1,57 @@
+.project-bars-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.project-bar-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.project-bar-label {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-bar-track {
+  height: 24px;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.project-bar-fill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  padding-left: var(--space-2);
+  min-width: fit-content;
+  transition: width 0.4s ease;
+}
+
+.project-bar-time {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-bg);
+  white-space: nowrap;
+}
+
+.project-bars-empty {
+  text-align: center;
+  padding: var(--space-6);
+}
+
+@media (max-width: 640px) {
+  .project-bar-row {
+    grid-template-columns: 90px 1fr;
+  }
+}

@@ -13,6 +13,14 @@ apps/api/*.exe
 apps/api/*.test
 apps/api/*.out
 
+# JetBrains plugin
+apps/jetbrains/.gradle/
+apps/jetbrains/.kotlin/
+apps/jetbrains/.intellijPlatform/
+apps/jetbrains/idea-sandbox/
+apps/jetbrains/*.iml
+apps/jetbrains/out/
+
 # Bun
 bun.lockb
 

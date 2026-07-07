@@ -1,7 +1,9 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { ToastService } from '../../core/toast/toast.service';
+import { CommonModule } from '@angular/common';
+import { KeyRound, LucideAngularModule, Shield, Target, User } from 'lucide-angular';
 
 interface ApiKeyResponse {
   apiKey: string;
@@ -30,12 +32,17 @@ type AccountSubTab = 'reset' | 'delete';
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, CommonModule, LucideAngularModule],
   templateUrl: './settings.html',
 })
 export class Settings implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
+
+  readonly KeyIcon = KeyRound;
+  readonly ShieldIcon = Shield;
+  readonly TargetIcon = Target;
+  readonly UserIcon = User;
 
   activeSection = signal<SettingsSection>('apikey');
   accountSubTab = signal<AccountSubTab>('reset');
@@ -153,6 +160,8 @@ export class Settings implements OnInit {
       error: () => {},
     });
   }
+
+  sortedGoals = computed(() => [...this.goals()].sort((a, b) => a.targetSeconds - b.targetSeconds));
 
   private loadFilters() {
     this.api.get<string[]>('/api/filters/languages').subscribe({

@@ -1,0 +1,40 @@
+.heatmap-scroll {
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+}
+
+.heatmap-grid {
+  display: flex;
+  gap: 3px;
+  width: fit-content;
+}
+
+.heatmap-week {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.heatmap-day {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.heatmap-day[data-level="1"] {
+  background: color-mix(in srgb, var(--color-accent) 25%, var(--color-bg-secondary));
+}
+
+.heatmap-day[data-level="2"] {
+  background: color-mix(in srgb, var(--color-accent) 50%, var(--color-bg-secondary));
+}
+
+.heatmap-day[data-level="3"] {
+  background: color-mix(in srgb, var(--color-accent) 75%, var(--color-bg-secondary));
+}
+
+.heatmap-day[data-level="4"] {
+  background: var(--color-accent);
+}

@@ -1,0 +1,20 @@
+@if (slices().length > 0) {
+  <div class="pie-chart-container">
+    <svg viewBox="0 0 120 120" class="pie-chart-svg">
+      @for (slice of slices(); track slice.label) {
+        <path [attr.d]="slice.pathD" [style.fill]="slice.color" />
+      }
+    </svg>
+
+    <div class="pie-chart-legend">
+      @for (slice of slices(); track slice.label) {
+        <div class="pie-legend-item">
+          <span class="pie-legend-dot" [style.background]="slice.color"></span>
+          {{ slice.label }}
+        </div>
+      }
+    </div>
+  </div>
+} @else {
+  <p class="text-muted pie-chart-empty">{{ emptyLabel() }}</p>
+}
