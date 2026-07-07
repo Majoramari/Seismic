@@ -548,6 +548,40 @@
                 }
             }
         },
+<<<<<<< HEAD
+=======
+        "/api/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the logged-in user's full profile: bio info, coding metrics, activity heatmap, problem-solving gauge, achievements, recent activity, and personal-info completion.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Get full profile",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+>>>>>>> cb826e2 (feat: add user profile page and improve Swagger API documentation)
         "/api/settings/account": {
             "post": {
                 "security": [
@@ -815,6 +849,43 @@
                 }
             }
         },
+<<<<<<< HEAD
+=======
+        "models.Achievement": {
+            "type": "object",
+            "properties": {
+                "badgeClass": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "earnedAt": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ActivityLogItem": {
+            "type": "object",
+            "properties": {
+                "at": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "text": {
+                    "type": "string"
+                }
+            }
+        },
+>>>>>>> cb826e2 (feat: add user profile page and improve Swagger API documentation)
         "models.Heartbeat": {
             "type": "object",
             "properties": {
@@ -852,6 +923,146 @@
                     "type": "string"
                 }
             }
+<<<<<<< HEAD
+=======
+        },
+        "models.HeatmapCell": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "level": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.ProfileInfoField": {
+            "type": "object",
+            "properties": {
+                "completed": {
+                    "type": "boolean"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ProfileMetric": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "positive": {
+                    "type": "boolean"
+                },
+                "sub": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ProfileResponse": {
+            "type": "object",
+            "properties": {
+                "achievements": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Achievement"
+                    }
+                },
+                "attempting": {
+                    "type": "integer"
+                },
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "bio": {
+                    "type": "string"
+                },
+                "completionPercent": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "heatmap": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/models.HeatmapCell"
+                        }
+                    }
+                },
+                "infoFields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ProfileInfoField"
+                    }
+                },
+                "joinDate": {
+                    "type": "string"
+                },
+                "lastActive": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "maxStreak": {
+                    "type": "integer"
+                },
+                "memberFor": {
+                    "type": "string"
+                },
+                "metrics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ProfileMetric"
+                    }
+                },
+                "recentActivity": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ActivityLogItem"
+                    }
+                },
+                "role": {
+                    "type": "string"
+                },
+                "solved": {
+                    "type": "integer"
+                },
+                "timeZone": {
+                    "type": "string"
+                },
+                "totalActiveDays": {
+                    "type": "integer"
+                },
+                "totalProblems": {
+                    "type": "integer"
+                },
+                "university": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+>>>>>>> cb826e2 (feat: add user profile page and improve Swagger API documentation)
         }
     },
     "securityDefinitions": {

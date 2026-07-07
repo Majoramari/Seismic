@@ -2,7 +2,12 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
+<<<<<<< HEAD
     "packageManager": "bun"
+=======
+    "packageManager": "bun",
+    "analytics": "b6ac57da-2b69-4157-a25b-75012047082b"
+>>>>>>> cb826e2 (feat: add user profile page and improve Swagger API documentation)
   },
   "newProjectRoot": "projects",
   "projects": {

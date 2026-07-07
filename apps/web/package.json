@@ -9,7 +9,11 @@
     "test": "ng test"
   },
   "private": true,
+<<<<<<< HEAD
   "packageManager": "bun@1.3.14",
+=======
+  "packageManager": "bun@1.3.14" ,
+>>>>>>> cb826e2 (feat: add user profile page and improve Swagger API documentation)
   "dependencies": {
     "@angular/common": "^22.0.0",
     "@angular/compiler": "^22.0.0",
@@ -17,6 +21,10 @@
     "@angular/forms": "^22.0.0",
     "@angular/platform-browser": "^22.0.0",
     "@angular/router": "^22.0.0",
+<<<<<<< HEAD
+=======
+    "fdir": "^6.5.0",
+>>>>>>> cb826e2 (feat: add user profile page and improve Swagger API documentation)
     "lucide-angular": "^1.0.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
