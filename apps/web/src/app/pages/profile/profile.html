@@ -1,0 +1,419 @@
+@if (loading) {
+<div class="profile-loading">
+  <div class="loading-spinner"></div>
+  <p>Loading profile…</p>
+</div>
+} @else if (error) {
+<div class="profile-error">
+  <p>{{ error }}</p>
+  <button (click)="ngOnInit()">Retry</button>
+</div>
+} @else {
+
+<main class="page profile-page">
+
+  <!-- ═══ Page Header ═══ -->
+  <div class="profile-page-header">
+    <div>
+      <h1>Profile</h1>
+      <p>View and manage your profile, stats, and achievements.</p>
+    </div>
+    <button class="btn-edit-profile" (click)="openEditModal()">
+      <lucide-angular [img]="PencilIcon" [size]="16" />
+      Edit Profile
+    </button>
+  </div>
+
+  <!-- ═══ Top Row: Bio + Avatar ═══ -->
+  <div class="profile-top-row">
+
+    <!-- Bio Card -->
+    <section class="bio-card">
+      <h2 class="bio-greeting">Hey there, <span class="name-green">{{ firstName }}!</span> 👋</h2>
+      <p class="bio-subtitle">{{ role }} • From {{ location }}</p>
+      <p class="bio-university">Student at {{ university }}</p>
+
+      <!-- Info Grid -->
+      <div class="bio-info-grid">
+        <div class="bio-info-item">
+          <lucide-angular [img]="CalendarIcon" [size]="16" class="info-icon" />
+          <div>
+            <div class="info-label">Joined</div>
+            <div class="info-value">{{ joinDate }}</div>
+          </div>
+        </div>
+        <div class="bio-info-item">
+          <lucide-angular [img]="ActivityIcon" [size]="16" class="info-icon" />
+          <div>
+            <div class="info-label">Last Active</div>
+            <div class="info-value online">{{ lastActive }}</div>
+          </div>
+        </div>
+        <div class="bio-info-item">
+          <lucide-angular [img]="ClockIcon" [size]="16" class="info-icon" />
+          <div>
+            <div class="info-label">Time Zone</div>
+            <div class="info-value">{{ timeZone }}</div>
+          </div>
+        </div>
+        <div class="bio-info-item">
+          <lucide-angular [img]="StarIcon" [size]="16" class="info-icon" />
+          <div>
+            <div class="info-label">Member for</div>
+            <div class="info-value">{{ memberFor }}</div>
+          </div>
+        </div>
+      </div>
+
+      @if (bio) {
+      <!-- Bio Quote -->
+      <div class="bio-quote">
+        <lucide-angular [img]="FileTextIcon" [size]="18" class="quote-icon" />
+        <p>"{{ bio }}"</p>
+      </div>
+      }
+
+      <!-- Social Icons -->
+      <div class="bio-social">
+        <a href="#" aria-label="GitHub">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+          </svg>
+        </a>
+        <a href="#" aria-label="LinkedIn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+          </svg>
+        </a>
+        <a href="#" aria-label="Twitter">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
+          </svg>
+        </a>
+        <a href="#" aria-label="Website">
+          <lucide-angular [img]="LinkIcon" [size]="20" />
+        </a>
+      </div>
+    </section>
+
+    <!-- Avatar Card -->
+    <section class="avatar-card">
+      <div class="avatar-wrapper">
+        <div class="avatar-img">{{ username.charAt(0).toUpperCase() }}</div>
+        <div class="avatar-badge"></div>
+      </div>
+      <div class="avatar-name">{{ username }}</div>
+      <div class="avatar-email">{{ email }}</div>
+      <div class="avatar-visibility">(not visible)</div>
+      <button class="btn-change-photo">
+        <lucide-angular [img]="CameraIcon" [size]="16" />
+        Change Photo
+      </button>
+      <button class="btn-unset-photo">
+        <lucide-angular [img]="TrashIcon" [size]="14" />
+        Unset Photo
+      </button>
+    </section>
+  </div>
+  <!-- ═══ Core Coding Metrics (Bento Style) ═══ -->
+  <div class="card-grid bento-section" appMagicBento>
+    @for (metric of metrics; track metric.label) {
+    <div class="magic-bento-card" appMagicBentoCard>
+      <div class="magic-bento-card__header" style="align-items: center;">
+        <div class="metric-icon" [class]="metric.iconClass" style="margin-bottom: 0;">
+          <lucide-angular [img]="metric.icon" [size]="20" />
+        </div>
+        <div class="magic-bento-card__label" style="text-align: right;">{{ metric.label }}</div>
+      </div>
+      <div class="magic-bento-card__content">
+        <h2 class="magic-bento-card__title" style="font-size: 22px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 8px;">{{ metric.value }}</h2>
+        <p class="magic-bento-card__description" [class.positive]="metric.positive">{{ metric.sub }}</p>
+      </div>
+    </div>
+    }
+  </div>
+
+  <!-- ═══ Visualizations Row ═══ -->
+  <div class="viz-row">
+
+    <!-- Activity Overview Heatmap -->
+    <section class="activity-card">
+      <div class="activity-header">
+        <div class="title-group">
+          <h3>Activity Overview</h3>
+          <lucide-angular [img]="InfoIcon" [size]="14" class="info-btn" />
+        </div>
+        <div class="stats-group">
+          <span>Total active days: <strong>{{ totalActiveDays }}</strong></span>
+          <span>Max streak: <strong>{{ maxStreak }}</strong></span>
+        </div>
+      </div>
+
+      <div class="heatmap-container">
+        <div class="heatmap-wrapper">
+          <div class="heatmap-labels">
+            @for (label of dayLabels; track $index) {
+            <span>{{ label }}</span>
+            }
+          </div>
+          <div class="heatmap-grid">
+            @for (week of heatmapData; track $index) {
+            <div class="heatmap-column">
+              @for (cell of week; track $index) {
+              <div class="heatmap-cell" [class]="'level-' + cell.level" [title]="cell.date"></div>
+              }
+            </div>
+            }
+          </div>
+        </div>
+
+        <div class="heatmap-months">
+          @for (month of months; track $index) {
+          <span>{{ month }}</span>
+          }
+        </div>
+      </div>
+
+      <div class="heatmap-footer">
+        <div class="heatmap-legend">
+          <span>Less</span>
+          <div class="legend-cell l0"></div>
+          <div class="legend-cell l1"></div>
+          <div class="legend-cell l2"></div>
+          <div class="legend-cell l3"></div>
+          <div class="legend-cell l4"></div>
+          <span>More</span>
+        </div>
+        <div class="heatmap-summary">{{ totalActiveDays }} active days in the past year</div>
+      </div>
+    </section>
+
+    <!-- Problem Solving Gauge -->
+    <section class="gauge-card">
+      <div class="gauge-header">
+        <h3>Problem Solving</h3>
+        <lucide-angular [img]="InfoIcon" [size]="14" class="info-btn" />
+      </div>
+
+      <div class="gauge-chart">
+        <div class="gauge-svg-container">
+          <svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background arc -->
+            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="12"
+              stroke-linecap="round" />
+            <!-- Teal segment -->
+            <path [attr.d]="gaugeArcs.tealPath" fill="none" stroke="#14b8a6" stroke-width="12" stroke-linecap="round" />
+            <!-- Gold segment -->
+            <path [attr.d]="gaugeArcs.goldPath" fill="none" stroke="#f59e0b" stroke-width="12" stroke-linecap="round" />
+            <!-- Red segment -->
+            <path [attr.d]="gaugeArcs.redPath" fill="none" stroke="#ef4444" stroke-width="12" stroke-linecap="round" />
+          </svg>
+          <div class="gauge-center-text">
+            <div class="gauge-number">{{ solved }}<span>/{{ totalProblems }}</span></div>
+            <div class="gauge-label">Solved</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="gauge-footer">{{ attempting }} Attempting</div>
+    </section>
+  </div>
+
+  <!-- ═══ Bottom Section ═══ -->
+  <div class="bottom-section">
+
+    <!-- Left Stack -->
+    <div class="bottom-left">
+
+      <!-- Personal Info Completion -->
+      <section class="personal-info-card">
+        <div class="personal-info-header">
+          <div class="progress-ring-container">
+            <svg viewBox="0 0 40 40">
+              <circle cx="20" cy="20" r="18" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3" />
+              <circle cx="20" cy="20" r="18" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round"
+                [attr.stroke-dasharray]="progressCircumference" [attr.stroke-dashoffset]="progressOffset" />
+            </svg>
+            <span class="progress-ring-text">{{ completionPercent }}%</span>
+          </div>
+          <div class="info-text">
+            <h3>Personal Info</h3>
+            <p>Complete your personal details</p>
+          </div>
+          <button class="skip-btn">Skip</button>
+        </div>
+
+        <div class="info-capsules cursor-target">
+          @for (field of infoFields; track field.label) {
+          <button class="info-capsule cursor-target" [class.completed]="field.completed">
+            <lucide-angular [img]="field.icon" [size]="14" class="capsule-icon" />
+            {{ field.label }}
+            @if (field.completed) {
+            <lucide-angular [img]="CheckIcon" [size]="14" />
+            } @else {
+            <lucide-angular [img]="PlusIcon" [size]="14" />
+            }
+          </button>
+          }
+        </div>
+      </section>
+
+      <!-- Projects -->
+      <section class="projects-card">
+        <div class="projects-header">
+          <h3>Projects</h3>
+          <lucide-angular [img]="EyeIcon" [size]="16" class="eye-icon" />
+        </div>
+
+        <div class="projects-empty">
+          <div class="empty-icon">
+            <lucide-angular [img]="FolderIcon" [size]="24" />
+          </div>
+          <h4>No projects information available</h4>
+          <p>Add your projects to showcase your technical skills and contributions.</p>
+          <button class="btn-add-project">
+            <lucide-angular [img]="PlusIcon" [size]="16" />
+            Add Project
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Right Stack -->
+    <div class="bottom-right">
+
+      <!-- Achievements -->
+      <section class="achievements-card">
+        <div class="card-header-row">
+          <h3>Achievements</h3>
+          <a class="view-all" href="#">View all</a>
+        </div>
+
+        @if (achievements.length === 0) {
+        <p class="empty-state">No achievements yet.</p>
+        } @else {
+        <div class="achievement-list">
+          @for (ach of achievements; track ach.title) {
+          <div class="achievement-item">
+            <div class="achievement-badge" [class]="ach.badgeClass">
+              <lucide-angular [img]="ach.icon" [size]="18" />
+            </div>
+            <div class="achievement-info">
+              <h4>{{ ach.title }}</h4>
+              <p>{{ ach.description }}</p>
+              <div class="date">{{ ach.date }}</div>
+            </div>
+          </div>
+          }
+        </div>
+        }
+      </section>
+
+      <!-- Recent Activity -->
+      <section class="activity-log-card">
+        <div class="card-header-row">
+          <h3>Recent Activity</h3>
+          <a class="view-all" href="#">View all</a>
+        </div>
+
+        @if (recentActivity.length === 0) {
+        <p class="empty-state">No recent activity.</p>
+        } @else {
+        <div class="activity-log-list">
+          @for (item of recentActivity; track item.text) {
+          <div class="activity-log-item">
+            <div class="log-left">
+              <lucide-angular [img]="item.icon" [size]="16" class="log-icon" />
+              <span class="log-text">{{ item.text }}</span>
+            </div>
+            <span class="log-time">{{ item.time }}</span>
+          </div>
+          }
+        </div>
+        }
+      </section>
+    </div>
+  </div>
+
+  <!-- ═══ Footer ═══ -->
+  <footer class="profile-footer">
+    <span>&copy; 2026 Seismic. All rights reserved.</span>
+    <div class="footer-links">
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Service</a>
+    </div>
+  </footer>
+</main>
+
+<!-- ═══ Edit Profile Modal ═══ -->
+@if (showEditModal()) {
+<div class="modal-backdrop" (click)="closeEditModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Edit Profile</h2>
+      <button class="modal-close" (click)="closeEditModal()">×</button>
+    </div>
+
+    <div class="modal-body profile-form-body">
+      <div class="form-group mb-4">
+        <label class="field-label">Display Name / First Name</label>
+        <input type="text" class="input" [(ngModel)]="editForm.firstName" maxlength="50" />
+      </div>
+
+      <div class="form-group mb-4">
+        <label class="field-label">Role / Title</label>
+        <input type="text" class="input" [(ngModel)]="editForm.role" maxlength="50" />
+      </div>
+
+      <div class="form-group mb-4">
+        <label class="field-label">Bio</label>
+        <textarea class="input" [(ngModel)]="editForm.bio" maxlength="280" rows="3"
+          placeholder="Tell us about yourself"></textarea>
+        <small class="text-muted text-sm mt-1 d-block">Max 280 characters</small>
+      </div>
+
+      <div class="form-group mb-4">
+        <label class="field-label">Location</label>
+        <input type="text" class="input" [(ngModel)]="editForm.location" maxlength="100" />
+      </div>
+
+      <div class="form-group mb-4">
+        <label class="field-label">University / Company</label>
+        <input type="text" class="input" [(ngModel)]="editForm.university" maxlength="100" />
+      </div>
+
+      <div class="form-group mb-4">
+        <label class="field-label">Website</label>
+        <input type="url" class="input" [(ngModel)]="editForm.website" placeholder="https://..." />
+      </div>
+
+      <div class="form-group mb-4">
+        <label class="field-label">Gender</label>
+        <input type="text" class="input" [(ngModel)]="editForm.gender" maxlength="50" />
+      </div>
+
+      <div class="form-group mb-4">
+        <label class="field-label">Languages (comma separated)</label>
+        <input type="text" class="input" [(ngModel)]="editLanguagesStr" placeholder="Go, TypeScript, Python" />
+      </div>
+
+      <div class="form-group mb-4">
+        <label class="field-label">Time Zone</label>
+        <input type="text" class="input" [(ngModel)]="editForm.timeZone" maxlength="50" />
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-ghost" (click)="closeEditModal()">Cancel</button>
+      <button class="btn-primary" [disabled]="savingProfile()" (click)="saveProfile()">
+        {{ savingProfile() ? 'Saving...' : 'Save Changes' }}
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+} <!-- end @else -->

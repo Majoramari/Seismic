@@ -11,6 +11,13 @@ import (
 func Setup(app *fiber.App, authHandler *handlers.AuthHandler, heartbeatHandler *handlers.HeartbeatHandler, adminHandler *handlers.AdminHandler, statsHandler *handlers.StatsHandler, filtersHandler *handlers.FiltersHandler, jwtSecret string, pool *pgxpool.Pool) {
 	app.Get("/health", handlers.HealthCheck)
 
+	// Profile routes
+	profileHandler := &handlers.ProfileHandler{Pool: pool}
+	profile := app.Group("/api/profile", middleware.RequireAuth(jwtSecret))
+	profile.Get("/", profileHandler.GetProfile)
+	profile.Patch("/", profileHandler.UpdateProfile)
+
+
 	auth := app.Group("/api/auth")
 	auth.Get("/verify", authHandler.VerifyMagicLink)
 	auth.Post("/complete-signup", authHandler.CompleteSignup)

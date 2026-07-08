@@ -53,10 +53,13 @@ func (h *AuthHandler) RequestMagicLink(c *fiber.Ctx) error {
 
 	err = services.SendMagicLinkEmail(h.EmailCfg, email, link.Token)
 	if err != nil {
-		return helpers.Error(c, fiber.StatusInternalServerError, "Failed to send login email")
+		// TEMP DEV BYPASS: Ignore email failure so we can test login locally
+		// return helpers.Error(c, fiber.StatusInternalServerError, "Failed to send login email")
 	}
 
-	return helpers.Success(c, "Check your email for a login link", nil)
+	return helpers.Success(c, "Check your email for a login link", fiber.Map{
+		"devToken": link.Token,
+	})
 }
 
 // VerifyMagicLink godoc

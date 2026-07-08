@@ -1,11 +1,16 @@
 @if (auth.isLoggedIn()) {
-  <app-sidebar />
-  <div class="with-sidebar">
-    <router-outlet></router-outlet>
-  </div>
-} @else {
-  <app-navbar />
+<app-sidebar />
+<div class="with-sidebar">
   <router-outlet></router-outlet>
+</div>
+} @else {
+<app-navbar />
+<router-outlet></router-outlet>
 }
+
+
+
+<app-target-cursor [targetSelector]="'.cursor-target'" [spinDuration]="2" [hideDefaultCursor]="true"
+  [parallaxOn]="true"></app-target-cursor>
 
 <app-toast />

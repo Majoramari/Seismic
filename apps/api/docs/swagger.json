@@ -548,6 +548,80 @@
                 }
             }
         },
+        "/api/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the logged-in user's full profile: bio info, coding metrics, activity heatmap, problem-solving gauge, achievements, recent activity, and personal-info completion.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Get full profile",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.APIResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates allowed fields on the user profile",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Update user profile",
+                "parameters": [
+                    {
+                        "description": "Profile update details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateProfileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/settings/account": {
             "post": {
                 "security": [
@@ -815,6 +889,40 @@
                 }
             }
         },
+        "models.Achievement": {
+            "type": "object",
+            "properties": {
+                "badgeClass": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "earnedAt": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ActivityLogItem": {
+            "type": "object",
+            "properties": {
+                "at": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "text": {
+                    "type": "string"
+                }
+            }
+        },
         "models.Heartbeat": {
             "type": "object",
             "properties": {
@@ -847,8 +955,185 @@
                 },
                 "time": {
                     "type": "integer"
-                },
                 "timezone": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.HeatmapCell": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "level": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.ProfileInfoField": {
+            "type": "object",
+            "properties": {
+                "completed": {
+                    "type": "boolean"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ProfileMetric": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "positive": {
+                    "type": "boolean"
+                },
+                "sub": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ProfileResponse": {
+            "type": "object",
+            "properties": {
+                "achievements": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Achievement"
+                    }
+                },
+                "attempting": {
+                    "type": "integer"
+                },
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "bio": {
+                    "type": "string"
+                },
+                "completionPercent": {
+                    "type": "integer"
+                },
+                "currentStreak": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "heatmap": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/models.HeatmapCell"
+                        }
+                    }
+                },
+                "infoFields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ProfileInfoField"
+                    }
+                },
+                "joinDate": {
+                    "type": "string"
+                },
+                "lastActive": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "maxStreak": {
+                    "type": "integer"
+                },
+                "memberFor": {
+                    "type": "string"
+                },
+                "metrics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ProfileMetric"
+                    }
+                },
+                "recentActivity": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ActivityLogItem"
+                    }
+                },
+                "role": {
+                    "type": "string"
+                },
+                "solved": {
+                    "type": "integer"
+                },
+                "timeZone": {
+                    "type": "string"
+                },
+                "totalActiveDays": {
+                    "type": "integer"
+                },
+                "totalCodingSeconds": {
+                    "type": "integer"
+                },
+                "totalProblems": {
+                    "type": "integer"
+                },
+                "university": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UpdateProfileRequest": {
+            "type": "object",
+            "properties": {
+                "firstName": {
+                    "type": "string"
+                },
+                "bio": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "university": {
+                    "type": "string"
+                },
+                "website": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "languages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "timeZone": {
                     "type": "string"
                 }
             }

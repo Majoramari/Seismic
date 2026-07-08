@@ -78,7 +78,7 @@ export class Verify implements OnInit {
         } else if (data.accessToken) {
           this.auth.setToken(data.accessToken);
           this.userService.load();
-          this.router.navigate(['/dashboard']);
+          this.router.navigate(['/profile']);
         }
       },
       error: () => {
@@ -134,7 +134,7 @@ export class Verify implements OnInit {
         next: (data) => {
           this.auth.setToken(data.accessToken);
           this.userService.load();
-          void this.router.navigate(['/dashboard']);
+          void this.router.navigate(['/profile']);
         },
         error: (err) => {
           this.signupLoading.set(false);

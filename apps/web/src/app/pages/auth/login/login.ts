@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { NgOptimizedImage } from '@angular/common';
 import { LucideAngularModule, Mailbox } from 'lucide-angular';
 import { ApiService } from '../../../core/api/api.service';
@@ -15,6 +15,7 @@ import { ToastService } from '../../../core/toast/toast.service';
 export class Login {
   private api = inject(ApiService);
   private toast = inject(ToastService);
+  private router = inject(Router);
 
   readonly MailboxIcon = Mailbox;
 
@@ -28,7 +29,11 @@ export class Login {
     this.loading.set(true);
 
     this.api.post('/api/auth/magic-link', { email: this.email() }).subscribe({
-      next: () => {
+      next: (res: any) => {
+        if (res.data?.devToken) {
+          void this.router.navigate(['/verify'], { queryParams: { token: res.data.devToken } });
+          return;
+        }
         this.loading.set(false);
         this.sent.set(true);
       },

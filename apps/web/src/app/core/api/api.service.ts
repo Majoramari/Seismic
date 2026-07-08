@@ -37,4 +37,10 @@ export class ApiService {
       .delete<ApiResponse<T>>(`${this.baseUrl}${path}`, { withCredentials: true })
       .pipe(map((res) => res.data));
   }
+
+  patch<T>(path: string, body: unknown) {
+    return this.http
+      .patch<ApiResponse<T>>(`${this.baseUrl}${path}`, body, { withCredentials: true })
+      .pipe(map((res) => res.data));
+  }
 }
