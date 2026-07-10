@@ -54,6 +54,7 @@ export class PieChart {
 
       return {
         ...d,
+        label: this.useLanguageColors() ? this.capitalize(d.label) : d.label,
         percentage: Math.round(percentage),
         color,
         pathD,
@@ -62,13 +63,25 @@ export class PieChart {
   });
 
   private describeArc(startAngle: number, endAngle: number): string {
+    const sweep = endAngle - startAngle;
+
+    if (sweep >= 360) {
+      const r = 50;
+      const cx = 60;
+      const cy = 60;
+
+      return `M ${cx - r} ${cy}
+            A ${r} ${r} 0 1 0 ${cx + r} ${cy}
+            A ${r} ${r} 0 1 0 ${cx - r} ${cy} Z`;
+    }
+
     const r = 50;
     const cx = 60;
     const cy = 60;
 
     const start = this.polarToCartesian(cx, cy, r, endAngle);
     const end = this.polarToCartesian(cx, cy, r, startAngle);
-    const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
+    const largeArcFlag = sweep > 180 ? '1' : '0';
 
     return `M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y} Z`;
   }
@@ -79,5 +92,9 @@ export class PieChart {
       x: cx + r * Math.cos(angleRad),
       y: cy + r * Math.sin(angleRad),
     };
+  }
+
+  private capitalize(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1);
   }
 }
