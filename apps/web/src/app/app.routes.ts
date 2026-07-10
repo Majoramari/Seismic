@@ -8,6 +8,7 @@ import { guestGuard } from './core/auth/guest.guard';
 import { Settings } from './pages/settings/settings';
 
 export const routes: Routes = [
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   { path: 'login', component: Login, canActivate: [guestGuard], title: 'Log in — Seismic' },
   { path: 'verify', component: Verify, title: 'Verifying — Seismic' },
   {

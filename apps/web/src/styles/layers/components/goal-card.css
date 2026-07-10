@@ -1,3 +1,121 @@
+.goal-card {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  gap: var(--space-6);
+}
+
+.goals-card {
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.goal-card {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.goal-card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.goal-progress-text {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+
+.goal-progress-current {
+  color: var(--color-text);
+}
+
+.goal-bar-track {
+  height: 6px;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-full);
+  margin-top: var(--space-3);
+  overflow: hidden;
+}
+
+.goal-bar-fill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+
+.goal-card-side {
+  text-align: right;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.goal-ring {
+  width: 44px;
+  height: 44px;
+  margin-top: var(--space-2);
+  transform: rotate(-90deg);
+}
+
+.goal-ring-track {
+  fill: none;
+  stroke: var(--color-border-strong);
+  stroke-width: 3;
+}
+
+.goal-ring-progress {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 3;
+  stroke-dasharray: 113;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.4s ease;
+}
+
+.goal-ring-text {
+  transform: rotate(90deg);
+  transform-origin: 20px 20px;
+  fill: var(--color-text);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.goals-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+  margin-bottom: 0;
+}
+
+.goal-delete-btn {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: var(--text-lg);
+  opacity: 0;
+  transition: var(--transition-fast);
+}
+
+.goal-card-inner {
+  display: contents;
+}
+
+.goal-card:hover .goal-delete-btn {
+  opacity: 1;
+}
+
 .goals-count {
   padding: var(--space-4) var(--space-6) 0;
   font-weight: 600;
@@ -8,4 +126,34 @@
   display: flex;
   gap: var(--space-2);
   flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .goals-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.goal-check-icon {
+  fill: none;
+  stroke: var(--color-success);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform: rotate(90deg);
+  transform-origin: 20px 20px;
+}
+
+.goal-ring-complete {
+  stroke: var(--color-success);
+}
+
+.goal-card-span-2 {
+  grid-column: span 2;
+}
+
+@media (max-width: 640px) {
+  .goal-card-span-2 {
+    grid-column: span 1;
+  }
 }

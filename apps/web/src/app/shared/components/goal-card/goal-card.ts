@@ -30,10 +30,11 @@ export class GoalCard {
     return `${this.formatShort(g.progressSeconds)}/${this.formatShort(g.targetSeconds)}`;
   });
 
-  timeLeft = computed(() => {
+  periodLabel = computed(() => {
     const g = this.goal();
-    if (g.period === 'daily') return 'today';
-    return 'this week';
+    if (g.period === 'daily') return 'Goal today';
+    if (g.period === 'weekly') return 'Goal this week';
+    return 'Goal this month';
   });
 
   // SVG circle: circumference for r=18 is ~113. Used to
