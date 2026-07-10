@@ -12,6 +12,8 @@ type StatsSummary struct {
 	TotalSeconds  int     `json:"totalSeconds"`
 	TopLanguage   *string `json:"topLanguage"`
 	TopProject    *string `json:"topProject"`
+	TopOS         *string `json:"topOS"`
+	TopEditor     *string `json:"topEditor"`
 	DailyAverage  int     `json:"dailyAverage"`
 	CurrentStreak int     `json:"currentStreak"`
 }
@@ -28,6 +30,11 @@ type HeatmapDay struct {
 
 type ProjectStat struct {
 	Project string `json:"project"`
+	Seconds int    `json:"seconds"`
+}
+
+type OSStat struct {
+	OS      string `json:"os"`
 	Seconds int    `json:"seconds"`
 }
 
@@ -63,6 +70,26 @@ func GetStatsSummary(ctx context.Context, pool *pgxpool.Pool, userID string, ran
 		ORDER BY SUM(duration_seconds) DESC
 		LIMIT 1
 	`, userID).Scan(&s.TopProject)
+	if err != nil && err.Error() != "no rows in result set" {
+		return nil, err
+	}
+
+	heartbeatRangeSQL := strings.ReplaceAll(rangeSQL, "start_time", "received_at")
+
+	err = pool.QueryRow(ctx, `
+		SELECT os FROM heartbeats
+		WHERE user_id = $1 AND `+heartbeatRangeSQL+` AND os IS NOT NULL
+		GROUP BY os ORDER BY COUNT(*) DESC LIMIT 1
+	`, userID).Scan(&s.TopOS)
+	if err != nil && err.Error() != "no rows in result set" {
+		return nil, err
+	}
+
+	err = pool.QueryRow(ctx, `
+		SELECT editor FROM heartbeats
+		WHERE user_id = $1 AND `+heartbeatRangeSQL+`
+		GROUP BY editor ORDER BY COUNT(*) DESC LIMIT 1
+	`, userID).Scan(&s.TopEditor)
 	if err != nil && err.Error() != "no rows in result set" {
 		return nil, err
 	}
@@ -311,7 +338,7 @@ func GetTimeline(ctx context.Context, pool *pgxpool.Pool, userID string, days in
 	rows, err := pool.Query(ctx, `
 		SELECT start_time::date as day, SUM(duration_seconds) as seconds
 		FROM sessions
-		WHERE user_id = $1 AND start_time >= CURRENT_DATE - ($2 || ' days')::interval
+		WHERE user_id = $1 AND start_time >= CURRENT_DATE - make_interval(days => $2)
 		GROUP BY day
 		ORDER BY day ASC
 	`, userID, days)
@@ -330,4 +357,32 @@ func GetTimeline(ctx context.Context, pool *pgxpool.Pool, userID string, days in
 		timeline = append(timeline, TimelineDay{Date: day.Format("2006-01-02"), Seconds: seconds})
 	}
 	return timeline, nil
+}
+
+func GetOSBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string, rangeSQL string) ([]OSStat, error) {
+	heartbeatRangeSQL := strings.ReplaceAll(rangeSQL, "start_time", "received_at")
+
+	rows, err := pool.Query(ctx, `
+		SELECT COALESCE(os, 'unknown'), COUNT(*) as heartbeat_count
+		FROM heartbeats
+		WHERE user_id = $1 AND `+heartbeatRangeSQL+`
+		GROUP BY os
+		ORDER BY heartbeat_count DESC
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stats []OSStat
+	for rows.Next() {
+		var s OSStat
+		var count int
+		if err := rows.Scan(&s.OS, &count); err != nil {
+			return nil, err
+		}
+		s.Seconds = count * 120
+		stats = append(stats, s)
+	}
+	return stats, nil
 }

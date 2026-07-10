@@ -30,6 +30,8 @@ func Setup(app *fiber.App, authHandler *handlers.AuthHandler, heartbeatHandler *
 	stats.Get("/projects", statsHandler.GetProjects)
 	stats.Get("/editors", statsHandler.GetEditors)
 	stats.Get("/timeline", statsHandler.GetTimeline)
+	stats.Get("/os", statsHandler.GetOS)
+	stats.Get("/dashboard", statsHandler.GetDashboard)
 
 	leaderboardHandler := &handlers.LeaderboardHandler{Pool: pool}
 	app.Get("/api/leaderboard", middleware.OptionalAuth(pool, jwtSecret), leaderboardHandler.GetLeaderboard)
