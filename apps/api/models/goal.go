@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -29,8 +30,17 @@ type CreateGoalInput struct {
 }
 
 func CreateGoal(ctx context.Context, pool *pgxpool.Pool, userID string, input CreateGoalInput) (*Goal, error) {
+	var count int
+	err := pool.QueryRow(ctx, `SELECT COUNT(*) FROM goals WHERE user_id = $1 AND active = true`, userID).Scan(&count)
+	if err != nil {
+		return nil, err
+	}
+	if count >= 5 {
+		return nil, fmt.Errorf("maximum of 5 active goals reached")
+	}
+
 	var g Goal
-	err := pool.QueryRow(ctx, `
+	err = pool.QueryRow(ctx, `
 		INSERT INTO goals (user_id, scope, scope_value, period, target_seconds, reminders_enabled)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id, scope, scope_value, period, target_seconds, reminders_enabled, active, created_at
