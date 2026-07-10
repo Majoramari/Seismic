@@ -645,6 +645,39 @@
                 }
             }
         },
+        "/api/stats/dashboard": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stats"
+                ],
+                "summary": "Get all dashboard data in one request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "week",
+                        "description": "today, week, month, or all",
+                        "name": "range",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/stats/heatmap": {
             "get": {
                 "security": [

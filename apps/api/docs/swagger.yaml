@@ -456,6 +456,26 @@ paths:
       summary: Reset all coding stats
       tags:
       - settings
+  /api/stats/dashboard:
+    get:
+      parameters:
+      - default: week
+        description: today, week, month, or all
+        in: query
+        name: range
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all dashboard data in one request
+      tags:
+      - stats
   /api/stats/heatmap:
     get:
       description: Returns daily coding totals for the last 365 days, like a GitHub
