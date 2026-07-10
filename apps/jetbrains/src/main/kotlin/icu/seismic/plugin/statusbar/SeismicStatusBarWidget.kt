@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import icu.seismic.plugin.SeismicSettings
@@ -58,6 +59,8 @@ class SeismicStatusBarWidget(private val project: Project) : CustomStatusBarWidg
     override fun dispose() {
         alarm.dispose()
     }
+
+    override fun getPresentation(): StatusBarWidget.WidgetPresentation? = null
 
     private fun scheduleUpdate() {
         refresh()

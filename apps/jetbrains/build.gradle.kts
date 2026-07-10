@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "icu.seismic"
-version = "0.1.4"
+version = "0.1.5"
 
 repositories {
     mavenCentral()
@@ -34,6 +34,11 @@ intellijPlatform {
             untilBuild = provider { null }
         }
     }
+    pluginVerification {
+        ides {
+            recommended()
+        }
+    }
 }
 
 tasks {
@@ -42,7 +47,7 @@ tasks {
     }
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         compilerOptions {
-            freeCompilerArgs.add("-Xsuppress-version-warnings")
+            freeCompilerArgs.add("-Xjvm-default=all")
         }
     }
 }
