@@ -19,6 +19,16 @@
     </div>
   </div>
 
+  @if (goals().length > 0) {
+    <div class="card goals-card mb-6">
+      <div class="goals-grid">
+        @for (goal of goals(); track goal.id; let i = $index) {
+          <app-goal-card [goal]="goal" [class.goal-card-span-2]="isLastOdd(i, goals().length)" />
+        }
+      </div>
+    </div>
+  }
+
   @if (loading()) {
     <p class="text-muted">Loading...</p>
   } @else if (stats()) {
@@ -34,6 +44,16 @@
       <div class="card stat-card">
         <p class="text-muted text-sm">TOP LANGUAGE</p>
         <h2>{{ stats()!.topLanguage ?? '—' }}</h2>
+      </div>
+    </div>
+    <div class="dashboard-stats-row mt-4">
+      <div class="card stat-card">
+        <p class="text-muted text-sm">TOP OS</p>
+        <h2>{{ stats()!.topOS ?? '—' }}</h2>
+      </div>
+      <div class="card stat-card">
+        <p class="text-muted text-sm">TOP EDITOR</p>
+        <h2>{{ stats()!.topEditor ?? '—' }}</h2>
       </div>
       <div class="card stat-card">
         <p class="text-muted text-sm">STREAK</p>
@@ -61,6 +81,10 @@
       <div class="card">
         <h3 class="dashboard-card-title">Editors</h3>
         <app-pie-chart [data]="editorData()" emptyLabel="No editor data yet" />
+      </div>
+      <div class="card">
+        <h3 class="dashboard-card-title">Operating Systems</h3>
+        <app-pie-chart [data]="osData()" emptyLabel="No OS data yet" />
       </div>
     </div>
 
