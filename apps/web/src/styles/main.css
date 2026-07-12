@@ -25,3 +25,24 @@
 
 @import "./layers/utilities.css" layer(utilities);
 @import "./layers/animations.css" layer(animations);
+
+@import "./layers/components/landing.css" layer(components);
+
+:root {
+    --color-bg: #0b0e14;
+    --color-surface: #131720;
+    --color-surface-raised: #1a1f2b;
+    --color-border: #232838;
+    --color-text: #e8ecf1;
+    --color-text-muted: #8b93a7;
+    --color-accent: #d97757;     /* pulse teal */
+    --color-accent-dim: #2dd4bf1a;
+    --color-warn: #f59e0b;        /* amber, used only for primary CTA */
+
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    --radius: 8px;
+    --max-width: 1120px;
+}
