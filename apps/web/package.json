@@ -1,6 +1,17 @@
 {
   "name": "seismic-web",
   "version": "0.1.0",
+  "contributors": [
+    {
+      "name": "Muhannad Elbolaky",
+      "email": "me@muhannad.cc",
+      "url": "https://muhannad.cc"
+    },
+    {
+      "name": "user",
+      "email": "user@example.com"
+    }
+  ],
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
