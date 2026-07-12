@@ -1,4 +1,4 @@
-import { Component, input, computed } from '@angular/core';
+import { Component, input, computed, signal } from '@angular/core';
 import { getLanguageColor } from './language-colors';
 
 export interface PieSlice {
@@ -34,6 +34,7 @@ export class PieChart {
   data = input.required<PieSlice[]>();
   emptyLabel = input('No data yet');
   useLanguageColors = input(false);
+  hoveredSlice = signal<ComputedSlice | null>(null);
 
   totalSeconds = computed(() => this.data().reduce((sum, d) => sum + d.seconds, 0));
 
@@ -96,5 +97,20 @@ export class PieChart {
 
   private capitalize(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  onSliceHover(slice: ComputedSlice) {
+    this.hoveredSlice.set(slice);
+  }
+
+  onSliceLeave() {
+    this.hoveredSlice.set(null);
+  }
+
+  formatDuration(seconds: number): string {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
   }
 }

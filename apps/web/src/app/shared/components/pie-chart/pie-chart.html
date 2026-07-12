@@ -1,10 +1,25 @@
 @if (slices().length > 0) {
   <div class="pie-chart-container">
-    <svg viewBox="0 0 120 120" class="pie-chart-svg">
-      @for (slice of slices(); track slice.label) {
-        <path [attr.d]="slice.pathD" [style.fill]="slice.color" />
+    <div class="pie-chart-wrapper">
+      <svg viewBox="0 0 120 120" class="pie-chart-svg">
+        @for (slice of slices(); track slice.label) {
+          <path
+            [attr.d]="slice.pathD"
+            [style.fill]="slice.color"
+            (mouseenter)="onSliceHover(slice)"
+            (mouseleave)="onSliceLeave()"
+            class="pie-slice"
+          />
+        }
+      </svg>
+
+      @if (hoveredSlice(); as hovered) {
+        <div class="pie-tooltip">
+          <span class="pie-tooltip-dot" [style.background]="hovered.color"></span>
+          {{ hovered.label }} {{ formatDuration(hovered.seconds) }}
+        </div>
       }
-    </svg>
+    </div>
 
     <div class="pie-chart-legend">
       @for (slice of slices(); track slice.label) {

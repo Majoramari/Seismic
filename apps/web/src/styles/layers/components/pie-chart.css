@@ -36,3 +36,47 @@
   text-align: center;
   padding: var(--space-8);
 }
+
+.pie-chart-wrapper {
+  position: relative;
+}
+
+.pie-chart-svg {
+  width: 260px;
+  height: 260px;
+}
+
+.pie-slice {
+  transition: opacity 0.15s ease;
+  cursor: pointer;
+}
+
+.pie-slice:hover {
+  opacity: 0.85;
+}
+
+.pie-tooltip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+}
+
+.pie-tooltip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
