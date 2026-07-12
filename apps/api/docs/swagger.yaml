@@ -478,8 +478,8 @@ paths:
       - stats
   /api/stats/heatmap:
     get:
-      description: Returns daily coding totals for the last 365 days, like a GitHub
-        contribution graph.
+      description: Returns historical daily coding totals, like a GitHub contribution
+        graph.
       produces:
       - application/json
       responses:
@@ -547,6 +547,29 @@ paths:
       summary: Get stats summary
       tags:
       - stats
+  /api/users/{username}:
+    get:
+      description: Returns a user's public profile, respecting their privacy settings.
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+      summary: Get public profile
+      tags:
+      - profile
   /health:
     get:
       description: Returns ok if the server is running
