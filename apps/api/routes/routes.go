@@ -54,6 +54,9 @@ func Setup(app *fiber.App, authHandler *handlers.AuthHandler, heartbeatHandler *
 	filters.Get("/languages", filtersHandler.GetLanguages)
 	filters.Get("/projects", filtersHandler.GetProjects)
 
+	profileHandler := &handlers.ProfileHandler{Pool: pool}
+	app.Get("/api/users/:username", profileHandler.GetProfile)
+
 	// This is a testing route, not for production use
 	app.Post("/api/admin/process-sessions", middleware.RequireAuth(jwtSecret), adminHandler.TriggerSessionProcessing)
 }

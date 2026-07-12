@@ -1,0 +1,269 @@
+<div class="page profile-page">
+  @if (loading()) {
+    <div class="card profile-message">
+      Loading profile...
+    </div>
+  } @else if (notFound() || !profile()) {
+    <div class="card profile-message">
+      <h1>Profile unavailable</h1>
+      <p class="text-muted">
+        This profile does not exist or is private.
+      </p>
+    </div>
+  } @else {
+    <section class="profile-hero card">
+      <div class="profile-avatar-section">
+        <div class="profile-avatar-large">
+          @if (profileImage) {
+            <img [src]="profileImage" alt="Profile image" />
+          } @else {
+            <span>{{ profileInitial() }}</span>
+          }
+
+          @if (profile()!.isOwner) {
+            <label class="profile-avatar-overlay">
+              <span>Change image</span>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                (change)="onImageSelected($event)"
+              />
+            </label>
+          }
+        </div>
+
+        @if (profile()!.isOwner && profileImage) {
+          <button
+            type="button"
+            class="profile-remove-image"
+            (click)="removeImage()"
+          >
+            Remove image
+          </button>
+        }
+      </div>
+
+      <div class="profile-summary">
+        <p class="profile-eyebrow">
+          {{ profile()!.isOwner ? 'YOUR PROFILE' : 'PROFILE' }}
+        </p>
+
+        <h1>{{ displayName || username }}</h1>
+        <p class="profile-handle">&#64;{{ username }}</p>
+
+        @if (bio) {
+          <p class="profile-bio-preview">{{ bio }}</p>
+        }
+
+        <div class="profile-meta">
+          @if (profile()!.country) {
+            <span>{{ profile()!.country }}</span>
+          }
+
+          @if (joinedLabel()) {
+            <span>Joined {{ joinedLabel() }}</span>
+          }
+
+          @if (normalizedWebsite()) {
+            <a
+              [href]="normalizedWebsite()"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {{ profile()!.website }}
+            </a>
+          }
+
+          @if (profile()!.isOwner && email) {
+            <span>{{ email }}</span>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="profile-stats"
+      aria-label="Profile statistics"
+    >
+      @if (!profile()!.visibility.hideTime) {
+        <div class="card profile-stat-card">
+          <p>TOTAL TIME</p>
+          <strong>
+            {{ formatSeconds(profile()!.stats.totalSeconds) }}
+          </strong>
+        </div>
+      }
+
+      @if (!profile()!.visibility.hideProjects) {
+        <div class="card profile-stat-card">
+          <p>TOP PROJECT</p>
+          <strong>
+            {{ profile()!.stats.topProject ?? '—' }}
+          </strong>
+        </div>
+      }
+
+      @if (!profile()!.visibility.hideLanguages) {
+        <div class="card profile-stat-card">
+          <p>TOP LANGUAGE</p>
+          <strong>
+            {{ profile()!.stats.topLanguage ?? '—' }}
+          </strong>
+        </div>
+      }
+
+      <div class="card profile-stat-card">
+        <p>TOP OS</p>
+        <strong>{{ profile()!.stats.topOS ?? '—' }}</strong>
+      </div>
+
+      <div class="card profile-stat-card">
+        <p>TOP EDITOR</p>
+        <strong>
+          {{ profile()!.stats.topEditor ?? '—' }}
+        </strong>
+      </div>
+
+      <div class="card profile-stat-card">
+        <p>STREAK</p>
+        <strong>
+          @if (profile()!.stats.currentStreak !== null) {
+            {{ profile()!.stats.currentStreak }} days
+          } @else {
+            —
+          }
+        </strong>
+      </div>
+    </section>
+
+    @if (profile()!.isOwner) {
+      <section class="card profile-editor">
+        <div class="profile-section-header">
+          <div>
+            <h2>Edit profile</h2>
+            <p>Update how other people see you.</p>
+          </div>
+
+          <button
+            type="button"
+            class="btn-primary"
+            [disabled]="saving()"
+            (click)="saveProfile()"
+          >
+            {{ saving() ? 'Saving...' : 'Save changes' }}
+          </button>
+        </div>
+
+        <div class="profile-form-grid">
+          <div class="profile-field">
+            <label
+              class="field-label"
+              for="profile-display-name"
+            >
+              Display name
+            </label>
+            <input
+              id="profile-display-name"
+              type="text"
+              class="input"
+              maxlength="60"
+              [(ngModel)]="displayName"
+              placeholder="Your display name"
+            />
+          </div>
+
+          <div class="profile-field">
+            <label class="field-label" for="profile-username">
+              Username
+            </label>
+            <div class="profile-username-input">
+              <span>&#64;</span>
+              <input
+                id="profile-username"
+                type="text"
+                class="input"
+                maxlength="30"
+                [(ngModel)]="username"
+                placeholder="username"
+              />
+            </div>
+          </div>
+
+          <div class="profile-field profile-field-full">
+            <label class="field-label" for="profile-email">
+              Email
+            </label>
+            <input
+              id="profile-email"
+              type="email"
+              class="input profile-readonly-input"
+              [value]="email"
+              readonly
+            />
+            <p class="profile-field-help">
+              Your email is private and cannot be changed here.
+            </p>
+          </div>
+
+          <div class="profile-field profile-field-full">
+            <label class="field-label" for="profile-website">
+              Website
+            </label>
+            <input
+              id="profile-website"
+              type="url"
+              class="input"
+              maxlength="200"
+              [(ngModel)]="website"
+              placeholder="https://yourwebsite.com"
+            />
+          </div>
+
+          <div class="profile-field profile-field-full">
+            <div class="profile-label-row">
+              <label class="field-label" for="profile-bio">
+                Bio
+              </label>
+              <span>{{ bio.length }}/280</span>
+            </div>
+
+            <textarea
+              id="profile-bio"
+              class="input profile-bio-input"
+              maxlength="280"
+              rows="5"
+              [(ngModel)]="bio"
+              placeholder="Tell people a little about yourself..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="profile-form-footer">
+          <button
+            type="button"
+            class="btn-primary"
+            [disabled]="saving()"
+            (click)="saveProfile()"
+          >
+            {{ saving() ? 'Saving...' : 'Save profile' }}
+          </button>
+        </div>
+      </section>
+    }
+
+    @if (!profile()!.visibility.hideTime) {
+      <section class="card profile-activity">
+        <div class="profile-section-header">
+          <div>
+            <h2>Coding activity</h2>
+            <p>
+              Programming activity during the last year.
+            </p>
+          </div>
+        </div>
+
+        <app-heatmap [data]="profile()!.heatmap" />
+      </section>
+    }
+  }
+</div>

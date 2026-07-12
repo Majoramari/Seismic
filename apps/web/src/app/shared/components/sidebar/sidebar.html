@@ -9,12 +9,42 @@
     Seismic
   </div>
 
-  <div class="sidebar-header">
-    <div class="sidebar-avatar">
-      {{ userService.user()?.username?.charAt(0)?.toUpperCase() || '?' }}
+  @if (userService.user(); as user) {
+    <a
+      [routerLink]="['/', user.username]"
+      routerLinkActive="sidebar-profile-active"
+      class="sidebar-header"
+      aria-label="Open your profile"
+    >
+      <div class="sidebar-avatar">
+        @if (user.profileImage) {
+          <img [src]="user.profileImage" alt="" />
+        } @else {
+          {{
+            (user.displayName || user.username || '?')
+              .charAt(0)
+              .toUpperCase()
+          }}
+        }
+      </div>
+
+      <div class="sidebar-profile-text">
+        <span class="sidebar-display-name">
+          {{ user.displayName || user.username }}
+        </span>
+        <span class="sidebar-username">
+          &#64;{{ user.username }}
+        </span>
+      </div>
+    </a>
+  } @else {
+    <div class="sidebar-header">
+      <div class="sidebar-avatar">?</div>
+      <div class="sidebar-profile-text">
+        <span class="sidebar-display-name">Loading...</span>
+      </div>
     </div>
-    <span class="sidebar-username">{{ userService.user()?.username || 'Loading...' }}</span>
-  </div>
+  }
 
   @if (userService.streak() > 0) {
     <div class="streak-badge">
@@ -24,21 +54,47 @@
   }
 
   <nav class="sidebar-nav">
-    <a routerLink="/dashboard" routerLinkActive="sidebar-link-active" class="sidebar-link">
-      <lucide-angular [img]="GaugeIcon" [size]="18" class="sidebar-icon" />
+    <a
+      routerLink="/dashboard"
+      routerLinkActive="sidebar-link-active"
+      class="sidebar-link"
+    >
+      <lucide-angular
+        [img]="GaugeIcon"
+        [size]="18"
+        class="sidebar-icon"
+      />
       Dashboard
     </a>
-    <a routerLink="/leaderboard" routerLinkActive="sidebar-link-active" class="sidebar-link">
-      <lucide-angular [img]="TrophyIcon" [size]="18" class="sidebar-icon" />
+
+    <a
+      routerLink="/leaderboard"
+      routerLinkActive="sidebar-link-active"
+      class="sidebar-link"
+    >
+      <lucide-angular
+        [img]="TrophyIcon"
+        [size]="18"
+        class="sidebar-icon"
+      />
       Leaderboard
     </a>
-    <a routerLink="/settings" routerLinkActive="sidebar-link-active" class="sidebar-link">
-      <lucide-angular [img]="SettingsIcon" [size]="18" class="sidebar-icon" />
+
+    <a
+      routerLink="/settings"
+      routerLinkActive="sidebar-link-active"
+      class="sidebar-link"
+    >
+      <lucide-angular
+        [img]="SettingsIcon"
+        [size]="18"
+        class="sidebar-icon"
+      />
       Settings
     </a>
   </nav>
 
-  <button class="sidebar-logout" (click)="logout()">
+  <button type="button" class="sidebar-logout" (click)="logout()">
     <lucide-angular [img]="LogOutIcon" [size]="16" />
     Logout
   </button>
