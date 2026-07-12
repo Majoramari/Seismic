@@ -1,14 +1,29 @@
-import { Component, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, computed, input } from '@angular/core';
+
+export interface TimelineProject {
+  project: string;
+  seconds: number;
+}
 
 export interface TimelineDay {
   date: string;
   seconds: number;
+  projects?: TimelineProject[];
+}
+
+interface DisplayProject extends TimelineProject {
+  percentage: number;
+  color: string;
 }
 
 interface DisplayBar extends TimelineDay {
   heightPercent: number;
   label: string;
+  fullLabel: string;
+  formattedTime: string;
+  displayProjects: DisplayProject[];
+  hoverProjects: DisplayProject[];
 }
 
 @Component({
@@ -19,28 +34,96 @@ interface DisplayBar extends TimelineDay {
 })
 export class TimelineChart {
   data = input.required<TimelineDay[]>();
+  projects = input<TimelineProject[]>([]);
 
   maxHours = computed(() => {
-    const max = Math.max(...this.data().map((d) => d.seconds), 3600);
-    return Math.ceil(max / 3600);
+    const maximum = Math.max(...this.data().map((day) => day.seconds), 3600);
+
+    return Math.ceil(maximum / 3600);
   });
 
   bars = computed<DisplayBar[]>(() => {
     const maxSeconds = this.maxHours() * 3600;
-    return this.data().map((d) => ({
-      ...d,
-      heightPercent: maxSeconds > 0 ? (d.seconds / maxSeconds) * 100 : 0,
-      label: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    }));
+    const rangeProjects = this.projects();
+    const rangeTotal = rangeProjects.reduce((total, project) => total + project.seconds, 0);
+
+    const fallbackProjects = this.toDisplayProjects(rangeProjects, rangeTotal);
+
+    return this.data().map((day) => {
+      const dayProjects = this.toDisplayProjects(day.projects ?? [], day.seconds);
+
+      const displayedProjects = dayProjects.length > 0 ? dayProjects : fallbackProjects;
+
+      return {
+        ...day,
+        heightPercent: maxSeconds > 0 ? (day.seconds / maxSeconds) * 100 : 0,
+        label: this.formatDate(day.date, {
+          month: 'short',
+          day: 'numeric',
+        }),
+        fullLabel: this.formatDate(day.date, {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        }),
+        formattedTime: this.formatSeconds(day.seconds),
+        displayProjects: displayedProjects,
+        hoverProjects: displayedProjects,
+      };
+    });
   });
 
   yAxisLabels = computed(() => {
-    const max = this.maxHours();
-    const step = Math.max(1, Math.round(max / 4));
+    const maximum = this.maxHours();
+    const step = Math.max(1, Math.ceil(maximum / 4));
     const labels: number[] = [];
-    for (let i = 0; i <= max; i += step) {
-      labels.push(i);
+
+    for (let value = 0; value <= maximum; value += step) {
+      labels.push(value);
     }
+
+    if (labels.at(-1) !== maximum) {
+      labels.push(maximum);
+    }
+
     return labels.reverse();
   });
+
+  private toDisplayProjects(projects: TimelineProject[], total: number): DisplayProject[] {
+    return projects
+      .filter((project) => project.seconds > 0)
+      .sort((first, second) => second.seconds - first.seconds)
+      .map((project) => ({
+        ...project,
+        percentage: total > 0 ? (project.seconds / total) * 100 : 0,
+        color: this.projectColor(project.project),
+      }));
+  }
+
+  private projectColor(projectName: string): string {
+    let hash = 0;
+
+    for (const character of projectName) {
+      hash = character.charCodeAt(0) + ((hash << 5) - hash);
+    }
+
+    return `hsl(${Math.abs(hash) % 360} 72% 60%)`;
+  }
+
+  private formatDate(date: string, options: Intl.DateTimeFormatOptions): string {
+    return new Date(`${date.slice(0, 10)}T00:00:00`).toLocaleDateString('en-US', options);
+  }
+
+  private formatSeconds(seconds: number): string {
+    if (seconds <= 0) return 'No activity';
+
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    if (minutes > 0) return `${minutes}m`;
+
+    return '< 1m';
+  }
 }

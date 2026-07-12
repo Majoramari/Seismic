@@ -1,16 +1,88 @@
 <div class="timeline-chart">
-  <div class="timeline-y-axis">
+  <div class="timeline-y-axis" aria-hidden="true">
     @for (label of yAxisLabels(); track label) {
       <span class="timeline-y-label">{{ label }}h</span>
     }
   </div>
 
-  <div class="timeline-bars">
-    @for (bar of bars(); track bar.date) {
-      <div class="timeline-bar-col" [title]="bar.label + ': ' + (bar.seconds / 3600 | number: '1.1-1') + 'h'">
-        <div class="timeline-bar" [style.height.%]="bar.heightPercent"></div>
-        <span class="timeline-x-label">{{ bar.label }}</span>
-      </div>
-    }
+  <div class="timeline-plot">
+    <div class="timeline-grid" aria-hidden="true">
+      @for (label of yAxisLabels(); track label) {
+        <span></span>
+      }
+    </div>
+
+    <div
+      class="timeline-bars"
+      aria-label="Daily project activity"
+    >
+      @for (bar of bars(); track bar.date) {
+        <button
+          type="button"
+          class="timeline-bar-col"
+          [attr.aria-label]="bar.fullLabel + ': ' + bar.formattedTime"
+        >
+          <span
+            class="timeline-bar"
+            [style.height.%]="bar.heightPercent"
+          >
+            @for (project of bar.displayProjects;
+              track project.project) {
+              <span
+                class="timeline-bar-segment"
+                [style.height.%]="project.percentage"
+                [style.background]="project.color"
+              ></span>
+            }
+          </span>
+
+          <span class="timeline-x-label">
+            {{ bar.label }}
+          </span>
+
+          <span class="timeline-hover-card">
+            <span class="timeline-hover-header">
+              <strong>{{ bar.fullLabel }}</strong>
+              <span>{{ bar.formattedTime }}</span>
+            </span>
+
+            <span class="timeline-hover-divider"></span>
+
+            @if (bar.hoverProjects.length > 0) {
+              <span class="timeline-hover-projects">
+                @for (project of bar.hoverProjects;
+                  track project.project) {
+                  <span class="timeline-hover-project">
+                    <span
+                      class="timeline-project-dot"
+                      [style.background]="project.color"
+                    ></span>
+
+                    <span class="timeline-project-name">
+                      {{ project.project }}
+                    </span>
+
+                    <span class="timeline-project-time">
+                      {{
+                        project.seconds / 3600
+                          | number: '1.0-1'
+                      }}h
+                    </span>
+                  </span>
+                }
+              </span>
+            } @else {
+              <span class="timeline-hover-empty">
+                No projects recorded for this day.
+              </span>
+            }
+          </span>
+        </button>
+      } @empty {
+        <div class="timeline-empty">
+          No timeline activity in this range yet.
+        </div>
+      }
+    </div>
   </div>
 </div>
