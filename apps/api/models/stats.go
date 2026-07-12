@@ -126,7 +126,9 @@ func GetLanguageBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string
 		SELECT language, SUM(duration_seconds) as seconds
 		FROM sessions
 		WHERE user_id = $1 AND `+rangeSQL+`
+			AND language NOT IN ('textmate', 'unknown', 'log')
 		GROUP BY language
+		HAVING SUM(duration_seconds) > 0
 		ORDER BY seconds DESC
 	`, userID)
 	if err != nil {
@@ -145,12 +147,12 @@ func GetLanguageBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string
 	return stats, nil
 }
 
-// GetHeatmap returns daily totals for the last 365 days.
+// GetHeatmap returns historical daily totals.
 func GetHeatmap(ctx context.Context, pool *pgxpool.Pool, userID string) ([]HeatmapDay, error) {
 	rows, err := pool.Query(ctx, `
 		SELECT start_time::date as day, SUM(duration_seconds) as seconds
 		FROM sessions
-		WHERE user_id = $1 AND start_time >= CURRENT_DATE - INTERVAL '365 days'
+		WHERE user_id = $1
 		GROUP BY day
 		ORDER BY day ASC
 	`, userID)
