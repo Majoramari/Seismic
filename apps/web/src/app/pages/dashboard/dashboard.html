@@ -2,20 +2,36 @@
   <h1>Keep track of your coding time</h1>
   <p class="text-muted mb-6">
     @if (stats()) {
-      You've logged {{ formatSeconds(stats()!.totalSeconds) }}
-      @if (stats()!.topLanguage) {
-        across {{ stats()!.topLanguage }}
-      }
+      {{ activitySummary() }}
     }
   </p>
 
   <div class="dashboard-range">
     <div class="segmented">
-      <button class="segmented-option" [class.active]="range() === 'today'" (click)="setRange('today')">Today</button>
-      <button class="segmented-option" [class.active]="range() === 'week'" (click)="setRange('week')">This Week</button>
-      <button class="segmented-option" [class.active]="range() === 'month'" (click)="setRange('month')">This Month
+      <button
+        class="segmented-option"
+        [class.active]="range() === 'today'"
+        (click)="setRange('today')"
+      >
+        Today
       </button>
-      <button class="segmented-option" [class.active]="range() === 'all'" (click)="setRange('all')">All Time</button>
+      <button
+        class="segmented-option"
+        [class.active]="range() === 'week'"
+        (click)="setRange('week')"
+      >
+        This Week
+      </button>
+      <button
+        class="segmented-option"
+        [class.active]="range() === 'month'"
+        (click)="setRange('month')"
+      >
+        This Month
+      </button>
+      <button class="segmented-option" [class.active]="range() === 'all'" (click)="setRange('all')">
+        All Time
+      </button>
     </div>
   </div>
 
@@ -49,11 +65,11 @@
     <div class="dashboard-stats-row mt-4">
       <div class="card stat-card">
         <p class="text-muted text-sm">TOP OS</p>
-        <h2>{{ stats()!.topOS ?? '—' }}</h2>
+        <h2>{{ formatDisplayLabel(stats()!.topOS) }}</h2>
       </div>
       <div class="card stat-card">
         <p class="text-muted text-sm">TOP EDITOR</p>
-        <h2>{{ stats()!.topEditor ?? '—' }}</h2>
+        <h2>{{ formatDisplayLabel(stats()!.topEditor) }}</h2>
       </div>
       <div class="card stat-card">
         <p class="text-muted text-sm">STREAK</p>
@@ -89,8 +105,8 @@
     </div>
 
     <div class="card mt-4">
-      <h3 class="dashboard-card-title">Timeline</h3>
-      <app-timeline-chart [data]="timelineData()" />
+      <h3 class="dashboard-card-title">Project Timeline</h3>
+      <app-timeline-chart [data]="timelineData()" [projects]="projectData()" />
     </div>
   } @else {
     <p>No data yet. Start coding to see your stats!</p>

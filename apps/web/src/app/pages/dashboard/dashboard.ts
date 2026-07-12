@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { Heatmap } from '../../shared/components/heatmap/heatmap';
@@ -6,6 +6,7 @@ import { PieChart, PieSlice } from '../../shared/components/pie-chart/pie-chart'
 import { ProjectBars, ProjectStat } from '../../shared/components/project-bars/project-bars';
 import { TimelineChart, TimelineDay } from '../../shared/components/timeline-chart/timeline-chart';
 import { GoalCard, GoalData } from '../../shared/components/goal-card/goal-card';
+import { retry, timer } from 'rxjs';
 
 interface StatsSummary {
   totalSeconds: number;
@@ -33,6 +34,26 @@ interface HeatmapDay {
 }
 
 type RangeOption = 'today' | 'week' | 'month' | 'all';
+
+const LABEL_OVERRIDES = new Map<string, string>([
+  ['css', 'CSS'],
+  ['html', 'HTML'],
+  ['javascript', 'JavaScript'],
+  ['typescript', 'TypeScript'],
+  ['json', 'JSON'],
+  ['jsx', 'JSX'],
+  ['tsx', 'TSX'],
+  ['yaml', 'YAML'],
+  ['yml', 'YAML'],
+  ['sql', 'SQL'],
+  ['go', 'Go'],
+  ['golang', 'Go'],
+  ['gpt', 'Gpt'],
+  ['macos', 'macOS'],
+  ['ios', 'iOS'],
+  ['linux', 'Linux'],
+  ['windows', 'Windows'],
+]);
 
 @Component({
   selector: 'app-dashboard',
@@ -74,23 +95,40 @@ export class Dashboard implements OnInit {
 
   private loadAll() {
     this.loading.set(true);
-    this.api.get<DashboardData>('/api/stats/dashboard', { range: this.range() }).subscribe({
-      next: (data) => {
-        this.stats.set(data.summary);
-        this.heatmapData.set(data.heatmap ?? []);
-        this.languageData.set(
-          (data.languages ?? []).map((d) => ({ label: d.language, seconds: d.seconds })),
-        );
-        this.editorData.set(
-          (data.editors ?? []).map((d) => ({ label: d.editor, seconds: d.seconds })),
-        );
-        this.osData.set((data.os ?? []).map((d) => ({ label: d.os, seconds: d.seconds })));
-        this.projectData.set(data.projects ?? []);
-        this.timelineData.set(data.timeline ?? []);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    this.api
+      .get<DashboardData>('/api/stats/dashboard', { range: this.range() })
+      .pipe(retry({ count: 2, delay: (_, retryIndex) => timer(retryIndex * 500) }))
+      .subscribe({
+        next: (data) => {
+          this.stats.set(data.summary);
+          this.heatmapData.set(data.heatmap ?? []);
+          this.languageData.set(
+            (data.languages ?? []).map((d) => ({
+              label: this.formatDisplayLabel(d.language),
+              seconds: d.seconds,
+            })),
+          );
+          this.editorData.set(
+            (data.editors ?? []).map((d) => ({
+              label: this.formatDisplayLabel(d.editor),
+              seconds: d.seconds,
+            })),
+          );
+          this.osData.set(
+            (data.os ?? []).map((d) => ({
+              label: this.formatDisplayLabel(d.os),
+              seconds: d.seconds,
+            })),
+          );
+          this.projectData.set(data.projects ?? []);
+          this.timelineData.set(data.timeline ?? []);
+          this.loading.set(false);
+        },
+        error: (err) => {
+          console.error('Failed to load dashboard after retries:', err);
+          this.loading.set(false);
+        },
+      });
   }
 
   formatSeconds(seconds: number): string {
@@ -100,7 +138,84 @@ export class Dashboard implements OnInit {
     return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
   }
 
+  formatPreciseSeconds(seconds: number): string {
+    if (seconds <= 0) return '0s';
+
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    const parts: string[] = [];
+
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+    if (remainingSeconds > 0 || parts.length === 0) parts.push(`${remainingSeconds}s`);
+
+    return parts.join(' ');
+  }
+
+  activitySummary(): string {
+    const stats = this.stats();
+    if (!stats) return '';
+
+    const rangeLabel = this.summaryRangeLabel();
+    const languages = this.languageData().map((item) => item.label);
+    const editors = this.editorData().map((item) => item.label);
+
+    let summary = `${rangeLabel}, you've logged ${this.formatPreciseSeconds(stats.totalSeconds)}`;
+
+    const languageSummary = this.formatGroupedList(languages, 'language');
+    if (languageSummary) summary += ` across ${languageSummary}`;
+
+    const editorSummary = this.formatPlainList(editors.slice(0, 3));
+    if (editorSummary) summary += ` using ${editorSummary}`;
+
+    return summary;
+  }
+
+  formatDisplayLabel(value: string | null | undefined): string {
+    if (!value) return '—';
+
+    const trimmed = value.trim();
+    if (!trimmed) return '—';
+
+    const override = LABEL_OVERRIDES.get(trimmed.toLowerCase());
+    if (override) return override;
+
+    return trimmed
+      .split(/([\s._-]+)/)
+      .map((part) => {
+        if (/^[\s._-]+$/.test(part)) return part;
+        return part.charAt(0).toUpperCase() + part.slice(1);
+      })
+      .join('');
+  }
+
   isLastOdd(index: number, total: number): boolean {
     return total % 2 !== 0 && index === total - 1;
+  }
+
+  private summaryRangeLabel(): string {
+    if (this.range() === 'today') return 'Today';
+    if (this.range() === 'week') return 'This week';
+    if (this.range() === 'month') return 'This month';
+    return 'All time';
+  }
+
+  private formatGroupedList(items: string[], singularLabel: string): string {
+    if (items.length <= 2) return this.formatPlainList(items);
+
+    const visible = items.slice(0, 2).join(', ');
+    const remaining = items.length - 2;
+    const pluralLabel = remaining === 1 ? singularLabel : `${singularLabel}s`;
+
+    return `${visible} (& ${remaining} other ${pluralLabel})`;
+  }
+
+  private formatPlainList(items: string[]): string {
+    if (items.length === 0) return '';
+    if (items.length === 1) return items[0];
+    if (items.length === 2) return `${items[0]} and ${items[1]}`;
+
+    return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
   }
 }
