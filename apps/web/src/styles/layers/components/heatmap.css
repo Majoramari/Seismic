@@ -1,40 +1,247 @@
+.heatmap {
+  --heatmap-cell-size: 15px;
+  --heatmap-cell-gap: 4px;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'header years'
+    'board years'
+    'footer years';
+  column-gap: var(--space-8);
+  gap: var(--space-4);
+}
+
+.heatmap-header {
+  grid-area: header;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.heatmap-total {
+  font-weight: 700;
+  line-height: var(--leading-tight);
+}
+
+.heatmap-subtitle {
+  margin-top: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.heatmap-years {
+  display: grid;
+  grid-area: years;
+  align-content: start;
+  gap: var(--space-2);
+  min-width: 104px;
+}
+
+.heatmap-year {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  text-align: left;
+  transition: background var(--transition-fast),
+  border-color var(--transition-fast),
+  color var(--transition-fast);
+}
+
+.heatmap-year:hover,
+.heatmap-year.active {
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+  color: var(--color-text);
+}
+
 .heatmap-scroll {
+  grid-area: board;
   overflow-x: auto;
+  overflow-y: visible;
+  padding-top: 38px;
   padding-bottom: var(--space-2);
+}
+
+.heatmap-board {
+  display: grid;
+  grid-template-columns: 28px max-content;
+  grid-template-rows: auto auto;
+  column-gap: var(--space-2);
+  row-gap: var(--space-2);
+  width: fit-content;
+  min-width: 100%;
+}
+
+.heatmap-months {
+  display: grid;
+  grid-column: 2;
+  grid-row: 1;
+  grid-template-columns: repeat(var(--heatmap-week-count), var(--heatmap-cell-size));
+  gap: var(--heatmap-cell-gap);
+  min-height: 16px;
+}
+
+.heatmap-month {
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  line-height: 1;
+}
+
+.heatmap-weekdays {
+  display: grid;
+  grid-column: 1;
+  grid-row: 2;
+  grid-template-rows: repeat(7, var(--heatmap-cell-size));
+  gap: var(--heatmap-cell-gap);
+}
+
+.heatmap-weekdays span {
+  color: var(--color-text-secondary);
+  font-size: 0.625rem;
+  line-height: var(--heatmap-cell-size);
+  text-align: right;
 }
 
 .heatmap-grid {
   display: flex;
-  gap: 3px;
+  grid-column: 2;
+  grid-row: 2;
+  gap: var(--heatmap-cell-gap);
   width: fit-content;
+  padding-right: var(--heatmap-cell-gap);
 }
 
 .heatmap-week {
   display: flex;
+  flex: 0 0 var(--heatmap-cell-size);
   flex-direction: column;
-  gap: 3px;
+  gap: var(--heatmap-cell-gap);
+}
+
+.heatmap-day-cell {
+  position: relative;
+  width: var(--heatmap-cell-size);
+  height: var(--heatmap-cell-size);
 }
 
 .heatmap-day {
-  width: 11px;
-  height: 11px;
-  border-radius: 2px;
-  background: var(--color-bg-secondary);
+  width: var(--heatmap-cell-size);
+  height: var(--heatmap-cell-size);
   border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: var(--color-bg-secondary);
 }
 
-.heatmap-day[data-level="1"] {
+.heatmap-day:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.heatmap-day-outside {
+  visibility: hidden;
+}
+
+.heatmap-day[data-level='1'] {
   background: color-mix(in srgb, var(--color-accent) 25%, var(--color-bg-secondary));
 }
 
-.heatmap-day[data-level="2"] {
+.heatmap-day[data-level='2'] {
   background: color-mix(in srgb, var(--color-accent) 50%, var(--color-bg-secondary));
 }
 
-.heatmap-day[data-level="3"] {
+.heatmap-day[data-level='3'] {
   background: color-mix(in srgb, var(--color-accent) 75%, var(--color-bg-secondary));
 }
 
-.heatmap-day[data-level="4"] {
+.heatmap-day[data-level='4'] {
   background: var(--color-accent);
+}
+
+.heatmap-tooltip {
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  z-index: 5;
+  width: max-content;
+  max-width: 220px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-md);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition: opacity var(--transition-fast),
+  transform var(--transition-fast);
+  white-space: nowrap;
+}
+
+.heatmap-tooltip::after {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 1px solid var(--color-border-strong);
+  border-bottom: 1px solid var(--color-border-strong);
+  background: var(--color-bg);
+  content: '';
+  transform: translate(-50%, -4px) rotate(45deg);
+}
+
+.heatmap-day-cell:hover .heatmap-tooltip,
+.heatmap-day-cell:focus-within .heatmap-tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.heatmap-footer {
+  grid-area: footer;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+}
+
+.heatmap-legend {
+  display: flex;
+  gap: var(--heatmap-cell-gap, 3px);
+}
+
+.heatmap-legend-day {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 640px) {
+  .heatmap {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'header'
+      'years'
+      'board'
+      'footer';
+  }
+
+  .heatmap-years {
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .heatmap-year {
+    width: auto;
+  }
 }

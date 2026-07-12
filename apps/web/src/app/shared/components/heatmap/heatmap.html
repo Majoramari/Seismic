@@ -1,15 +1,81 @@
-<div class="heatmap-scroll">
-  <div class="heatmap-grid">
-    @for (week of weeks(); track $index) {
-      <div class="heatmap-week">
-        @for (day of week; track day.date) {
-          <div
-            class="heatmap-day"
-            [attr.data-level]="day.level"
-            [title]="formatTooltip(day)"
-          ></div>
+<div class="heatmap">
+  <div class="heatmap-header">
+    <div>
+      <p class="heatmap-total">{{ totalLabel() }}</p>
+      <p class="heatmap-subtitle">{{ activeDays() }} active days</p>
+    </div>
+
+    <div class="heatmap-years" aria-label="Select activity year">
+      @for (year of availableYears(); track year) {
+        <button
+          type="button"
+          class="heatmap-year"
+          [class.active]="year === activeYear()"
+          [attr.aria-pressed]="year === activeYear()"
+          (click)="setYear(year)"
+        >
+          {{ year }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="heatmap-scroll" #heatmapScroll>
+    <div class="heatmap-board" [style.--heatmap-week-count]="weekCount()">
+      <div class="heatmap-months" aria-hidden="true">
+        @for (month of monthLabels(); track month.name) {
+          <span class="heatmap-month" [style.grid-column]="month.weekIndex + 1">
+            {{ month.name }}
+          </span>
         }
       </div>
-    }
+
+      <div class="heatmap-weekdays" aria-hidden="true">
+        <span></span>
+        <span>Mon</span>
+        <span></span>
+        <span>Wed</span>
+        <span></span>
+        <span>Fri</span>
+        <span></span>
+      </div>
+
+      <div
+        class="heatmap-grid"
+        role="img"
+        [attr.aria-label]="'Coding activity heatmap for ' + activeYear()"
+      >
+        @for (week of weeks(); track $index) {
+          <div class="heatmap-week">
+            @for (day of week; track day.date) {
+              <div class="heatmap-day-cell">
+                <div
+                  class="heatmap-day"
+                  [class.heatmap-day-outside]="day.isOutsidePeriod"
+                  [attr.data-level]="day.level"
+                  tabindex="0"
+                  [attr.aria-label]="formatTooltip(day)"
+                ></div>
+                @if (!day.isOutsidePeriod) {
+                  <div class="heatmap-tooltip" role="tooltip">
+                    {{ formatTooltip(day) }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="heatmap-footer">
+    <span>Less</span>
+    <div class="heatmap-legend" aria-hidden="true">
+      @for (level of [0, 1, 2, 3, 4]; track level) {
+        <span class="heatmap-day heatmap-legend-day" [attr.data-level]="level"></span>
+      }
+    </div>
+    <span>More</span>
   </div>
 </div>
