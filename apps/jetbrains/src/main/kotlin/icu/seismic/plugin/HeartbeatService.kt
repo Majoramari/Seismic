@@ -17,6 +17,8 @@ import java.util.concurrent.atomic.AtomicInteger
 private const val TWO_MINUTES_MS = 2 * 60 * 1000L
 private val JSON = "application/json".toMediaType()
 
+private const val MAX_KEYSTROKE_EDIT_LENGTH = 200
+
 class HeartbeatService {
     private val client = OkHttpClient.Builder()
         .connectTimeout(5, TimeUnit.SECONDS)
@@ -43,7 +45,7 @@ class HeartbeatService {
 
     /** Called from the document listener with characters inserted in that edit. */
     fun recordKeystrokes(charsInserted: Int) {
-        if (charsInserted <= 0) return
+        if (charsInserted <= 0 || charsInserted > MAX_KEYSTROKE_EDIT_LENGTH) return
         keystrokeCount.addAndGet(charsInserted)
     }
 

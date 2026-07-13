@@ -2,9 +2,9 @@ package icu.seismic.plugin.startup
 
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -15,6 +15,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.wm.IdeFrame
 import icu.seismic.plugin.HeartbeatService
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -22,13 +24,25 @@ class SeismicStartupActivity : ProjectActivity, DumbAware {
     override suspend fun execute(project: Project) {
         val heartbeat = HeartbeatService.getInstance()
 
-        // Heartbeat on typing (subject to the 2 min rule)
-        EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
-            override fun documentChanged(event: DocumentEvent) {
-                heartbeat.recordKeystrokes(event.newFragment.length)
-                val file = FileDocumentManager.getInstance().getFile(event.document) ?: return
-                val editor = FileEditorManager.getInstance(project).selectedTextEditor
-                heartbeat.handleActivity(project, file, editor)
+        // Heartbeat on typing (subject to the 2 min rule). Uses a raw
+        // AWT key listener rather than a DocumentListener, since
+        // DocumentEvent fires for ANY text change — auto-format,
+        // code completion, auto-import, refactors — not just real
+        // keypresses. A key listener only fires for actual keys the
+        // user physically pressed.
+        EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
+            override fun editorCreated(event: EditorFactoryEvent) {
+                val editor = event.editor
+                editor.contentComponent.addKeyListener(object : KeyAdapter() {
+                    override fun keyTyped(e: KeyEvent) {
+                        heartbeat.recordKeystrokes(1)
+
+                        val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return
+                        val currentProject = editor.project ?: return
+                        val selectedEditor = FileEditorManager.getInstance(currentProject).selectedTextEditor
+                        heartbeat.handleActivity(currentProject, file, selectedEditor)
+                    }
+                })
             }
         }, project)
 

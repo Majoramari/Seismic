@@ -27,36 +27,30 @@ local function try_send(payload, api_key, api_url, callback)
 	end)
 end
 
+-- Sends only the OLDEST queued item, not the whole backlog. Sending
+-- everything at once (the old behavior) guaranteed a burst of requests
+-- that blew straight through the server's per-key rate limit whenever
+-- more than one heartbeat was queued up — every failed retry (including
+-- the resulting 429s) got requeued, so it repeated forever. One item per
+-- flush call keeps retries paced naturally alongside real heartbeats.
 function M.flush(api_key, api_url)
 	if #queue == 0 or api_key == "" then
 		return
 	end
 
-	local still_queued = {}
-	local pending = #queue
-	local remaining_items = vim.deepcopy(queue)
-	queue = {}
+	local item = table.remove(queue, 1)
 
-	if pending == 0 then
-		return
-	end
+	try_send(item.payload, api_key, api_url, function(ok)
+		if ok then
+			return -- drained successfully, nothing to do
+		end
 
-	for _, item in ipairs(remaining_items) do
-		try_send(item.payload, api_key, api_url, function(ok)
-			if not ok then
-				item.attempts = item.attempts + 1
-				if item.attempts < MAX_ATTEMPTS then
-					table.insert(still_queued, item)
-				end
-			end
-			pending = pending - 1
-			if pending == 0 then
-				for _, i in ipairs(still_queued) do
-					table.insert(queue, i)
-				end
-			end
-		end)
-	end
+		item.attempts = item.attempts + 1
+		if item.attempts < MAX_ATTEMPTS then
+			table.insert(queue, 1, item) -- put it back at the front to retry next time
+		end
+		-- else: dropped after MAX_ATTEMPTS failed tries
+	end)
 end
 
 return M

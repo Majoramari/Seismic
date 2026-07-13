@@ -10,8 +10,14 @@ function M.setup(opts)
 	vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
 		group = augroup,
 		callback = function(args)
-			heartbeat.record_keystroke()
 			heartbeat.handle_activity(args.buf, false)
+		end,
+	})
+
+	vim.api.nvim_create_autocmd("InsertCharPre", {
+		group = augroup,
+		callback = function()
+			heartbeat.record_keystroke()
 		end,
 	})
 
@@ -38,9 +44,13 @@ function M.setup(opts)
 
 	-- Retry queued heartbeats every 5 minutes
 	local timer = vim.uv.new_timer()
-	timer:start(300000, 300000, vim.schedule_wrap(function()
-		heartbeat.flush_queue()
-	end))
+	timer:start(
+		300000,
+		300000,
+		vim.schedule_wrap(function()
+			heartbeat.flush_queue()
+		end)
+	)
 end
 
 return M

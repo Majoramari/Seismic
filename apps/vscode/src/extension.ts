@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as config from './config';
-import {HeartbeatService} from './heartbeat';
-import {StatusBarManager} from './statusbar';
+import { HeartbeatService } from './heartbeat';
+import { StatusBarManager } from './statusbar';
 
 /**
  * Entry point for the Seismic extension. VS Code calls
@@ -14,35 +14,43 @@ export function activate(context: vscode.ExtensionContext) {
     const heartbeat = new HeartbeatService();
     const statusBar = new StatusBarManager();
 
-    // Send a heartbeat when the user types (subject to the 2 min rule)
+    // Every one of these just records "something happened" — none of
+    // them send a network request directly. heartbeat.start() below is
+    // the only thing that actually fires a heartbeat, on a fixed
+    // 2-minute interval, so switching tabs or saving rapidly can't
+    // cause a burst of requests anymore.
+
+    // Typing: also tally characters inserted toward the keystroke count.
     context.subscriptions.push(
         vscode.workspace.onDidChangeTextDocument((e) => {
-            const charsInserted = e.contentChanges.reduce((sum, change) => sum + change.text.length, 0);
-            heartbeat.recordKeystrokes(charsInserted);
-            heartbeat.handleActivity(e.document);
+            const realKeystrokes = e.contentChanges.filter(
+                (change) => change.text.length === 1 && change.rangeLength === 0,
+            ).length;
+            heartbeat.recordKeystrokes(realKeystrokes);
+            heartbeat.noteActivity(e.document);
         }),
     );
 
-    // Send a heartbeat immediately when switching files
+    // Switching files
     context.subscriptions.push(
         vscode.window.onDidChangeActiveTextEditor((editor) => {
-            if (editor) heartbeat.handleActivity(editor.document, true);
+            if (editor) heartbeat.noteActivity(editor.document);
         }),
     );
 
-    // Send a heartbeat immediately on save
+    // Saving
     context.subscriptions.push(
         vscode.workspace.onDidSaveTextDocument((doc) => {
-            heartbeat.handleActivity(doc, true);
+            heartbeat.noteActivity(doc);
         }),
     );
 
-    // Send a heartbeat when the VS Code window gains/loses focus
+    // Window gaining focus
     context.subscriptions.push(
         vscode.window.onDidChangeWindowState((state) => {
             if (!state.focused) return; // only care about gaining focus, not losing it
             const editor = vscode.window.activeTextEditor;
-            if (editor) heartbeat.handleActivity(editor.document, false); // respect throttle
+            if (editor) heartbeat.noteActivity(editor.document);
         }),
     );
 
@@ -92,11 +100,16 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     statusBar.startUpdating();
-    context.subscriptions.push({dispose: () => statusBar.dispose()});
+    context.subscriptions.push({ dispose: () => statusBar.dispose() });
 
-    // Retry any queued heartbeats every 5 minutes
+    // Start the periodic heartbeat tick (see heartbeat.ts) — this replaces
+    // the old immediate-send-on-save/switch behavior.
+    heartbeat.start();
+    context.subscriptions.push({ dispose: () => heartbeat.dispose() });
+
+    // Retry any queued (failed) heartbeats every 5 minutes
     const flushInterval = setInterval(() => heartbeat.flushQueue(), 5 * 60 * 1000);
-    context.subscriptions.push({dispose: () => clearInterval(flushInterval)});
+    context.subscriptions.push({ dispose: () => clearInterval(flushInterval) });
 }
 
 export function deactivate() {

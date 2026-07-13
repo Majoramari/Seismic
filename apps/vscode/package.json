@@ -2,7 +2,7 @@
   "name": "seismic-stats",
   "displayName": "Seismic Stats",
   "description": "Your code speaks. We listen.",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "publisher": "muhannad",
   "license": "GPL-3.0",
   "icon": "images/icon.png",
@@ -68,6 +68,7 @@
     }
   },
   "scripts": {
+    "vscode:prepublish": "bun run build",
     "build": "bun build src/extension.ts --outdir dist --target node --external vscode",
     "test": "bun test"
   },

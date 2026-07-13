@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as config from './config';
 import * as detector from './detector';
-import {HeartbeatQueue} from './queue';
+import { HeartbeatQueue } from './queue';
 
 export interface HeartbeatPayload {
     file: string;
@@ -21,34 +21,62 @@ export interface HeartbeatPayload {
 const TWO_MINUTES = 2 * 60 * 1000;
 
 export class HeartbeatService {
-    private lastHeartbeatTime = 0;
-    private lastFile = '';
     private queue = new HeartbeatQueue();
     private hasShownInvalidKeyWarning = false;
+
+    // Characters inserted since the last heartbeat was sent.
     private keystrokeCount = 0;
 
+    // The document to report on next tick, and whether anything has
+    // happened since the last send. Every editor event just updates
+    // these — it never triggers a network call directly. Only the
+    // periodic tick() below decides when an actual heartbeat goes out,
+    // so no matter how many times you switch tabs, save, or type, at
+    // most one heartbeat fires per TWO_MINUTES interval.
+    private pendingDocument: vscode.TextDocument | null = null;
+    private hasPendingActivity = false;
+
+    private timer: ReturnType<typeof setInterval> | undefined;
+
+    /** Called from onDidChangeTextDocument with characters inserted in that edit. */
     recordKeystrokes(charsInserted: number): void {
         if (charsInserted <= 0) return;
         this.keystrokeCount += charsInserted;
     }
 
-    async handleActivity(document: vscode.TextDocument, forced = false): Promise<void> {
+    /**
+     * Called from every relevant editor event (typing, switching files,
+     * saving, gaining focus). Just records what's being worked on right
+     * now — sending is entirely decided by the timer in start().
+     */
+    noteActivity(document: vscode.TextDocument): void {
         if (!config.isEnabled()) return;
-        if (!config.hasApiKey()) return;
         if (!detector.shouldTrack(document)) return;
 
-        const now = Date.now();
-        const fileChanged = document.fileName !== this.lastFile;
+        this.pendingDocument = document;
+        this.hasPendingActivity = true;
+    }
 
-        if (!forced && !fileChanged && now - this.lastHeartbeatTime < TWO_MINUTES) {
-            return;
-        }
+    /** Starts the periodic flush loop. Call once from activate(). */
+    start(): void {
+        this.timer = setInterval(() => {
+            void this.tick();
+        }, TWO_MINUTES);
+    }
 
-        this.lastHeartbeatTime = now;
-        this.lastFile = document.fileName;
+    dispose(): void {
+        if (this.timer) clearInterval(this.timer);
+    }
+
+    private async tick(): Promise<void> {
+        if (!config.hasApiKey()) return;
+        if (!this.hasPendingActivity || !this.pendingDocument) return;
+
+        const document = this.pendingDocument;
+        this.hasPendingActivity = false;
 
         const payload = await this.buildPayload(document);
-        this.keystrokeCount = 0;
+        this.keystrokeCount = 0; // captured into payload above, start counting fresh
         await this.send(payload);
     }
 
@@ -91,11 +119,15 @@ export class HeartbeatService {
             }
 
             if (res.ok) {
+                // Since we're online right now, also try to clear
+                // out anything stuck in the offline queue.
                 await this.queue.flush(apiKey, apiUrl);
             } else {
                 this.queue.enqueue(payload);
             }
         } catch {
+            // Network error (offline, DNS failure, etc) — queue it
+            // silently and try again later. Never bother the user.
             this.queue.enqueue(payload);
         }
     }
@@ -108,6 +140,10 @@ export class HeartbeatService {
         );
     }
 
+    /**
+     * Called periodically in the background to retry any
+     * heartbeats that failed to send earlier.
+     */
     async flushQueue(): Promise<void> {
         await this.queue.flush(config.getApiKey(), config.getApiUrl());
     }
