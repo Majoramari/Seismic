@@ -14,6 +14,21 @@ definitions:
       email:
         type: string
     type: object
+  handlers.updateProfileRequest:
+    properties:
+      bio:
+        type: string
+      contactEmail:
+        type: string
+      displayName:
+        type: string
+      profileImage:
+        type: string
+      username:
+        type: string
+      website:
+        type: string
+    type: object
   helpers.APIResponse:
     properties:
       data: {}
@@ -32,6 +47,8 @@ definitions:
         type: string
       file:
         type: string
+      keystrokes:
+        type: integer
       language:
         type: string
       lines:
@@ -114,6 +131,23 @@ paths:
       summary: Regenerate API key
       tags:
       - auth
+  /api/auth/change-email:
+    post:
+      consumes:
+      - application/json
+      description: Sends a verification link to the new email address.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Request email change
+      tags:
+      - auth
   /api/auth/check-username:
     get:
       description: Checks if a username is valid and not already taken.
@@ -168,6 +202,25 @@ paths:
       summary: Complete signup for a new user
       tags:
       - auth
+  /api/auth/confirm-email-change:
+    get:
+      description: Validates the token and applies the new email address.
+      parameters:
+      - description: Email change token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+      summary: Confirm email change
+      tags:
+      - auth
   /api/auth/magic-link:
     post:
       consumes:
@@ -212,6 +265,38 @@ paths:
       security:
       - BearerAuth: []
       summary: Get current user
+      tags:
+      - auth
+  /api/auth/profile:
+    put:
+      consumes:
+      - application/json
+      description: Updates the logged-in user's profile fields.
+      parameters:
+      - description: Profile fields
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.updateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update profile
       tags:
       - auth
   /api/auth/refresh:
