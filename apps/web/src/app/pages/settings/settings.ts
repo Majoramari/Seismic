@@ -13,6 +13,8 @@ interface PrivacySettings {
   hideProjects: boolean;
   hideTime: boolean;
   hideLanguages: boolean;
+  hideOS: boolean;
+  hideEditor: boolean;
   hideLeaderboard: boolean;
   profilePublic: boolean;
 }

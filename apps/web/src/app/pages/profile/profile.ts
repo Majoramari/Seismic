@@ -29,7 +29,8 @@ interface ProfileVisibility {
 interface ProfileData {
   username: string;
   displayName: string;
-  email?: string;
+  accountEmail?: string;
+  contactEmail: string;
   bio: string;
   website: string;
   profileImage: string | null;
@@ -59,13 +60,14 @@ export class Profile implements OnInit {
   saving = signal(false);
   notFound = signal(false);
   profile = signal<ProfileData | null>(null);
+  profileImage = signal<string | null>(null);
 
   username = '';
   displayName = '';
-  email = '';
+  accountEmail = '';
+  contactEmail = '';
   bio = '';
   website = '';
-  profileImage: string | null = null;
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -86,10 +88,11 @@ export class Profile implements OnInit {
         this.profile.set(profile);
         this.username = profile.username ?? '';
         this.displayName = profile.displayName ?? '';
-        this.email = profile.email ?? '';
+        this.accountEmail = profile.accountEmail ?? '';
+        this.contactEmail = profile.contactEmail ?? '';
         this.bio = profile.bio ?? '';
         this.website = profile.website ?? '';
-        this.profileImage = profile.profileImage ?? null;
+        this.profileImage.set(profile.profileImage ?? null);
         this.loading.set(false);
       },
       error: (error) => {
@@ -126,7 +129,7 @@ export class Profile implements OnInit {
     const reader = new FileReader();
 
     reader.onload = () => {
-      this.profileImage = reader.result as string;
+      this.profileImage.set(reader.result as string);
     };
 
     reader.onerror = () => {
@@ -138,7 +141,7 @@ export class Profile implements OnInit {
 
   removeImage(): void {
     if (!this.profile()?.isOwner) return;
-    this.profileImage = null;
+    this.profileImage.set(null);
   }
 
   saveProfile(): void {
@@ -172,7 +175,8 @@ export class Profile implements OnInit {
         displayName,
         bio: this.bio.trim(),
         website,
-        profileImage: this.profileImage,
+        contactEmail: this.contactEmail.trim(),
+        profileImage: this.profileImage(),
       })
       .subscribe({
         next: (profile) => {
@@ -181,13 +185,13 @@ export class Profile implements OnInit {
           this.displayName = profile.displayName ?? '';
           this.bio = profile.bio ?? '';
           this.website = profile.website ?? '';
-          this.profileImage = profile.profileImage ?? null;
+          this.profileImage.set(profile.profileImage ?? null);
           this.saving.set(false);
           this.userService.load();
           this.toast.success('Profile updated');
 
           if (previousUsername !== profile.username) {
-            void this.router.navigate(['/', profile.username], {
+            void this.router.navigate(['/p', profile.username], {
               replaceUrl: true,
             });
           }
@@ -200,7 +204,7 @@ export class Profile implements OnInit {
   }
 
   formatSeconds(seconds: number | null): string {
-    if (seconds === null) return 'Private';
+    if (seconds === null) return 'Hidden';
     if (seconds < 60) return '< 1m';
 
     const hours = Math.floor(seconds / 3600);
@@ -213,7 +217,7 @@ export class Profile implements OnInit {
   }
 
   profileInitial(): string {
-    const value = this.displayName.trim() || this.username.trim() || this.email.trim();
+    const value = this.displayName.trim() || this.username.trim();
 
     return value.charAt(0).toUpperCase() || '?';
   }
@@ -247,5 +251,23 @@ export class Profile implements OnInit {
     } catch {
       return false;
     }
+  }
+
+  private readonly labelOverrides = new Map<string, string>([
+    ['macos', 'macOS'],
+    ['ios', 'iOS'],
+    ['linux', 'Linux'],
+    ['windows', 'Windows'],
+  ]);
+
+  formatDisplayLabel(value: string | null | undefined): string {
+    if (!value) return '—';
+    const trimmed = value.trim();
+    if (!trimmed) return '—';
+
+    const override = this.labelOverrides.get(trimmed.toLowerCase());
+    if (override) return override;
+
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
   }
 }

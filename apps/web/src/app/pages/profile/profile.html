@@ -14,8 +14,8 @@
     <section class="profile-hero card">
       <div class="profile-avatar-section">
         <div class="profile-avatar-large">
-          @if (profileImage) {
-            <img [src]="profileImage" alt="Profile image" />
+          @if (profileImage()) {
+            <img [src]="profileImage()" alt="Profile image" />
           } @else {
             <span>{{ profileInitial() }}</span>
           }
@@ -32,7 +32,7 @@
           }
         </div>
 
-        @if (profile()!.isOwner && profileImage) {
+        @if (profile()!.isOwner && profileImage()) {
           <button
             type="button"
             class="profile-remove-image"
@@ -74,54 +74,55 @@
             </a>
           }
 
-          @if (profile()!.isOwner && email) {
-            <span>{{ email }}</span>
+          @if (profile()!.contactEmail) {
+            <a [href]="'mailto:' + profile()!.contactEmail">{{ profile()!.contactEmail }}</a>
           }
         </div>
       </div>
     </section>
 
-    <section
-      class="profile-stats"
-      aria-label="Profile statistics"
-    >
-      @if (!profile()!.visibility.hideTime) {
-        <div class="card profile-stat-card">
-          <p>TOTAL TIME</p>
-          <strong>
+    <section class="profile-stats" aria-label="Profile statistics">
+      <div class="card profile-stat-card stat-card-accent">
+        <p>TOTAL TIME</p>
+        <strong>
+          @if (profile()!.visibility.hideTime && !profile()!.isOwner) {
+            Hidden
+          } @else {
             {{ formatSeconds(profile()!.stats.totalSeconds) }}
-          </strong>
-        </div>
-      }
+          }
+        </strong>
+      </div>
 
-      @if (!profile()!.visibility.hideProjects) {
-        <div class="card profile-stat-card">
-          <p>TOP PROJECT</p>
-          <strong>
+      <div class="card profile-stat-card">
+        <p>TOP PROJECT</p>
+        <strong>
+          @if (profile()!.visibility.hideProjects && !profile()!.isOwner) {
+            Hidden
+          } @else {
             {{ profile()!.stats.topProject ?? '—' }}
-          </strong>
-        </div>
-      }
+          }
+        </strong>
+      </div>
 
-      @if (!profile()!.visibility.hideLanguages) {
-        <div class="card profile-stat-card">
-          <p>TOP LANGUAGE</p>
-          <strong>
+      <div class="card profile-stat-card">
+        <p>TOP LANGUAGE</p>
+        <strong>
+          @if (profile()!.visibility.hideLanguages && !profile()!.isOwner) {
+            Hidden
+          } @else {
             {{ profile()!.stats.topLanguage ?? '—' }}
-          </strong>
-        </div>
-      }
+          }
+        </strong>
+      </div>
 
       <div class="card profile-stat-card">
         <p>TOP OS</p>
-        <strong>{{ profile()!.stats.topOS ?? '—' }}</strong>
+        <strong>{{ formatDisplayLabel(profile()!.stats.topOS) }}</strong>
       </div>
 
       <div class="card profile-stat-card">
         <p>TOP EDITOR</p>
-        <strong>
-          {{ profile()!.stats.topEditor ?? '—' }}
-        </strong>
+        <strong>{{ formatDisplayLabel(profile()!.stats.topEditor) }}</strong>
       </div>
 
       <div class="card profile-stat-card">
@@ -143,15 +144,6 @@
             <h2>Edit profile</h2>
             <p>Update how other people see you.</p>
           </div>
-
-          <button
-            type="button"
-            class="btn-primary"
-            [disabled]="saving()"
-            (click)="saveProfile()"
-          >
-            {{ saving() ? 'Saving...' : 'Save changes' }}
-          </button>
         </div>
 
         <div class="profile-form-grid">
@@ -191,18 +183,30 @@
 
           <div class="profile-field profile-field-full">
             <label class="field-label" for="profile-email">
-              Email
+              Account email
             </label>
             <input
               id="profile-email"
               type="email"
               class="input profile-readonly-input"
-              [value]="email"
+              [value]="accountEmail"
               readonly
             />
             <p class="profile-field-help">
               Your email is private and cannot be changed here.
             </p>
+          </div>
+
+          <div class="profile-field profile-field-full">
+            <label class="field-label" for="profile-contact-email">Contact email (public)</label>
+            <input
+              id="profile-contact-email"
+              type="email"
+              class="input"
+              [(ngModel)]="contactEmail"
+              placeholder="How people can reach you (optional)"
+            />
+            <p class="profile-field-help">Shown publicly on your profile. Leave blank to hide it.</p>
           </div>
 
           <div class="profile-field profile-field-full">

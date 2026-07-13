@@ -10,6 +10,8 @@ type PrivacySettings struct {
 	HideProjects    bool `json:"hideProjects"`
 	HideTime        bool `json:"hideTime"`
 	HideLanguages   bool `json:"hideLanguages"`
+	HideOS          bool `json:"hideOS"`
+	HideEditor      bool `json:"hideEditor"`
 	HideLeaderboard bool `json:"hideLeaderboard"`
 	ProfilePublic   bool `json:"profilePublic"`
 }
@@ -20,9 +22,25 @@ func GetPrivacySettings(ctx context.Context, pool *pgxpool.Pool, userID string) 
 	var p PrivacySettings
 
 	err := pool.QueryRow(ctx, `
-		SELECT hide_projects, hide_time, hide_languages, hide_leaderboard, profile_public
-		FROM privacy_settings WHERE user_id = $1
-	`, userID).Scan(&p.HideProjects, &p.HideTime, &p.HideLanguages, &p.HideLeaderboard, &p.ProfilePublic)
+	SELECT
+		hide_projects,
+		hide_time,
+		hide_languages,
+		hide_os,
+		hide_editor,
+		hide_leaderboard,
+		profile_public
+	FROM privacy_settings
+	WHERE user_id = $1
+	`, userID).Scan(
+		&p.HideProjects,
+		&p.HideTime,
+		&p.HideLanguages,
+		&p.HideOS,
+		&p.HideEditor,
+		&p.HideLeaderboard,
+		&p.ProfilePublic,
+	)
 
 	if err != nil {
 		// No row yet, create default settings
@@ -50,6 +68,10 @@ func UpdatePrivacySettings(ctx context.Context, pool *pgxpool.Pool, userID strin
 			column = "hide_time"
 		case "hideLanguages":
 			column = "hide_languages"
+		case "hideOS":
+			column = "hide_os"
+		case "hideEditor":
+			column = "hide_editor"
 		case "hideLeaderboard":
 			column = "hide_leaderboard"
 		case "profilePublic":

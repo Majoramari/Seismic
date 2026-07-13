@@ -117,14 +117,29 @@
 
           <div class="privacy-row">
             <div>
-              <p class="privacy-label">Hide languages</p>
-              <p class="text-muted text-sm">Don't show your language breakdown</p>
+              <p class="privacy-label">Hide OS</p>
+              <p class="text-muted text-sm">Don't show your top operating system</p>
             </div>
             <label class="switch">
               <input
                 type="checkbox"
-                [checked]="privacy()!.hideLanguages"
-                (change)="toggleLocal('hideLanguages', $any($event.target).checked)"
+                [checked]="privacy()!.hideOS"
+                (change)="toggleLocal('hideOS', $any($event.target).checked)"
+              />
+              <span class="switch-track"></span>
+            </label>
+          </div>
+
+          <div class="privacy-row">
+            <div>
+              <p class="privacy-label">Hide editor</p>
+              <p class="text-muted text-sm">Don't show your top code editor</p>
+            </div>
+            <label class="switch">
+              <input
+                type="checkbox"
+                [checked]="privacy()!.hideEditor"
+                (change)="toggleLocal('hideEditor', $any($event.target).checked)"
               />
               <span class="switch-track"></span>
             </label>
