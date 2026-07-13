@@ -40,6 +40,7 @@ type PublicProfile struct {
 	Visibility   ProfileVisibility `json:"visibility"`
 	Stats        ProfileStats      `json:"stats"`
 	Heatmap      []HeatmapDay      `json:"heatmap,omitempty"`
+	Badges       []BadgeInfo       `json:"badges,omitempty"`
 }
 
 type UpdateProfileInput struct {
@@ -50,6 +51,11 @@ type UpdateProfileInput struct {
 	ContactEmail   string
 	AvatarURL      *string
 	AvatarPublicID *string
+}
+
+type BadgeInfo struct {
+	Type     string    `json:"type"`
+	EarnedAt time.Time `json:"earnedAt"`
 }
 
 // GetPublicProfile returns a user's public profile data, respecting
@@ -176,6 +182,12 @@ func GetPublicProfile(ctx context.Context, pool *pgxpool.Pool, username string, 
 		}
 	}
 
+	badges, err := GetUserBadges(ctx, pool, userID)
+	if err != nil {
+		return nil, err
+	}
+	p.Badges = badges
+
 	return &p, nil
 }
 
@@ -190,4 +202,24 @@ func UpdateProfile(ctx context.Context, pool *pgxpool.Pool, userID string, input
 	`, input.Username, input.DisplayName, input.Bio, input.Website,
 		input.ContactEmail, input.AvatarURL, input.AvatarPublicID, userID)
 	return err
+}
+
+func GetUserBadges(ctx context.Context, pool *pgxpool.Pool, userID string) ([]BadgeInfo, error) {
+	rows, err := pool.Query(ctx, `
+		SELECT badge_type, earned_at FROM badges WHERE user_id = $1 ORDER BY earned_at ASC
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var badges []BadgeInfo
+	for rows.Next() {
+		var b BadgeInfo
+		if err := rows.Scan(&b.Type, &b.EarnedAt); err != nil {
+			return nil, err
+		}
+		badges = append(badges, b)
+	}
+	return badges, nil
 }
