@@ -1,0 +1,116 @@
+<div class="docs">
+  <p class="docs-eyebrow">Documentation</p>
+  <h1 class="docs-title">Set up your editor</h1>
+  <p class="docs-subtitle">
+    Pick your editor for step-by-step setup, then grab your API key at the bottom to start tracking.
+  </p>
+
+  <div class="docs-grid">
+    @for (editor of editors; track editor.id) {
+      <button
+        type="button"
+        class="docs-card"
+        [class.active]="selected() === editor.id"
+        (click)="select(editor.id)"
+      >
+        <div class="docs-card-icon">
+          <img [ngSrc]="editor.logo" [alt]="editor.name" width="28" height="28" />
+        </div>
+        <div class="docs-card-name">{{ editor.name }}</div>
+      </button>
+    }
+  </div>
+
+  <div class="docs-panel">
+    @switch (selectedGroup()) {
+      @case ('vscode') {
+        <h2 class="docs-panel-title">VS Code setup</h2>
+        <ol class="docs-steps">
+          <li>Open the Extensions panel (<code>Ctrl+Shift+X</code> / <code>Cmd+Shift+X</code>) and install the <code>Seismic</code>
+            extension.
+          </li>
+          <li>Open the Command Palette (<code>Ctrl+Shift+P</code> / <code>Cmd+Shift+P</code>) and run <code>Seismic: Set
+            API Key</code>.
+          </li>
+          <li>Paste in your API key from the box below.</li>
+          <li>That's it — the status bar will show your tracked time once your first heartbeat goes through.</li>
+        </ol>
+        <p class="docs-note">
+          By default the extension talks to Seismic's production API — you only need to touch the API URL setting if
+          you're running your own instance.
+        </p>
+      }
+      @case ('jetbrains') {
+        <h2 class="docs-panel-title">{{ selectedEditor().name }} setup</h2>
+        <p class="docs-note docs-note-top">
+          One plugin covers every JetBrains IDE — IntelliJ IDEA, PyCharm, WebStorm, GoLand, Rider, CLion, RubyMine,
+          PhpStorm, DataGrip, Android Studio, and RustRover all use the same steps below.
+        </p>
+        <ol class="docs-steps">
+          <li>Go to <code>Settings → Plugins → Marketplace</code>, search for <code>Seismic</code>, and install it.</li>
+          <li>Restart the IDE.</li>
+          <li>Open <code>Tools → Seismic → Set API Key…</code> and paste in your key.</li>
+          <li>Tracking starts automatically — check the Seismic item in the status bar for today's time.</li>
+        </ol>
+      }
+      @case ('neovim') {
+        <h2 class="docs-panel-title">Neovim setup</h2>
+        <ol class="docs-steps">
+          <li>
+            Add this to your lazy.nvim plugin spec:
+            <pre class="docs-code"><code class="language-lua hljs" [innerHTML]="highlightedLazySpec"></code></pre>
+          </li>
+          <li>lazy.nvim clones the whole Seismic repo, <code>init</code> points Neovim at the <code>apps/nvim</code>
+            subfolder, and <code>opts</code> triggers setup automatically.
+          </li>
+          <li>Run <code>:SeismicSetApiKey</code> and paste in your key — or set it once in any other editor, since all
+            three share <code>~/.seismic.cfg</code>.
+          </li>
+          <li>Run <code>:SeismicStatus</code> any time to confirm tracking is active.</li>
+        </ol>
+        <p class="docs-note">
+          Requires Neovim 0.10+ and <code>curl</code> on your <code>$PATH</code>. <code>git</code> is optional, only
+          used for branch detection.
+        </p>
+
+        <h3 class="docs-subheading">Optional: lualine integration</h3>
+        <p class="docs-note docs-note-top">
+          Seismic exposes a function you can plug into any statusline plugin. Example for
+          <code>lualine.nvim</code>:
+        </p>
+        <pre class="docs-code"><code class="language-lua hljs" [innerHTML]="highlightedLualineSnippet"></code></pre>
+        <p class="docs-note">
+          Updates once per minute and shows <code>Set API Key</code>, <code>Paused</code>, <code>Offline</code>, or
+          today's tracked time (e.g. <code>2h 14m</code>).
+        </p>
+      }
+    }
+
+    <a [href]="selectedLink().url" target="_blank" rel="noopener" class="docs-plugin-link">
+      <lucide-angular [img]="ExternalLinkIcon" [size]="14" />
+      {{ selectedLink().label }}
+    </a>
+
+    <div class="docs-key-box">
+      <div class="docs-key-label">
+        <lucide-angular [img]="KeyIcon" [size]="16" />
+        Your API key
+      </div>
+      <div class="docs-key-row">
+        <input
+          class="docs-key-input"
+          [type]="apiKeyVisible() ? 'text' : 'password'"
+          [value]="apiKey() || 'Loading…'"
+          readonly
+        />
+        <button type="button" class="docs-key-btn" (click)="toggleVisible()">
+          <lucide-angular [img]="apiKeyVisible() ? EyeOffIcon : EyeIcon" [size]="16" />
+        </button>
+        <button type="button" class="docs-key-btn" (click)="copyKey()">
+          <lucide-angular [img]="copied() ? CheckIcon : CopyIcon" [size]="16" />
+        </button>
+      </div>
+      <a routerLink="/settings" class="docs-key-link">Manage or regenerate your key in Settings →</a>
+    </div>
+  </div>
+</div>
