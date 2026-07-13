@@ -13,38 +13,35 @@ import (
 type User struct {
 	ID             string     `json:"id"`
 	Username       string     `json:"username"`
+	DisplayName    *string    `json:"displayName"`
 	Email          string     `json:"email"`
 	APIKey         string     `json:"apiKey"`
 	Country        *string    `json:"country"`
 	Bio            *string    `json:"bio"`
 	Website        *string    `json:"website"`
-	AvatarURL      *string    `json:"avatarUrl"`
+	AvatarURL      *string    `json:"profileImage"`
 	AvatarPublicID *string    `json:"-"`
 	CreatedAt      time.Time  `json:"createdAt"`
 	DeletedAt      *time.Time `json:"-"`
 }
 
 // FindUserByEmail looks up a user by their email address.
-// Returns nil (no error) if no user was found — this is
-// normal, not a failure, since a new email means we should
-// create a new account instead. (We use magic links ma dude)
 func FindUserByEmail(ctx context.Context, pool *pgxpool.Pool, email string) (*User, error) {
 	var u User
 
 	err := pool.QueryRow(ctx, `
-		SELECT id, username, email, api_key, country, bio, website,
+		SELECT id, username, display_name, email, api_key, country, bio, website,
 		       avatar_url, avatar_public_id, created_at, deleted_at
 		FROM users
 		WHERE email = $1 AND deleted_at IS NULL
 	`, email).Scan(
-		&u.ID, &u.Username, &u.Email, &u.APIKey, &u.Country, &u.Bio,
+		&u.ID, &u.Username, &u.DisplayName, &u.Email, &u.APIKey, &u.Country, &u.Bio,
 		&u.Website, &u.AvatarURL, &u.AvatarPublicID, &u.CreatedAt, &u.DeletedAt,
 	)
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, nil // no user found, not an error
+		return nil, nil
 	}
-
 	if err != nil {
 		return nil, err
 	}
@@ -58,12 +55,12 @@ func FindUserByUsername(ctx context.Context, pool *pgxpool.Pool, username string
 	var u User
 
 	err := pool.QueryRow(ctx, `
-		SELECT id, username, email, api_key, country, bio, website,
+		SELECT id, username, display_name, email, api_key, country, bio, website,
 		       avatar_url, avatar_public_id, created_at, deleted_at
 		FROM users
 		WHERE username = $1 AND deleted_at IS NULL
 	`, username).Scan(
-		&u.ID, &u.Username, &u.Email, &u.APIKey, &u.Country, &u.Bio,
+		&u.ID, &u.Username, &u.DisplayName, &u.Email, &u.APIKey, &u.Country, &u.Bio,
 		&u.Website, &u.AvatarURL, &u.AvatarPublicID, &u.CreatedAt, &u.DeletedAt,
 	)
 
@@ -82,12 +79,12 @@ func FindUserByID(ctx context.Context, pool *pgxpool.Pool, id string) (*User, er
 	var u User
 
 	err := pool.QueryRow(ctx, `
-		SELECT id, username, email, api_key, country, bio, website,
+		SELECT id, username, display_name, email, api_key, country, bio, website,
 		       avatar_url, avatar_public_id, created_at, deleted_at
 		FROM users
 		WHERE id = $1 AND deleted_at IS NULL
 	`, id).Scan(
-		&u.ID, &u.Username, &u.Email, &u.APIKey, &u.Country, &u.Bio,
+		&u.ID, &u.Username, &u.DisplayName, &u.Email, &u.APIKey, &u.Country, &u.Bio,
 		&u.Website, &u.AvatarURL, &u.AvatarPublicID, &u.CreatedAt, &u.DeletedAt,
 	)
 
@@ -107,12 +104,12 @@ func FindUserByAPIKey(ctx context.Context, pool *pgxpool.Pool, apiKey string) (*
 	var u User
 
 	err := pool.QueryRow(ctx, `
-		SELECT id, username, email, api_key, country, bio, website,
+		SELECT id, username, display_name, email, api_key, country, bio, website,
 		       avatar_url, avatar_public_id, created_at, deleted_at
 		FROM users
 		WHERE api_key = $1 AND deleted_at IS NULL
 	`, apiKey).Scan(
-		&u.ID, &u.Username, &u.Email, &u.APIKey, &u.Country, &u.Bio,
+		&u.ID, &u.Username, &u.DisplayName, &u.Email, &u.APIKey, &u.Country, &u.Bio,
 		&u.Website, &u.AvatarURL, &u.AvatarPublicID, &u.CreatedAt, &u.DeletedAt,
 	)
 
@@ -134,10 +131,10 @@ func CreateUser(ctx context.Context, pool *pgxpool.Pool, email, username, displa
 	err := pool.QueryRow(ctx, `
 		INSERT INTO users (email, username, display_name)
 		VALUES ($1, $2, $3)
-		RETURNING id, username, email, api_key, country, bio, website,
+		RETURNING id, username, display_name, email, api_key, country, bio, website,
 		          avatar_url, avatar_public_id, created_at, deleted_at
 	`, email, username, displayName).Scan(
-		&u.ID, &u.Username, &u.Email, &u.APIKey, &u.Country, &u.Bio,
+		&u.ID, &u.Username, &u.DisplayName, &u.Email, &u.APIKey, &u.Country, &u.Bio,
 		&u.Website, &u.AvatarURL, &u.AvatarPublicID, &u.CreatedAt, &u.DeletedAt,
 	)
 

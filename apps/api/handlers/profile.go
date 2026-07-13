@@ -24,8 +24,12 @@ type ProfileHandler struct {
 func (h *ProfileHandler) GetProfile(c *fiber.Ctx) error {
 	username := c.Params("username")
 
+	// viewerID is empty for anonymous visitors — set only when the
+	// optional auth middleware successfully validated a token.
+	viewerID, _ := c.Locals("userID").(string)
+
 	ctx := c.Context()
-	profile, err := models.GetPublicProfile(ctx, h.Pool, username)
+	profile, err := models.GetPublicProfile(ctx, h.Pool, username, viewerID)
 	if err != nil {
 		return helpers.Error(c, fiber.StatusInternalServerError, "Something went wrong")
 	}

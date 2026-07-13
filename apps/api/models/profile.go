@@ -9,32 +9,74 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type PublicProfile struct {
-	Username      string         `json:"username"`
-	Bio           *string        `json:"bio"`
-	Website       *string        `json:"website"`
-	Country       *string        `json:"country"`
-	AvatarURL     *string        `json:"avatarUrl"`
-	CreatedAt     time.Time      `json:"createdAt"`
-	TotalSeconds  *int           `json:"totalSeconds"` // nil if hidden
-	TopLanguage   *string        `json:"topLanguage"`  // nil if hidden
-	TopProject    *string        `json:"topProject"`   // nil if hidden
-	CurrentStreak int            `json:"currentStreak"`
-	Languages     []LanguageStat `json:"languages,omitempty"` // nil if hidden
+type ProfileStats struct {
+	TotalSeconds  *int    `json:"totalSeconds,omitempty"`
+	TopProject    *string `json:"topProject,omitempty"`
+	TopLanguage   *string `json:"topLanguage,omitempty"`
+	TopOS         *string `json:"topOS,omitempty"`
+	TopEditor     *string `json:"topEditor,omitempty"`
+	CurrentStreak *int    `json:"currentStreak,omitempty"`
 }
 
-// GetPublicProfile returns a user's public profile data,
-// respecting their privacy settings. Returns nil if the
-// user doesn't exist, is deleted, or has profile_public=false.
-func GetPublicProfile(ctx context.Context, pool *pgxpool.Pool, username string) (*PublicProfile, error) {
+type ProfileVisibility struct {
+	HideTime      bool `json:"hideTime"`
+	HideProjects  bool `json:"hideProjects"`
+	HideLanguages bool `json:"hideLanguages"`
+	HideOS        bool `json:"hideOS"`
+	HideEditor    bool `json:"hideEditor"`
+}
+
+type PublicProfile struct {
+	Username     string            `json:"username"`
+	DisplayName  string            `json:"displayName"`
+	AccountEmail *string           `json:"accountEmail,omitempty"`
+	ContactEmail string            `json:"contactEmail"`
+	Bio          string            `json:"bio"`
+	Website      string            `json:"website"`
+	ProfileImage *string           `json:"profileImage"`
+	Country      *string           `json:"country"`
+	CreatedAt    time.Time         `json:"createdAt"`
+	IsOwner      bool              `json:"isOwner"`
+	Visibility   ProfileVisibility `json:"visibility"`
+	Stats        ProfileStats      `json:"stats"`
+	Heatmap      []HeatmapDay      `json:"heatmap,omitempty"`
+}
+
+type UpdateProfileInput struct {
+	Username       string
+	DisplayName    string
+	Bio            string
+	Website        string
+	ContactEmail   string
+	AvatarURL      *string
+	AvatarPublicID *string
+}
+
+// GetPublicProfile returns a user's public profile data, respecting
+// their privacy settings. viewerID is the currently authenticated
+// user's ID, or "" if the request is unauthenticated — used to
+// determine isOwner and whether to include the private account email.
+//
+// Fields gated by a privacy toggle (TotalSeconds, TopProject,
+// TopLanguage, Heatmap) are only ever populated when the viewer is
+// allowed to see them — for a non-owner viewing a profile with that
+// toggle on, the field stays nil/empty and is omitted from the JSON
+// response entirely (via omitempty), so no hidden data is ever sent
+// over the wire, not even as a null placeholder.
+func GetPublicProfile(ctx context.Context, pool *pgxpool.Pool, username string, viewerID string) (*PublicProfile, error) {
 	var userID string
+	var accountEmail string
+	var displayName, bio, website, contactEmail *string
 	var p PublicProfile
 
 	err := pool.QueryRow(ctx, `
-		SELECT id, username, bio, website, country, avatar_url, created_at
+		SELECT id, username, display_name, email, contact_email, bio, website, country, avatar_url, created_at
 		FROM users
 		WHERE username = $1 AND deleted_at IS NULL
-	`, username).Scan(&userID, &p.Username, &p.Bio, &p.Website, &p.Country, &p.AvatarURL, &p.CreatedAt)
+	`, username).Scan(
+		&userID, &p.Username, &displayName, &accountEmail, &contactEmail,
+		&bio, &website, &p.Country, &p.ProfileImage, &p.CreatedAt,
+	)
 
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
@@ -43,49 +85,109 @@ func GetPublicProfile(ctx context.Context, pool *pgxpool.Pool, username string) 
 		return nil, err
 	}
 
+	isOwner := viewerID != "" && viewerID == userID
+	p.IsOwner = isOwner
+
+	if displayName != nil {
+		p.DisplayName = *displayName
+	}
+	if bio != nil {
+		p.Bio = *bio
+	}
+	if website != nil {
+		p.Website = *website
+	}
+	if contactEmail != nil {
+		p.ContactEmail = *contactEmail
+	}
+	if isOwner {
+		p.AccountEmail = &accountEmail
+	}
+
 	privacy, err := GetPrivacySettings(ctx, pool, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	if !privacy.ProfilePublic {
-		return nil, nil // treat as not found, don't leak that the account exists
+	if !privacy.ProfilePublic && !isOwner {
+		return nil, nil
+	}
+
+	p.Visibility = ProfileVisibility{
+		HideTime:      privacy.HideTime,
+		HideProjects:  privacy.HideProjects,
+		HideLanguages: privacy.HideLanguages,
+		HideOS:        privacy.HideOS,
+		HideEditor:    privacy.HideEditor,
 	}
 
 	streak, err := GetCurrentStreak(ctx, pool, userID)
 	if err != nil {
 		return nil, err
 	}
-	p.CurrentStreak = streak
+	p.Stats.CurrentStreak = &streak
 
-	if !privacy.HideTime {
-		summary, err := GetStatsSummary(ctx, pool, userID, "1=1") // all time
+	showTime := isOwner || !privacy.HideTime
+	showProjects := isOwner || !privacy.HideProjects
+	showLanguages := isOwner || !privacy.HideLanguages
+	showOS := isOwner || !privacy.HideOS
+	showEditor := isOwner || !privacy.HideEditor
+
+	summary, err := GetStatsSummary(ctx, pool, userID, "1=1")
+	if err != nil {
+		return nil, err
+	}
+	if showOS {
+		p.Stats.TopOS = summary.TopOS
+	}
+	if showEditor {
+		p.Stats.TopEditor = summary.TopEditor
+	}
+
+	if showTime {
+		p.Stats.TotalSeconds = &summary.TotalSeconds
+
+		heatmap, err := GetHeatmap(ctx, pool, userID)
 		if err != nil {
 			return nil, err
 		}
-		p.TotalSeconds = &summary.TotalSeconds
+		p.Heatmap = heatmap
 	}
+	// else: p.Heatmap and p.Stats.TotalSeconds stay nil/empty and are
+	// dropped from the JSON response by omitempty — not sent at all.
 
-	if !privacy.HideLanguages {
+	if showLanguages {
 		languages, err := GetLanguageBreakdown(ctx, pool, userID, "1=1")
 		if err != nil {
 			return nil, err
 		}
-		p.Languages = languages
 		if len(languages) > 0 {
-			p.TopLanguage = &languages[0].Language
+			p.Stats.TopLanguage = &languages[0].Language
 		}
 	}
 
-	if !privacy.HideProjects {
+	if showProjects {
 		projects, err := GetProjectBreakdown(ctx, pool, userID, "1=1")
 		if err != nil {
 			return nil, err
 		}
 		if len(projects) > 0 {
-			p.TopProject = &projects[0].Project
+			p.Stats.TopProject = &projects[0].Project
 		}
 	}
 
 	return &p, nil
+}
+
+// UpdateProfile updates the editable profile fields for a user,
+// including the avatar URL/public ID from Cloudinary.
+func UpdateProfile(ctx context.Context, pool *pgxpool.Pool, userID string, input UpdateProfileInput) error {
+	_, err := pool.Exec(ctx, `
+		UPDATE users
+		SET username = $1, display_name = $2, bio = $3, website = $4,
+		    contact_email = $5, avatar_url = $6, avatar_public_id = $7
+		WHERE id = $8
+	`, input.Username, input.DisplayName, input.Bio, input.Website,
+		input.ContactEmail, input.AvatarURL, input.AvatarPublicID, userID)
+	return err
 }
