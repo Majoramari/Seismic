@@ -16,10 +16,6 @@ interface StatsSummary {
   currentStreak: number;
 }
 
-interface StatsSummary {
-  currentStreak: number;
-}
-
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private api = inject(ApiService);

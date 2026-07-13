@@ -55,7 +55,8 @@ func Setup(app *fiber.App, authHandler *handlers.AuthHandler, heartbeatHandler *
 	filters.Get("/projects", filtersHandler.GetProjects)
 
 	profileHandler := &handlers.ProfileHandler{Pool: pool}
-	app.Get("/api/users/:username", profileHandler.GetProfile)
+	app.Get("/api/users/:username", middleware.OptionalAuth(pool, jwtSecret), profileHandler.GetProfile)
+	app.Put("/api/auth/profile", middleware.RequireAuth(jwtSecret), authHandler.UpdateProfile)
 
 	// This is a testing route, not for production use
 	app.Post("/api/admin/process-sessions", middleware.RequireAuth(jwtSecret), adminHandler.TriggerSessionProcessing)
