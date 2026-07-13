@@ -209,14 +209,17 @@
 
 .profile-username-input > span {
   position: absolute;
-  top: 22px;
+  top: 50%;
   left: var(--space-4);
+  transform: translateY(-50%);
   z-index: 1;
   color: var(--color-text-muted);
+  pointer-events: none;
 }
 
 .profile-username-input .input {
   padding-left: var(--space-8);
+  margin-bottom: 0;
 }
 
 .profile-readonly-input {

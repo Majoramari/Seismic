@@ -8,6 +8,7 @@
 @import "./layers/components/buttons.css" layer(components);
 @import "./layers/components/card.css" layer(components);
 @import "./layers/components/dashboard.css" layer(components);
+@import "./layers/components/docs.css" layer(components);
 @import "./layers/components/goal-card.css" layer(components);
 @import "./layers/components/goal-modal.css" layer(components);
 @import "./layers/components/heatmap.css" layer(components);

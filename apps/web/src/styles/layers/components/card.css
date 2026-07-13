@@ -16,3 +16,9 @@
   font-size: var(--text-4xl);
   margin-top: var(--space-2);
 }
+
+.stat-card-accent {
+  border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 6%, var(--color-bg-card));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 20%, transparent) inset;
+}
