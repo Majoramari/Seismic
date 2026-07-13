@@ -11,7 +11,7 @@
 
   @if (userService.user(); as user) {
     <a
-      [routerLink]="['/', user.username]"
+      [routerLink]="['/p', user.username]"
       routerLinkActive="sidebar-profile-active"
       class="sidebar-header"
       aria-label="Open your profile"
@@ -47,7 +47,7 @@
   }
 
   @if (userService.streak() > 0) {
-    <div class="streak-badge">
+    <div class="streak-badge" [class]="streakTier(userService.streak())">
       <lucide-angular [img]="FlameIcon" [size]="14" />
       {{ userService.streak() }} day streak
     </div>
@@ -65,6 +65,19 @@
         class="sidebar-icon"
       />
       Dashboard
+    </a>
+
+    <a
+      routerLink="/docs"
+      routerLinkActive="sidebar-link-active"
+      class="sidebar-link"
+    >
+      <lucide-angular
+        [img]="DocsIcon"
+        [size]="18"
+        class="sidebar-icon"
+      />
+      Docs
     </a>
 
     <a

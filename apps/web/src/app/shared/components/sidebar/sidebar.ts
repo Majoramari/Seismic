@@ -8,7 +8,7 @@ import {
   Settings,
   LogOut,
   Flame,
-  Target,
+  BookOpen,
 } from 'lucide-angular';
 import { AuthService } from '../../../core/auth/auth.service';
 import { UserService } from '../../../core/auth/user.service';
@@ -29,7 +29,14 @@ export class Sidebar {
   readonly SettingsIcon = Settings;
   readonly LogOutIcon = LogOut;
   readonly FlameIcon = Flame;
-  readonly TargetIcon = Target;
+  readonly DocsIcon = BookOpen;
+
+  streakTier(streak: number): string {
+    if (streak >= 30) return 'streak-tier-legendary';
+    if (streak >= 14) return 'streak-tier-hot';
+    if (streak >= 7) return 'streak-tier-warm';
+    return 'streak-tier-new';
+  }
 
   logout() {
     this.auth.logout();
