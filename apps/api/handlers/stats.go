@@ -70,7 +70,7 @@ func (h *StatsHandler) GetLanguages(c *fiber.Ctx) error {
 
 // GetHeatmap godoc
 // @Summary      Get coding heatmap
-// @Description  Returns daily coding totals for the last 365 days, like a GitHub contribution graph.
+// @Description  Returns historical daily coding totals, like a GitHub contribution graph.
 // @Tags         stats
 // @Produce      json
 // @Security     BearerAuth

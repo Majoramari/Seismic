@@ -1,6 +1,8 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
+import { RouterLink } from '@angular/router';
+import { LucideAngularModule, Flame } from 'lucide-angular';
 
 interface LeaderboardEntry {
   rank: number;
@@ -8,6 +10,8 @@ interface LeaderboardEntry {
   seconds: number;
   topLanguage: string;
   isYou: boolean;
+  profileImage: string | null;
+  streak: number;
 }
 
 interface LeaderboardResult {
@@ -20,11 +24,13 @@ type RangeOption = 'today' | 'week' | 'month' | 'all';
 @Component({
   selector: 'app-leaderboard',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink, LucideAngularModule],
   templateUrl: './leaderboard.html',
 })
 export class Leaderboard implements OnInit {
   private api = inject(ApiService);
+
+  readonly FlameIcon = Flame;
 
   entries = signal<LeaderboardEntry[]>([]);
   yourRank = signal<number | null>(null);
@@ -89,5 +95,12 @@ export class Leaderboard implements OnInit {
     this.entries.set(data.entries ?? []);
     this.filteredEntries.set(data.entries ?? []);
     this.yourRank.set(data.yourRank);
+  }
+
+  streakTier(streak: number): string {
+    if (streak >= 30) return 'streak-tier-legendary';
+    if (streak >= 14) return 'streak-tier-hot';
+    if (streak >= 7) return 'streak-tier-warm';
+    return 'streak-tier-new';
   }
 }

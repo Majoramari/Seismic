@@ -6,26 +6,27 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type LeaderboardEntry struct {
-	Rank        int    `json:"rank"`
-	Username    string `json:"username"`
-	Seconds     int    `json:"seconds"`
-	TopLanguage string `json:"topLanguage"`
-	IsYou       bool   `json:"isYou"`
-}
-
 type LeaderboardResult struct {
 	Entries  []LeaderboardEntry `json:"entries"`
 	YourRank *int               `json:"yourRank"`
 }
 
-// GetLeaderboard returns ranked users by total coding time
-// within the given range, respecting privacy settings.
+type LeaderboardEntry struct {
+	Rank         int     `json:"rank"`
+	Username     string  `json:"username"`
+	Seconds      int     `json:"seconds"`
+	TopLanguage  string  `json:"topLanguage"`
+	IsYou        bool    `json:"isYou"`
+	ProfileImage *string `json:"profileImage"`
+	Streak       int     `json:"streak"`
+}
+
 func GetLeaderboard(ctx context.Context, pool *pgxpool.Pool, rangeSQL string, limit int, currentUserID string) (*LeaderboardResult, error) {
 	rows, err := pool.Query(ctx, `
 		SELECT
 			u.id,
 			u.username,
+			u.avatar_url,
 			SUM(s.duration_seconds) as total_seconds,
 			(
 				SELECT language FROM sessions s2
@@ -41,7 +42,7 @@ func GetLeaderboard(ctx context.Context, pool *pgxpool.Pool, rangeSQL string, li
 			AND (p.hide_leaderboard IS NULL OR p.hide_leaderboard = false)
 			AND (p.profile_public IS NULL OR p.profile_public = true)
 			AND u.deleted_at IS NULL
-		GROUP BY u.id, u.username
+		GROUP BY u.id, u.username, u.avatar_url
 		ORDER BY total_seconds DESC
 	`)
 	if err != nil {
@@ -49,7 +50,11 @@ func GetLeaderboard(ctx context.Context, pool *pgxpool.Pool, rangeSQL string, li
 	}
 	defer rows.Close()
 
-	var allEntries []LeaderboardEntry
+	type rawRow struct {
+		userID string
+		entry  LeaderboardEntry
+	}
+	var rawRows []rawRow
 	rank := 1
 	var yourRank *int
 
@@ -57,12 +62,15 @@ func GetLeaderboard(ctx context.Context, pool *pgxpool.Pool, rangeSQL string, li
 		var e LeaderboardEntry
 		var userID string
 		var topLang *string
-		if err := rows.Scan(&userID, &e.Username, &e.Seconds, &topLang); err != nil {
+
+		if err := rows.Scan(&userID, &e.Username, &e.ProfileImage, &e.Seconds, &topLang); err != nil {
 			return nil, err
 		}
+
 		if topLang != nil {
 			e.TopLanguage = *topLang
 		}
+
 		e.Rank = rank
 		e.IsYou = userID == currentUserID
 
@@ -71,16 +79,28 @@ func GetLeaderboard(ctx context.Context, pool *pgxpool.Pool, rangeSQL string, li
 			yourRank = &r
 		}
 
-		allEntries = append(allEntries, e)
+		rawRows = append(rawRows, rawRow{userID: userID, entry: e})
 		rank++
 	}
 
 	result := &LeaderboardResult{YourRank: yourRank}
-	if len(allEntries) > limit {
-		result.Entries = allEntries[:limit]
-	} else {
-		result.Entries = allEntries
+
+	cutoff := len(rawRows)
+	if cutoff > limit {
+		cutoff = limit
 	}
+
+	entries := make([]LeaderboardEntry, 0, cutoff)
+	for i := 0; i < cutoff; i++ {
+		streak, err := GetCurrentStreak(ctx, pool, rawRows[i].userID)
+		if err != nil {
+			return nil, err
+		}
+		rawRows[i].entry.Streak = streak
+		entries = append(entries, rawRows[i].entry)
+	}
+
+	result.Entries = entries
 
 	return result, nil
 }

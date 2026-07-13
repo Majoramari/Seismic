@@ -59,8 +59,28 @@
           <span class="leaderboard-rank" [class.leaderboard-rank-top]="entry.rank <= 3">
             {{ entry.rank }}
           </span>
-          <span class="leaderboard-avatar">{{ entry.username.charAt(0).toUpperCase() }}</span>
-          <span class="leaderboard-username">{{ entry.username }}</span>
+          <a [routerLink]="['/p', entry.username]" class="leaderboard-avatar">
+            @if (entry.profileImage) {
+              <img [src]="entry.profileImage" alt="" />
+
+            } @else {
+              {{ entry.username.charAt(0).toUpperCase() }}
+
+            }
+          </a>
+          <div class="leaderboard-user-info">
+            <a [routerLink]="['/p', entry.username]" class="leaderboard-username">
+              {{ entry.username }}
+            </a>
+            @if (entry.streak > 0) {
+              <span class="leaderboard-streak" [class]="streakTier(entry.streak)">
+              <lucide-angular [img]="FlameIcon" [size]="16" [strokeWidth]="2" class="leaderboard-streak-icon" />
+                {{ entry.streak }}
+                            </span>
+
+            }
+
+          </div>
           <span class="leaderboard-language text-muted">{{ entry.topLanguage || '—' }}</span>
           <span class="leaderboard-time">{{ formatSeconds(entry.seconds) }}</span>
         </div>
