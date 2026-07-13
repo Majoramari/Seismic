@@ -1,4 +1,3 @@
-// main.go
 package main
 
 import (
@@ -63,6 +62,11 @@ func main() {
 			Username: cfg.SMTPUser,
 			Password: cfg.SMTPPass,
 			AppURL:   cfg.AppURL,
+		},
+		CloudinaryCfg: services.CloudinaryConfig{
+			CloudName: cfg.CloudinaryCloudName,
+			APIKey:    cfg.CloudinaryAPIKey,
+			APISecret: cfg.CloudinaryAPISecret,
 		},
 	}
 	heartbeatHandler := &handlers.HeartbeatHandler{Pool: pool}

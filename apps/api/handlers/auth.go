@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"regexp"
 	"strings"
 	"time"
@@ -14,13 +15,44 @@ import (
 )
 
 type AuthHandler struct {
-	Pool      *pgxpool.Pool
-	EmailCfg  services.EmailConfig
-	JWTSecret string
+	Pool          *pgxpool.Pool
+	EmailCfg      services.EmailConfig
+	JWTSecret     string
+	CloudinaryCfg services.CloudinaryConfig
 }
 
 type magicLinkRequest struct {
 	Email string `json:"email"`
+}
+
+type updateProfileRequest struct {
+	Username     string  `json:"username"`
+	DisplayName  string  `json:"displayName"`
+	Bio          string  `json:"bio"`
+	Website      string  `json:"website"`
+	ContactEmail string  `json:"contactEmail"`
+	ProfileImage *string `json:"profileImage"`
+}
+
+var reservedUsernames = map[string]bool{
+	"p":           true,
+	"login":       true,
+	"verify":      true,
+	"settings":    true,
+	"dashboard":   true,
+	"leaderboard": true,
+	"api":         true,
+	"admin":       true,
+	"auth":        true,
+	"about":       true,
+	"help":        true,
+	"support":     true,
+}
+
+// isReservedUsername checks if a username is reserved for
+// application routes/pages and can't be used by real accounts.
+func isReservedUsername(username string) bool {
+	return reservedUsernames[username]
 }
 
 // RequestMagicLink godoc
@@ -167,6 +199,9 @@ func (h *AuthHandler) CompleteSignup(c *fiber.Ctx) error {
 	}
 	if !isValidUsername(username) {
 		return helpers.Error(c, fiber.StatusBadRequest, "Username must be 3-20 characters, start with a letter, and contain only lowercase letters, numbers, underscore, or hyphen")
+	}
+	if isReservedUsername(username) {
+		return helpers.Error(c, fiber.StatusBadRequest, "This username is reserved")
 	}
 
 	ctx := c.Context()
@@ -330,6 +365,12 @@ func (h *AuthHandler) CheckUsername(c *fiber.Ctx) error {
 			"reason":    "invalid_format",
 		})
 	}
+	if isReservedUsername(username) {
+		return helpers.Success(c, "Reserved", fiber.Map{
+			"available": false,
+			"reason":    "reserved",
+		})
+	}
 
 	ctx := c.Context()
 	existing, err := models.FindUserByUsername(ctx, h.Pool, username)
@@ -368,4 +409,106 @@ func (h *AuthHandler) GetMe(c *fiber.Ctx) error {
 	}
 
 	return helpers.Success(c, "User retrieved", user)
+}
+
+// UpdateProfile godoc
+// @Summary      Update profile
+// @Description  Updates the logged-in user's profile fields.
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        body body updateProfileRequest true "Profile fields"
+// @Success      200 {object} helpers.APIResponse
+// @Failure      400 {object} helpers.APIResponse
+// @Failure      409 {object} helpers.APIResponse
+// @Router       /api/auth/profile [put]
+func (h *AuthHandler) UpdateProfile(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+
+	var body updateProfileRequest
+	if err := c.BodyParser(&body); err != nil {
+		return helpers.Error(c, fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	username := strings.TrimSpace(strings.ToLower(body.Username))
+	if !isValidUsername(username) {
+		return helpers.Error(c, fiber.StatusBadRequest, "Username must be 3-20 characters, start with a letter, and contain only lowercase letters, numbers, underscore, or hyphen")
+	}
+	if isReservedUsername(username) {
+		return helpers.Error(c, fiber.StatusBadRequest, "This username is reserved")
+	}
+
+	displayName := strings.TrimSpace(body.DisplayName)
+	if len(displayName) > 50 {
+		return helpers.Error(c, fiber.StatusBadRequest, "Display name must be 50 characters or less")
+	}
+
+	bio := strings.TrimSpace(body.Bio)
+	if len(bio) > 280 {
+		return helpers.Error(c, fiber.StatusBadRequest, "Bio must be 280 characters or less")
+	}
+
+	ctx := c.Context()
+
+	currentUser, err := models.FindUserByID(ctx, h.Pool, userID)
+	if err != nil || currentUser == nil {
+		return helpers.Error(c, fiber.StatusInternalServerError, "Something went wrong")
+	}
+
+	usernameOwner, err := models.FindUserByUsername(ctx, h.Pool, username)
+	if err != nil {
+		return helpers.Error(c, fiber.StatusInternalServerError, "Something went wrong")
+	}
+	if usernameOwner != nil && usernameOwner.ID != userID {
+		return helpers.Error(c, fiber.StatusConflict, "Username is already taken")
+	}
+
+	var avatarURL, avatarPublicID *string
+
+	switch {
+	case body.ProfileImage == nil:
+		// Explicit removal — clean up the old Cloudinary asset if one exists.
+		if currentUser.AvatarPublicID != nil {
+			if err := services.DeleteAvatar(h.CloudinaryCfg, *currentUser.AvatarPublicID); err != nil {
+				return helpers.Error(c, fiber.StatusInternalServerError, "Failed to remove image")
+			}
+		}
+		avatarURL = nil
+		avatarPublicID = nil
+
+	case strings.HasPrefix(*body.ProfileImage, "data:image"):
+		uploaded, err := services.UploadAvatar(h.CloudinaryCfg, userID, *body.ProfileImage)
+		if err != nil {
+			log.Printf("UploadAvatar error for user %s: %v", userID, err) // TEMPORARY
+			return helpers.Error(c, fiber.StatusInternalServerError, "Failed to upload image")
+		}
+		avatarURL = &uploaded.URL
+		avatarPublicID = &uploaded.PublicID
+
+	default:
+		// Unchanged — the frontend sent back the existing hosted URL as-is.
+		avatarURL = currentUser.AvatarURL
+		avatarPublicID = currentUser.AvatarPublicID
+	}
+
+	err = models.UpdateProfile(ctx, h.Pool, userID, models.UpdateProfileInput{
+		Username:       username,
+		DisplayName:    displayName,
+		Bio:            bio,
+		Website:        strings.TrimSpace(body.Website),
+		ContactEmail:   strings.TrimSpace(body.ContactEmail),
+		AvatarURL:      avatarURL,
+		AvatarPublicID: avatarPublicID,
+	})
+	if err != nil {
+		return helpers.Error(c, fiber.StatusInternalServerError, "Failed to update profile")
+	}
+
+	profile, err := models.GetPublicProfile(ctx, h.Pool, username, userID)
+	if err != nil {
+		return helpers.Error(c, fiber.StatusInternalServerError, "Something went wrong")
+	}
+
+	return helpers.Success(c, "Profile updated", profile)
 }
