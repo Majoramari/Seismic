@@ -10,6 +10,7 @@ function M.setup(opts)
 	vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
 		group = augroup,
 		callback = function(args)
+			heartbeat.record_keystroke()
 			heartbeat.handle_activity(args.buf, false)
 		end,
 	})

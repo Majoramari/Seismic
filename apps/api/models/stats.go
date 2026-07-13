@@ -9,13 +9,14 @@ import (
 )
 
 type StatsSummary struct {
-	TotalSeconds  int     `json:"totalSeconds"`
-	TopLanguage   *string `json:"topLanguage"`
-	TopProject    *string `json:"topProject"`
-	TopOS         *string `json:"topOS"`
-	TopEditor     *string `json:"topEditor"`
-	DailyAverage  int     `json:"dailyAverage"`
-	CurrentStreak int     `json:"currentStreak"`
+	TotalSeconds    int     `json:"totalSeconds"`
+	TopLanguage     *string `json:"topLanguage"`
+	TopProject      *string `json:"topProject"`
+	TopOS           *string `json:"topOS"`
+	TopEditor       *string `json:"topEditor"`
+	DailyAverage    int     `json:"dailyAverage"`
+	CurrentStreak   int     `json:"currentStreak"`
+	TotalKeystrokes int     `json:"totalKeystrokes"`
 }
 
 type LanguageStat struct {
@@ -91,6 +92,14 @@ func GetStatsSummary(ctx context.Context, pool *pgxpool.Pool, userID string, ran
 		GROUP BY editor ORDER BY COUNT(*) DESC LIMIT 1
 	`, userID).Scan(&s.TopEditor)
 	if err != nil && err.Error() != "no rows in result set" {
+		return nil, err
+	}
+
+	err = pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(keystrokes), 0)
+		FROM heartbeats
+		WHERE user_id = $1 AND `+heartbeatRangeSQL, userID).Scan(&s.TotalKeystrokes)
+	if err != nil {
 		return nil, err
 	}
 
@@ -204,9 +213,6 @@ func GetCurrentStreak(ctx context.Context, pool *pgxpool.Pool, userID string) (i
 	streak := 0
 	expected := today
 
-	// Allow the streak to still count if today has no activity
-	// yet but yesterday does (streak isn't broken until a full
-	// day passes with nothing logged).
 	if !days[0].Equal(today) {
 		expected = today.AddDate(0, 0, -1)
 	}
@@ -322,7 +328,6 @@ func GetEditorBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string, 
 		if err := rows.Scan(&e.Editor, &count); err != nil {
 			return nil, err
 		}
-		// Approximate: each heartbeat represents up to 2 minutes
 		e.Seconds = count * 120
 		stats = append(stats, e)
 	}

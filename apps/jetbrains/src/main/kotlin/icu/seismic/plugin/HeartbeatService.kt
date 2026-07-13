@@ -12,6 +12,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 private const val TWO_MINUTES_MS = 2 * 60 * 1000L
 private val JSON = "application/json".toMediaType()
@@ -26,10 +27,25 @@ class HeartbeatService {
 
     @Volatile
     private var lastHeartbeatTime = 0L
+
     @Volatile
     private var lastFile: String? = null
+
     @Volatile
     private var hasShownInvalidKeyWarning = false
+
+    // Characters inserted since the last heartbeat was sent. Must be
+    // an instance member (not top-level) since HeartbeatService is
+    // used as a per-application singleton via getInstance(), and
+    // SeismicStartupActivity calls heartbeat.recordKeystrokes(...)
+    // on that instance.
+    private val keystrokeCount = AtomicInteger(0)
+
+    /** Called from the document listener with characters inserted in that edit. */
+    fun recordKeystrokes(charsInserted: Int) {
+        if (charsInserted <= 0) return
+        keystrokeCount.addAndGet(charsInserted)
+    }
 
     fun handleActivity(project: Project, file: VirtualFile, editor: Editor?, forced: Boolean = false) {
         if (!SeismicSettings.isEnabled()) return
@@ -38,6 +54,11 @@ class HeartbeatService {
 
         val now = System.currentTimeMillis()
         val fileChanged = file.path != lastFile
+
+        // IMPORTANT: check the throttle BEFORE touching keystrokeCount.
+        // If we're not actually going to send a heartbeat, we must not
+        // reset the counter — otherwise typing gets wiped out between
+        // real sends and the total is always near zero.
         if (!forced && !fileChanged && now - lastHeartbeatTime < TWO_MINUTES_MS) return
 
         lastHeartbeatTime = now
@@ -48,6 +69,8 @@ class HeartbeatService {
         val filePath = file.path
         val lineCount = editor?.document?.lineCount
         val cursorLine = editor?.caretModel?.logicalPosition?.line?.plus(1)
+        // Read-and-reset now that we know a heartbeat will actually send.
+        val keystrokes = keystrokeCount.getAndSet(0)
 
         ApplicationManager.getApplication().executeOnPooledThread {
             val payload = HeartbeatPayload(
@@ -61,6 +84,7 @@ class HeartbeatService {
                 lines = lineCount,
                 cursorLine = cursorLine,
                 timezone = Detector.detectTimezone(),
+                keystrokes = keystrokes,
                 time = System.currentTimeMillis()
             )
             send(payload)

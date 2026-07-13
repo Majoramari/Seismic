@@ -16,6 +16,7 @@ interface StatsSummary {
   topEditor: string | null;
   dailyAverage: number;
   currentStreak: number;
+  totalKeystrokes: number;
 }
 
 interface DashboardData {
@@ -188,6 +189,12 @@ export class Dashboard implements OnInit {
         return part.charAt(0).toUpperCase() + part.slice(1);
       })
       .join('');
+  }
+
+  formatKeystrokes(count: number): string {
+    if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`;
+    if (count >= 1_000) return `${(count / 1_000).toFixed(1)}k`;
+    return count.toLocaleString();
   }
 
   isLastOdd(index: number, total: number): boolean {

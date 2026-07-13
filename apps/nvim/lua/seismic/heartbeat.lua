@@ -9,6 +9,11 @@ local TWO_MINUTES = 120
 local last_heartbeat_time = 0
 local last_file = ""
 local has_shown_invalid_key_warning = false
+local keystroke_count = 0
+
+function M.record_keystroke()
+	keystroke_count = keystroke_count + 1
+end
 
 local function build_payload(bufnr)
 	local lines = vim.api.nvim_buf_line_count(bufnr)
@@ -23,6 +28,7 @@ local function build_payload(bufnr)
 		os = detector.detect_os(),
 		machine = detector.detect_machine(),
 		lines = lines,
+		keystrokes = keystroke_count,
 		cursorLine = cursor_line,
 		timezone = detector.detect_timezone(),
 		time = os.time() * 1000,
@@ -87,7 +93,9 @@ function M.handle_activity(bufnr, forced)
 	last_heartbeat_time = now
 	last_file = filename
 
-	send(build_payload(bufnr))
+	local payload = build_payload(bufnr)
+	keystroke_count = 0
+	send(payload)
 end
 
 function M.flush_queue()

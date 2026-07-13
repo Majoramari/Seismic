@@ -25,6 +25,7 @@ class SeismicStartupActivity : ProjectActivity, DumbAware {
         // Heartbeat on typing (subject to the 2 min rule)
         EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
             override fun documentChanged(event: DocumentEvent) {
+                heartbeat.recordKeystrokes(event.newFragment.length)
                 val file = FileDocumentManager.getInstance().getFile(event.document) ?: return
                 val editor = FileEditorManager.getInstance(project).selectedTextEditor
                 heartbeat.handleActivity(project, file, editor)

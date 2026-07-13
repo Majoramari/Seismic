@@ -11,5 +11,6 @@ data class HeartbeatPayload(
     val lines: Int? = null,
     val cursorLine: Int? = null,
     val timezone: String? = null,
+    val keystrokes: Int = 0,
     val time: Long
 )
