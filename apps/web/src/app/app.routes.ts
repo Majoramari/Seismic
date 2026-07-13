@@ -7,6 +7,7 @@ import { Profile } from './pages/profile/profile';
 import { authGuard } from './core/auth/auth.guard';
 import { guestGuard } from './core/auth/guest.guard';
 import { Settings } from './pages/settings/settings';
+import { DocumentationComponent } from './pages/docs/docs';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -24,6 +25,12 @@ export const routes: Routes = [
     component: Settings,
     canActivate: [authGuard],
     title: 'Settings — Seismic',
+  },
+  {
+    path: 'documentation',
+    component: DocumentationComponent,
+    canActivate: [authGuard],
+    title: 'Documentation — Seismic',
   },
   {
     path: ':username',

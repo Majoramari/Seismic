@@ -1,0 +1,125 @@
+.app-container {
+  min-height: 100vh;
+  background-color: #0b0c0f;
+  color: #f3f4f6;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  padding: 4rem 3.5rem;
+  box-sizing: border-box;
+}
+
+.header-group {
+  margin-bottom: 3rem;
+}
+
+.doc-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #71717a;
+  letter-spacing: 0.12em;
+  display: block;
+  margin-bottom: 0.6rem;
+}
+
+.header-group h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+}
+
+.subtitle {
+  color: #8c8e97;
+  margin-top: 0.8rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  max-width: 600px;
+}
+
+.editors-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.25rem;
+  max-width: 1200px;
+}
+
+@media (max-width: 1024px) {
+  .editors-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 650px) {
+  .editors-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.editor-card {
+  background: #131417;
+  border: 1px solid #1c1d22;
+  border-radius: 12px;
+  padding: 2.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.editor-card.active {
+  border-color: #ea580c;
+  box-shadow: 0 0 10px rgba(234, 88, 12, 0.15);
+}
+
+.icon-inner-box {
+  width: 56px;
+  height: 56px;
+  background-color: #000000;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.icon-brand {
+  width: 34px;
+  height: 34px;
+}
+
+.editor-title {
+  font-size: 0.9rem;
+  color: #ffffff;
+  font-weight: 600;
+  text-align: center;
+}
+
+.jb-mini {
+  width: 32px;
+  height: 32px;
+  background-color: #000000;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.jb-mini span {
+  font-family: monospace;
+  font-weight: 900;
+  font-size: 0.7rem;
+  color: #ffffff;
+}
+
+.ij-border { border: 2px solid #FE2857; }
+.pc-border { border: 2px solid #3cd070; }
+.ws-border { border: 2px solid #00CDFF; }
+.go-border { border: 2px solid #ff46ae; }
+.rd-border { border: 2px solid #f2243d; }
+.cl-border { border: 2px solid #31db87; }
+.rm-border { border: 2px solid #ff1944; }
+.ps-border { border: 2px solid #b321ff; }
+.dg-border { border: 2px solid #21f3a2; }
+.rr-border { border: 2px solid #ff6e24; }

@@ -4,6 +4,7 @@ import { NgOptimizedImage } from '@angular/common';
 import {
   LucideAngularModule,
   Gauge,
+  ScrollText,
   Trophy,
   Settings,
   LogOut,
@@ -25,6 +26,7 @@ export class Sidebar {
   userService = inject(UserService);
 
   readonly GaugeIcon = Gauge;
+  readonly ScrollIcon = ScrollText;
   readonly TrophyIcon = Trophy;
   readonly SettingsIcon = Settings;
   readonly LogOutIcon = LogOut;
