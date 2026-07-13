@@ -162,3 +162,10 @@ func RegenerateAPIKey(ctx context.Context, pool *pgxpool.Pool, userID string) (s
 
 	return newKey, nil
 }
+
+// UpdateUserEmail changes a user's email address. Called only
+// after the new email has been verified via magic link.
+func UpdateUserEmail(ctx context.Context, pool *pgxpool.Pool, userID, newEmail string) error {
+	_, err := pool.Exec(ctx, `UPDATE users SET email = $1 WHERE id = $2`, newEmail, userID)
+	return err
+}

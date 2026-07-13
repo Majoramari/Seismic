@@ -25,6 +25,10 @@ type magicLinkRequest struct {
 	Email string `json:"email"`
 }
 
+type requestEmailChangeInput struct {
+	NewEmail string `json:"newEmail"`
+}
+
 type updateProfileRequest struct {
 	Username     string  `json:"username"`
 	DisplayName  string  `json:"displayName"`
@@ -511,4 +515,76 @@ func (h *AuthHandler) UpdateProfile(c *fiber.Ctx) error {
 	}
 
 	return helpers.Success(c, "Profile updated", profile)
+}
+
+// RequestEmailChange godoc
+// @Summary      Request email change
+// @Description  Sends a verification link to the new email address.
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200 {object} helpers.APIResponse
+// @Router       /api/auth/change-email [post]
+func (h *AuthHandler) RequestEmailChange(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+
+	var body requestEmailChangeInput
+	if err := c.BodyParser(&body); err != nil {
+		return helpers.Error(c, fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	newEmail := helpers.NormalizeEmail(body.NewEmail)
+	if newEmail == "" || !strings.Contains(newEmail, "@") {
+		return helpers.Error(c, fiber.StatusBadRequest, "Please provide a valid email address")
+	}
+
+	ctx := c.Context()
+
+	existing, err := models.FindUserByEmail(ctx, h.Pool, newEmail)
+	if err != nil {
+		return helpers.Error(c, fiber.StatusInternalServerError, "Something went wrong")
+	}
+	if existing != nil {
+		return helpers.Error(c, fiber.StatusConflict, "That email is already in use")
+	}
+
+	token, err := generateEmailChangeToken(userID, newEmail, h.JWTSecret)
+	if err != nil {
+		return helpers.Error(c, fiber.StatusInternalServerError, "Something went wrong")
+	}
+
+	err = services.SendEmailChangeConfirmation(h.EmailCfg, newEmail, token)
+	if err != nil {
+		return helpers.Error(c, fiber.StatusInternalServerError, "Failed to send confirmation email")
+	}
+
+	return helpers.Success(c, "Check your new email to confirm the change", nil)
+}
+
+// ConfirmEmailChange godoc
+// @Summary      Confirm email change
+// @Description  Validates the token and applies the new email address.
+// @Tags         auth
+// @Produce      json
+// @Param        token query string true "Email change token"
+// @Success      200 {object} helpers.APIResponse
+// @Router       /api/auth/confirm-email-change [get]
+func (h *AuthHandler) ConfirmEmailChange(c *fiber.Ctx) error {
+	token := c.Query("token")
+	if token == "" {
+		return helpers.Error(c, fiber.StatusBadRequest, "Missing token")
+	}
+
+	userID, newEmail, err := verifyEmailChangeToken(token, h.JWTSecret)
+	if err != nil {
+		return helpers.Error(c, fiber.StatusUnauthorized, "Invalid or expired confirmation link")
+	}
+
+	ctx := c.Context()
+	if err := models.UpdateUserEmail(ctx, h.Pool, userID, newEmail); err != nil {
+		return helpers.Error(c, fiber.StatusInternalServerError, "Failed to update email")
+	}
+
+	return helpers.Success(c, "Email updated successfully", nil)
 }

@@ -29,7 +29,7 @@ interface GoalData {
 }
 
 type SettingsSection = 'apikey' | 'privacy' | 'goals' | 'account';
-type AccountSubTab = 'reset' | 'delete';
+type AccountSubTab = 'reset' | 'email' | 'delete';
 
 @Component({
   selector: 'app-settings',
@@ -47,11 +47,15 @@ export class Settings implements OnInit {
   readonly UserIcon = User;
 
   activeSection = signal<SettingsSection>('apikey');
-  accountSubTab = signal<AccountSubTab>('reset');
+  accountSubTab = signal<AccountSubTab>('email');
 
   apiKey = signal('');
   apiKeyVisible = signal(false);
   regenerating = signal(false);
+
+  newEmail = signal('');
+  currentEmail = signal('');
+  changingEmail = signal(false);
 
   privacy = signal<PrivacySettings | null>(null);
   privacyDirty = signal(false);
@@ -80,6 +84,14 @@ export class Settings implements OnInit {
     this.loadPrivacy();
     this.loadGoals();
     this.loadFilters();
+    this.loadCurrentUser();
+  }
+
+  private loadCurrentUser() {
+    this.api.get<{ email: string }>('/api/auth/me').subscribe({
+      next: (data) => this.currentEmail.set(data.email),
+      error: () => {},
+    });
   }
 
   setSection(section: SettingsSection) {
@@ -323,6 +335,23 @@ export class Settings implements OnInit {
         window.location.href = '/login';
       },
       error: () => this.toast.error('Failed to delete account'),
+    });
+  }
+
+  requestEmailChange() {
+    if (!this.newEmail()) return;
+
+    this.changingEmail.set(true);
+    this.api.post('/api/auth/change-email', { newEmail: this.newEmail() }).subscribe({
+      next: () => {
+        this.changingEmail.set(false);
+        this.toast.success('Check your new email to confirm the change');
+        this.newEmail.set('');
+      },
+      error: (err) => {
+        this.changingEmail.set(false);
+        this.toast.error(err.error?.message || 'Failed to request email change');
+      },
     });
   }
 }

@@ -57,3 +57,45 @@ func verifySignupToken(tokenString string, secret string) (string, error) {
 
 	return email, nil
 }
+
+func generateEmailChangeToken(userID, newEmail, secret string) (string, error) {
+	claims := jwt.MapClaims{
+		"userId":   userID,
+		"newEmail": newEmail,
+		"purpose":  "email_change",
+		"exp":      time.Now().Add(15 * time.Minute).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(secret))
+}
+
+func verifyEmailChangeToken(tokenString, secret string) (userID string, newEmail string, err error) {
+	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (any, error) {
+		return []byte(secret), nil
+	})
+	if err != nil || !token.Valid {
+		return "", "", errors.New("invalid token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", "", errors.New("invalid token claims")
+	}
+
+	if claims["purpose"] != "email_change" {
+		return "", "", errors.New("wrong token type")
+	}
+
+	userID, ok = claims["userId"].(string)
+	if !ok {
+		return "", "", errors.New("missing user id in token")
+	}
+
+	newEmail, ok = claims["newEmail"].(string)
+	if !ok {
+		return "", "", errors.New("missing new email in token")
+	}
+
+	return userID, newEmail, nil
+}

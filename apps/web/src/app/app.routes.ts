@@ -8,6 +8,7 @@ import { authGuard } from './core/auth/auth.guard';
 import { guestGuard } from './core/auth/guest.guard';
 import { Settings } from './pages/settings/settings';
 import { Docs } from './pages/docs/docs';
+import { ConfirmEmail } from './pages/confirm-email/confirm-email';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -37,4 +38,5 @@ export const routes: Routes = [
     component: Profile,
     title: 'Profile — Seismic',
   },
+  { path: 'confirm-email', component: ConfirmEmail },
 ];

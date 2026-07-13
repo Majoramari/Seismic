@@ -1,0 +1,13 @@
+<div class="page flex-center">
+  <div class="card" style="max-width: 420px; width: 100%; text-align: center;">
+    @if (loading()) {
+      <p>Confirming your new email...</p>
+    } @else if (success()) {
+      <h1>Email updated!</h1>
+      <p class="text-muted">Redirecting you to settings...</p>
+    } @else {
+      <h1>Confirmation failed</h1>
+      <p class="text-danger">{{ error() }}</p>
+    }
+  </div>
+</div>
