@@ -117,6 +117,21 @@
 
           <div class="privacy-row">
             <div>
+              <p class="privacy-label">Hide languages</p>
+              <p class="text-muted text-sm">Don't show your top language</p>
+            </div>
+            <label class="switch">
+              <input
+                type="checkbox"
+                [checked]="privacy()!.hideLanguages"
+                (change)="toggleLocal('hideLanguages', $any($event.target).checked)"
+              />
+              <span class="switch-track"></span>
+            </label>
+          </div>
+
+          <div class="privacy-row">
+            <div>
               <p class="privacy-label">Hide OS</p>
               <p class="text-muted text-sm">Don't show your top operating system</p>
             </div>
@@ -211,21 +226,45 @@
 
       @if (activeSection() === 'account') {
         <div class="settings-pills">
+    <span
+      class="settings-pill"
+      [class.active]="accountSubTab() === 'email'"
+      (click)="setAccountSubTab('email')"
+    >
+      Change email
+    </span>
           <span
             class="settings-pill"
             [class.active]="accountSubTab() === 'reset'"
             (click)="setAccountSubTab('reset')"
           >
-            Reset stats
-          </span>
+      Reset stats
+    </span>
           <span
             class="settings-pill"
             [class.active]="accountSubTab() === 'delete'"
             (click)="setAccountSubTab('delete')"
           >
-            Delete account
-          </span>
+      Delete account
+    </span>
         </div>
+
+        @if (accountSubTab() === 'email') {
+          <div class="card">
+            <h2 class="settings-section-title">Change Email</h2>
+            <p class="text-muted">
+              Current email: <strong>{{ currentEmail() }}</strong>
+            </p>
+            <p class="text-muted">We'll send a confirmation link to your new email.</p>
+
+            <div class="apikey-row mt-4">
+              <input type="email" class="input" placeholder="Enter your new Email" [(ngModel)]="newEmail" />
+              <button class="btn-primary" [disabled]="changingEmail() || !newEmail()" (click)="requestEmailChange()">
+                {{ changingEmail() ? 'Sending...' : 'Change Email' }}
+              </button>
+            </div>
+          </div>
+        }
 
         @if (accountSubTab() === 'reset') {
           <div class="card">

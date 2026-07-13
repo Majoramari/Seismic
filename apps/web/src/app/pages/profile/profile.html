@@ -48,7 +48,25 @@
           {{ profile()!.isOwner ? 'YOUR PROFILE' : 'PROFILE' }}
         </p>
 
-        <h1>{{ displayName || username }}</h1>
+        <div class="profile-name-row">
+          <h1>{{ displayName || username }}</h1>
+
+          @if (profile()!.badges && profile()!.badges!.length > 0) {
+            <div class="profile-badges">
+              @for (badge of profile()!.badges; track badge.type) {
+                <span
+                  class="profile-badge-pill"
+                  [style.color]="badgeColor(badge.type)"
+                  [style.background]="badgeColor(badge.type) + '1f'"
+                  [style.border-color]="badgeColor(badge.type) + '66'"
+                  [title]="badgeDescription(badge.type)"
+                >
+                {{ badgeLabel(badge.type) }}
+              </span>
+              }
+            </div>
+          }
+        </div>
         <p class="profile-handle">&#64;{{ username }}</p>
 
         @if (bio) {
@@ -117,12 +135,24 @@
 
       <div class="card profile-stat-card">
         <p>TOP OS</p>
-        <strong>{{ formatDisplayLabel(profile()!.stats.topOS) }}</strong>
+        <strong>
+          @if (profile()!.visibility.hideOS && !profile()!.isOwner) {
+            Hidden
+          } @else {
+            {{ formatDisplayLabel(profile()!.stats.topOS) }}
+          }
+        </strong>
       </div>
 
       <div class="card profile-stat-card">
         <p>TOP EDITOR</p>
-        <strong>{{ formatDisplayLabel(profile()!.stats.topEditor) }}</strong>
+        <strong>
+          @if (profile()!.visibility.hideEditor && !profile()!.isOwner) {
+            Hidden
+          } @else {
+            {{ formatDisplayLabel(profile()!.stats.topEditor) }}
+          }
+        </strong>
       </div>
 
       <div class="card profile-stat-card">

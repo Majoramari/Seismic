@@ -24,6 +24,13 @@ interface ProfileVisibility {
   hideTime: boolean;
   hideProjects: boolean;
   hideLanguages: boolean;
+  hideOS: boolean;
+  hideEditor: boolean;
+}
+
+interface BadgeData {
+  type: string;
+  earnedAt: string;
 }
 
 interface ProfileData {
@@ -40,6 +47,7 @@ interface ProfileData {
   visibility: ProfileVisibility;
   stats: ProfileStats;
   heatmap: HeatmapDay[];
+  badges?: BadgeData[];
 }
 
 @Component({
@@ -259,6 +267,57 @@ export class Profile implements OnInit {
     ['linux', 'Linux'],
     ['windows', 'Windows'],
   ]);
+
+  private readonly badgeLabels = new Map<string, string>([
+    ['first_heartbeat', 'First steps'],
+    ['week_streak', 'Week streak'],
+    ['month_streak', 'Month streak'],
+    ['night_owl', 'Night owl'],
+    ['early_bird', 'Early bird'],
+    ['polyglot', 'Polyglot'],
+    ['century', 'Century'],
+    ['supporter', 'Supporter'],
+    ['contributor', 'Contributor'],
+    ['maintainer', 'Maintainer'],
+  ]);
+
+  private readonly badgeColors = new Map<string, string>([
+    ['first_heartbeat', '#22c55e'], // green
+    ['week_streak', '#f59e0b'], // amber
+    ['month_streak', '#ef4444'], // red
+    ['night_owl', '#6366f1'], // indigo
+    ['early_bird', '#eab308'], // yellow
+    ['polyglot', '#06b6d4'], // cyan
+    ['century', '#d97757'], // accent/terracotta
+    ['supporter', '#ec4899'], // pink
+    ['contributor', '#8b5cf6'], // purple
+    ['maintainer', '#fbbf24'], // gold
+  ]);
+
+  private readonly badgeDescriptions = new Map<string, string>([
+    ['first_heartbeat', 'Every legend starts somewhere.'],
+    ['week_streak', 'Seven days without missing a beat.'],
+    ['month_streak', 'A month that speaks for itself.'],
+    ['night_owl', 'The stars witnessed every commit.'],
+    ['early_bird', 'Ahead of sunrise.'],
+    ['polyglot', 'No single language tells the whole story.'],
+    ['century', '100 hours of coding. Time well invested.'],
+    ['supporter', 'Keeping Seismic alive, one donation at a time.'],
+    ['contributor', 'Left a mark on Seismic.'],
+    ['maintainer', 'Maintaining what others help build.'],
+  ]);
+
+  badgeDescription(type: string): string {
+    return this.badgeDescriptions.get(type) ?? '';
+  }
+
+  badgeColor(type: string): string {
+    return this.badgeColors.get(type) ?? '#6b7280'; // gray fallback
+  }
+
+  badgeLabel(type: string): string {
+    return this.badgeLabels.get(type) ?? type;
+  }
 
   formatDisplayLabel(value: string | null | undefined): string {
     if (!value) return '—';

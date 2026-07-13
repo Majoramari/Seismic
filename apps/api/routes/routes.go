@@ -20,6 +20,8 @@ func Setup(app *fiber.App, authHandler *handlers.AuthHandler, heartbeatHandler *
 	auth.Post("/magic-link", middleware.AuthRateLimit(), authHandler.RequestMagicLink)
 	auth.Get("/me", middleware.RequireAuth(jwtSecret), authHandler.GetMe)
 	auth.Get("/check-username", authHandler.CheckUsername)
+	auth.Post("/change-email", middleware.RequireAuth(jwtSecret), authHandler.RequestEmailChange)
+	auth.Get("/confirm-email-change", authHandler.ConfirmEmailChange)
 
 	app.Post("/api/heartbeat", middleware.HeartbeatRateLimit(), middleware.RequireAPIKey(pool), heartbeatHandler.Receive)
 
@@ -58,6 +60,8 @@ func Setup(app *fiber.App, authHandler *handlers.AuthHandler, heartbeatHandler *
 	app.Get("/api/users/:username", middleware.OptionalAuth(pool, jwtSecret), profileHandler.GetProfile)
 	app.Put("/api/auth/profile", middleware.RequireAuth(jwtSecret), authHandler.UpdateProfile)
 
+	app.Post("/api/admin/grant-badge", middleware.RequireAuth(jwtSecret), adminHandler.GrantBadge)
 	// This is a testing route, not for production use
 	app.Post("/api/admin/process-sessions", middleware.RequireAuth(jwtSecret), adminHandler.TriggerSessionProcessing)
+	app.Post("/api/admin/check-reminders", middleware.RequireAuth(jwtSecret), adminHandler.TriggerGoalReminders)
 }

@@ -70,7 +70,16 @@ func main() {
 		},
 	}
 	heartbeatHandler := &handlers.HeartbeatHandler{Pool: pool}
-	adminHandler := &handlers.AdminHandler{Pool: pool}
+	adminHandler := &handlers.AdminHandler{
+		Pool: pool,
+		EmailCfg: services.EmailConfig{
+			Host:     cfg.SMTPHost,
+			Port:     cfg.SMTPPort,
+			Username: cfg.SMTPUser,
+			Password: cfg.SMTPPass,
+			AppURL:   cfg.AppURL,
+		},
+	}
 	statsHandler := &handlers.StatsHandler{Pool: pool}
 	filtersHandler := &handlers.FiltersHandler{Pool: pool}
 
@@ -82,6 +91,23 @@ func main() {
 		for range ticker.C {
 			if err := services.ProcessSessions(context.Background(), pool); err != nil {
 				log.Println("Session processor error:", err)
+			}
+			if err := services.CheckAndAwardBadges(context.Background(), pool); err != nil {
+				log.Println("Badge check error:", err)
+			}
+		}
+	}()
+
+	go func() {
+		ticker := time.NewTicker(30 * time.Minute)
+		defer ticker.Stop()
+		for range ticker.C {
+			emailCfg := services.EmailConfig{
+				Host: cfg.SMTPHost, Port: cfg.SMTPPort,
+				Username: cfg.SMTPUser, Password: cfg.SMTPPass, AppURL: cfg.AppURL,
+			}
+			if err := services.CheckGoalReminders(context.Background(), pool, emailCfg); err != nil {
+				log.Println("Goal reminder job error:", err)
 			}
 		}
 	}()
