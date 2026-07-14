@@ -74,6 +74,7 @@ func CheckGoalReminders(ctx context.Context, pool *pgxpool.Pool, emailCfg EmailC
 			label,
 			formatDuration(progress),
 			formatDuration(g.TargetSeconds),
+			goalProgressPercent(progress, g.TargetSeconds),
 			g.Period,
 		)
 		if err != nil {
@@ -141,6 +142,20 @@ func formatDuration(seconds int) string {
 		return fmt.Sprintf("%dh %dm", hours, minutes)
 	}
 	return fmt.Sprintf("%dm", minutes)
+}
+
+func goalProgressPercent(progress, target int) int {
+	if target <= 0 {
+		return 0
+	}
+	percent := (progress * 100) / target
+	if percent < 0 {
+		return 0
+	}
+	if percent > 100 {
+		return 100
+	}
+	return percent
 }
 
 func getGoalProgressPublic(ctx context.Context, pool *pgxpool.Pool, userID, scope string, scopeValue *string, period string) (int, error) {

@@ -80,11 +80,11 @@
     <div class="dashboard-grid-2">
       <div class="card">
         <h3 class="dashboard-card-title">Project Durations</h3>
-        <app-project-bars [data]="projectData()" />
+        <app-project-bars [data]="limitedProjectData()" />
       </div>
       <div class="card">
         <h3 class="dashboard-card-title">Languages</h3>
-        <app-pie-chart [data]="languageData()" [useLanguageColors]="true" />
+        <app-pie-chart [data]="languageData()" [useLanguageColors]="true" [legendLimit]="15" />
       </div>
     </div>
 
@@ -103,12 +103,16 @@
         <app-pie-chart [data]="osData()" emptyLabel="No OS data yet" />
       </div>
     </div>
-
-    <div class="card mt-4">
-      <h3 class="dashboard-card-title">Project Timeline</h3>
-      <app-timeline-chart [data]="timelineData()" [projects]="projectData()" />
-    </div>
   } @else {
     <p>No data yet. Start coding to see your stats!</p>
   }
+
+  <div class="card mt-4">
+    <h3 class="dashboard-card-title">Project Timeline</h3>
+    @if (timelineLoading()) {
+      <p class="text-muted">Loading timeline...</p>
+    } @else {
+      <app-timeline-chart [data]="timelineData()" />
+    }
+  </div>
 </div>

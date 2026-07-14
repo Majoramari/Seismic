@@ -1,33 +1,65 @@
 <!DOCTYPE html>
-<html>
-<body style="margin:0; padding:0; background-color:#f4f4f5; font-family:Arial, Helvetica, sans-serif;">
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="supported-color-schemes" content="dark">
+    <title>Seismic goal reminder</title>
+</head>
+<body style="margin:0; padding:0; background-color:#0a0a0f; font-family:Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color:#e8e8f0;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-       style="background-color:#f4f4f5; padding:60px 0;">
+       style="background-color:#0a0a0f; padding:56px 16px;">
     <tr>
         <td align="center">
-            <table role="presentation" width="480" cellpadding="0" cellspacing="0"
-                   style="max-width:480px; width:100%; background-color:#ffffff; border-radius:16px; border:1px solid #e5e5e8;">
+            <table role="presentation" width="520" cellpadding="0" cellspacing="0"
+                   style="max-width:520px; width:100%; background-color:#16161f; border:1px solid rgba(255,255,255,0.08); border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,0.35);">
                 <tr>
-                    <td align="center" style="padding:48px 40px 0 40px;">
-                        <span style="color:#d97757; font-size:26px; font-weight:bold;">Seismic</span>
+                    <td align="center" style="padding:40px 40px 0 40px;">
+                        <img src="{{LOGO_URL}}" width="48" height="48" alt="Seismic"
+                             style="display:block; width:48px; height:48px; border-radius:6px; margin:0 auto 16px auto;">
+                        <div style="font-size:18px; line-height:1.2; font-weight:700; letter-spacing:0.04em; color:#d97757;">
+                            Seismic
+                        </div>
                     </td>
                 </tr>
                 <tr>
                     <td align="center" style="padding:32px 40px 0 40px;">
-                        <h1 style="color:#111114; font-size:22px; margin:0 0 12px 0;">You're falling behind on your
-                            goal</h1>
-                        <p style="color:#71717a; font-size:15px; line-height:1.6; margin:0;">
-                            {{GOAL_LABEL}}: you've coded {{PROGRESS}} of your {{TARGET}} {{PERIOD}} goal.
+                        <h1 style="color:#e8e8f0; font-size:28px; line-height:1.1; margin:0 0 12px 0; font-weight:700;">
+                            Your goal needs attention
+                        </h1>
+                        <p style="color:#9999b0; font-size:15px; line-height:1.6; margin:0;">
+                            You have coded {{PROGRESS}} of your {{TARGET}} {{PERIOD}} goal for {{GOAL_LABEL}}.
                         </p>
                     </td>
                 </tr>
                 <tr>
-                    <td align="center" style="padding:32px 40px 48px 40px;">
+                    <td align="center" style="padding:32px 40px 0 40px;">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                               style="background-color:#111118; border:1px solid rgba(255,255,255,0.06); border-radius:12px;">
+                            <tr>
+                                <td style="padding:22px 24px;">
+                                    <p style="color:#666680; font-size:12px; line-height:1.4; margin:0 0 8px 0; text-transform:uppercase; letter-spacing:0.08em;">
+                                        Current progress
+                                    </p>
+                                    <p style="color:#e8e8f0; font-size:22px; line-height:1.2; font-weight:700; margin:0 0 14px 0;">
+                                        {{PROGRESS}} / {{TARGET}}
+                                    </p>
+                                    <div style="height:8px; line-height:8px; background-color:rgba(255,255,255,0.09); border-radius:999px;">
+                                        <div style="height:8px; line-height:8px; width:{{PROGRESS_PERCENT}}%; max-width:100%; background-color:#d97757; border-radius:999px;">&nbsp;</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="center" style="padding:32px 40px 40px 40px;">
                         <table role="presentation" cellpadding="0" cellspacing="0">
                             <tr>
-                                <td align="center" style="background-color:#111114; border-radius:10px;">
+                                <td align="center" style="background-color:#d97757; border-radius:12px;">
                                     <a href="{{APP_URL}}/dashboard"
-                                       style="display:inline-block; padding:16px 40px; color:#ffffff; font-size:15px; font-weight:600; text-decoration:none;">
+                                       style="display:inline-block; padding:15px 34px; color:#0a0a0f; font-size:15px; font-weight:700; text-decoration:none; line-height:1.2;">
                                         Open Dashboard
                                     </a>
                                 </td>
@@ -36,10 +68,10 @@
                     </td>
                 </tr>
             </table>
-            <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px; width:100%;">
+            <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px; width:100%;">
                 <tr>
                     <td align="center" style="padding:24px 40px;">
-                        <p style="color:#a1a1aa; font-size:12px; margin:0;">Your code speaks. We listen.</p>
+                        <p style="color:#666680; font-size:12px; margin:0; line-height:1.6;">Your code speaks. We listen.</p>
                     </td>
                 </tr>
             </table>

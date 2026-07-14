@@ -8,7 +8,7 @@ import (
 	"github.com/majoramari/seismic/apps/api/middleware"
 )
 
-func Setup(app *fiber.App, authHandler *handlers.AuthHandler, heartbeatHandler *handlers.HeartbeatHandler, adminHandler *handlers.AdminHandler, statsHandler *handlers.StatsHandler, filtersHandler *handlers.FiltersHandler, jwtSecret string, pool *pgxpool.Pool) {
+func Setup(app *fiber.App, authHandler *handlers.AuthHandler, heartbeatHandler *handlers.HeartbeatHandler, adminHandler *handlers.AdminHandler, statsHandler *handlers.StatsHandler, filtersHandler *handlers.FiltersHandler, importHandler *handlers.ImportHandler, jwtSecret string, pool *pgxpool.Pool) {
 	app.Get("/health", handlers.HealthCheck)
 
 	auth := app.Group("/api/auth")
@@ -17,7 +17,7 @@ func Setup(app *fiber.App, authHandler *handlers.AuthHandler, heartbeatHandler *
 	auth.Post("/refresh", authHandler.RefreshAccessToken)
 	auth.Get("/apikey", middleware.RequireAuth(jwtSecret), authHandler.GetAPIKey)
 	auth.Post("/apikey/regenerate", middleware.RequireAuth(jwtSecret), authHandler.RegenerateAPIKey)
-	auth.Post("/magic-link", middleware.AuthRateLimit(), authHandler.RequestMagicLink)
+	auth.Post("/magic-link", authHandler.RequestMagicLink)
 	auth.Get("/me", middleware.RequireAuth(jwtSecret), authHandler.GetMe)
 	auth.Get("/check-username", authHandler.CheckUsername)
 	auth.Post("/change-email", middleware.RequireAuth(jwtSecret), authHandler.RequestEmailChange)
@@ -35,12 +35,21 @@ func Setup(app *fiber.App, authHandler *handlers.AuthHandler, heartbeatHandler *
 	stats.Get("/os", statsHandler.GetOS)
 	stats.Get("/dashboard", statsHandler.GetDashboard)
 
+	projectsHandler := &handlers.ProjectsHandler{Pool: pool}
+	app.Post("/api/projects/sync", middleware.RequireAPIKey(pool), projectsHandler.SyncProject)
+
+	projects := app.Group("/api/projects", middleware.RequireAuth(jwtSecret))
+	projects.Get("", projectsHandler.GetProjects)
+	projects.Get("/", projectsHandler.GetProjects)
+	projects.Post("/archive", projectsHandler.SetArchived)
+
 	leaderboardHandler := &handlers.LeaderboardHandler{Pool: pool}
 	app.Get("/api/leaderboard", middleware.OptionalAuth(pool, jwtSecret), leaderboardHandler.GetLeaderboard)
 
 	settingsHandler := &handlers.SettingsHandler{Pool: pool}
 	settings := app.Group("/api/settings", middleware.RequireAuth(jwtSecret))
 	settings.Get("/privacy", settingsHandler.GetPrivacy)
+	settings.Get("/badges", settingsHandler.GetBadges)
 	settings.Post("/privacy", settingsHandler.UpdatePrivacy)
 	settings.Post("/reset-timers", settingsHandler.ResetTimers)
 	settings.Post("/account", settingsHandler.DeleteAccount)
@@ -59,8 +68,12 @@ func Setup(app *fiber.App, authHandler *handlers.AuthHandler, heartbeatHandler *
 	profileHandler := &handlers.ProfileHandler{Pool: pool}
 	app.Get("/api/users/:username", middleware.OptionalAuth(pool, jwtSecret), profileHandler.GetProfile)
 	app.Put("/api/auth/profile", middleware.RequireAuth(jwtSecret), authHandler.UpdateProfile)
+	app.Post("/api/settings/badge-visibility", middleware.RequireAuth(jwtSecret), profileHandler.ToggleBadgeVisibility)
 
 	app.Post("/api/admin/grant-badge", middleware.RequireAuth(jwtSecret), adminHandler.GrantBadge)
+	app.Post("/api/import/wakatime", middleware.RequireAuth(jwtSecret), importHandler.StartWakaTimeImport)
+	app.Post("/api/import/file", middleware.RequireAuth(jwtSecret), importHandler.ImportFromFile)
+	app.Get("/api/import/status", middleware.RequireAuth(jwtSecret), importHandler.GetImportStatus)
 	// This is a testing route, not for production use
 	app.Post("/api/admin/process-sessions", middleware.RequireAuth(jwtSecret), adminHandler.TriggerSessionProcessing)
 	app.Post("/api/admin/check-reminders", middleware.RequireAuth(jwtSecret), adminHandler.TriggerGoalReminders)

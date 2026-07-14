@@ -38,7 +38,9 @@ func main() {
 		log.Fatalf("Migration failed: %v\n", err)
 	}
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		BodyLimit: 200 * 1024 * 1024, // 200MB
+	})
 
 	app.Use(recover.New())
 	app.Use(logger.New())
@@ -82,8 +84,9 @@ func main() {
 	}
 	statsHandler := &handlers.StatsHandler{Pool: pool}
 	filtersHandler := &handlers.FiltersHandler{Pool: pool}
+	importHandler := &handlers.ImportHandler{Pool: pool}
 
-	routes.Setup(app, authHandler, heartbeatHandler, adminHandler, statsHandler, filtersHandler, cfg.JWTSecret, pool)
+	routes.Setup(app, authHandler, heartbeatHandler, adminHandler, statsHandler, filtersHandler, importHandler, cfg.JWTSecret, pool)
 
 	go func() {
 		ticker := time.NewTicker(5 * time.Minute)

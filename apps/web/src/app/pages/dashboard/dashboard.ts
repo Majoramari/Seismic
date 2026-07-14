@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { Heatmap } from '../../shared/components/heatmap/heatmap';
@@ -26,7 +26,6 @@ interface DashboardData {
   editors: { editor: string; seconds: number }[];
   os: { os: string; seconds: number }[];
   projects: ProjectStat[];
-  timeline: TimelineDay[];
 }
 
 interface HeatmapDay {
@@ -67,6 +66,7 @@ export class Dashboard implements OnInit {
 
   range = signal<RangeOption>('week');
   loading = signal(true);
+  timelineLoading = signal(true);
 
   stats = signal<StatsSummary | null>(null);
   heatmapData = signal<HeatmapDay[]>([]);
@@ -79,6 +79,7 @@ export class Dashboard implements OnInit {
 
   ngOnInit() {
     this.loadAll();
+    this.loadTimeline();
     this.loadGoals();
   }
 
@@ -122,12 +123,29 @@ export class Dashboard implements OnInit {
             })),
           );
           this.projectData.set(data.projects ?? []);
-          this.timelineData.set(data.timeline ?? []);
           this.loading.set(false);
         },
         error: (err) => {
           console.error('Failed to load dashboard after retries:', err);
           this.loading.set(false);
+        },
+      });
+  }
+
+  private loadTimeline() {
+    this.timelineLoading.set(true);
+    this.api
+      .get<TimelineDay[]>('/api/stats/timeline')
+      .pipe(retry({ count: 2, delay: (_, retryIndex) => timer(retryIndex * 500) }))
+      .subscribe({
+        next: (data) => {
+          this.timelineData.set(data ?? []);
+          this.timelineLoading.set(false);
+        },
+        error: (err) => {
+          console.error('Failed to load project timeline after retries:', err);
+          this.timelineData.set([]);
+          this.timelineLoading.set(false);
         },
       });
   }
@@ -225,4 +243,6 @@ export class Dashboard implements OnInit {
 
     return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
   }
+
+  limitedProjectData = computed(() => this.projectData().slice(0, 10));
 }

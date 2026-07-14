@@ -4,6 +4,7 @@ import { Verify } from './pages/auth/verify/verify';
 import { Dashboard } from './pages/dashboard/dashboard';
 import { Leaderboard } from './pages/leaderboard/leaderboard';
 import { Profile } from './pages/profile/profile';
+import { Projects } from './pages/projects/projects';
 import { authGuard } from './core/auth/auth.guard';
 import { guestGuard } from './core/auth/guest.guard';
 import { Settings } from './pages/settings/settings';
@@ -26,6 +27,12 @@ export const routes: Routes = [
     component: Docs,
     canActivate: [authGuard],
     title: 'Docs — Seismic',
+  },
+  {
+    path: 'projects',
+    component: Projects,
+    canActivate: [authGuard],
+    title: 'Projects — Seismic',
   },
   {
     path: 'settings',

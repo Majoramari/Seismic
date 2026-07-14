@@ -37,4 +37,10 @@ export class ApiService {
       .delete<ApiResponse<T>>(`${this.baseUrl}${path}`, { withCredentials: true })
       .pipe(map((res) => res.data));
   }
+
+  postFormData<T>(path: string, formData: FormData) {
+    return this.http
+      .post<ApiResponse<T>>(`${this.baseUrl}${path}`, formData, { withCredentials: true })
+      .pipe(map((res) => res.data));
+  }
 }

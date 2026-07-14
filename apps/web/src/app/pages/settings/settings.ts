@@ -3,7 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { ToastService } from '../../core/toast/toast.service';
 import { CommonModule } from '@angular/common';
-import { KeyRound, LucideAngularModule, Shield, Target, User } from 'lucide-angular';
+import { KeyRound, LucideAngularModule, Shield, Target, User, Award, Download } from 'lucide-angular';
+import { badgeInfo } from '../../shared/badges';
 
 interface ApiKeyResponse {
   apiKey: string;
@@ -28,7 +29,17 @@ interface GoalData {
   remindersEnabled: boolean;
 }
 
-type SettingsSection = 'apikey' | 'privacy' | 'goals' | 'account';
+interface CurrentUserResponse {
+  email: string;
+}
+
+interface SettingsBadge {
+  type: string;
+  earnedAt: string;
+  hidden: boolean;
+}
+
+type SettingsSection = 'apikey' | 'privacy' | 'goals' | 'badges' | 'account' | 'imports';
 type AccountSubTab = 'reset' | 'email' | 'delete';
 
 @Component({
@@ -45,6 +56,8 @@ export class Settings implements OnInit {
   readonly ShieldIcon = Shield;
   readonly TargetIcon = Target;
   readonly UserIcon = User;
+  readonly AwardIcon = Award;
+  readonly DownloadIcon = Download;
 
   activeSection = signal<SettingsSection>('apikey');
   accountSubTab = signal<AccountSubTab>('email');
@@ -79,16 +92,30 @@ export class Settings implements OnInit {
   goalProject = '';
   goalReminders = false;
 
+  wakaTimeApiKey = '';
+  importing = signal(false);
+  importProgress = signal<{ status: string; imported: number; total: number } | null>(null);
+  importProvider: 'wakatime' | 'hackatime' = 'wakatime';
+  selectedFile: File | null = null;
+  private importPollInterval: ReturnType<typeof setInterval> | null = null;
+
+  badges = signal<SettingsBadge[]>([]);
+  badgesLoading = signal(true);
+  sortedBadges = computed(() =>
+    [...this.badges()].sort((a, b) => this.badgeLabel(a.type).localeCompare(this.badgeLabel(b.type))),
+  );
+
   ngOnInit() {
     this.loadApiKey();
     this.loadPrivacy();
     this.loadGoals();
     this.loadFilters();
     this.loadCurrentUser();
+    this.loadBadges();
   }
 
   private loadCurrentUser() {
-    this.api.get<{ email: string }>('/api/auth/me').subscribe({
+    this.api.get<CurrentUserResponse>('/api/auth/me').subscribe({
       next: (data) => this.currentEmail.set(data.email),
       error: () => {},
     });
@@ -352,6 +379,122 @@ export class Settings implements OnInit {
         this.changingEmail.set(false);
         this.toast.error(err.error?.message || 'Failed to request email change');
       },
+    });
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.selectedFile = input.files?.[0] ?? null;
+  }
+
+  startWakaTimeImport() {
+    if (!this.wakaTimeApiKey.trim()) {
+      this.toast.error('Enter your WakaTime API key');
+      return;
+    }
+    this.importing.set(true);
+    this.api.post('/api/import/wakatime', { apiKey: this.wakaTimeApiKey.trim() }).subscribe({
+      next: () => this.toast.success('Import started — check your dashboard in a few minutes'),
+      error: (err) => {
+        this.importing.set(false);
+        this.toast.error(err.error?.message ?? 'Failed to start import');
+      },
+    });
+  }
+
+  importFromFile() {
+    if (!this.selectedFile) {
+      this.toast.error('Choose a file first');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', this.selectedFile);
+
+    this.importing.set(true);
+    this.api.postFormData('/api/import/file', formData).subscribe({
+      next: () => {
+        this.pollImportStatus();
+      },
+      error: (err) => {
+        this.importing.set(false);
+        this.toast.error(err.error?.message ?? 'Import failed');
+      },
+    });
+  }
+
+  private pollImportStatus() {
+    this.importPollInterval = setInterval(() => {
+      this.api
+        .get<{ status: string; imported: number; total: number }>('/api/import/status')
+        .subscribe({
+          next: (status) => {
+            this.importProgress.set(status);
+
+            if (status.status === 'completed') {
+              this.stopPolling();
+              this.importing.set(false);
+              this.toast.success(`Imported ${status.imported} heartbeats`);
+            } else if (status.status === 'failed') {
+              this.stopPolling();
+              this.importing.set(false);
+              this.toast.error('Import failed');
+            }
+          },
+          error: () => this.stopPolling(),
+        });
+    }, 1500);
+  }
+
+  private stopPolling() {
+    if (this.importPollInterval) {
+      clearInterval(this.importPollInterval);
+      this.importPollInterval = null;
+    }
+  }
+
+  badgeLabel(type: string): string {
+    return badgeInfo(type).label;
+  }
+
+  badgeDescription(type: string): string {
+    return badgeInfo(type).description;
+  }
+
+  badgeColor(type: string): string {
+    return badgeInfo(type).color;
+  }
+
+  settingsBadgeColor(badge: SettingsBadge): string {
+    return badge.hidden ? '#9ca3af' : this.badgeColor(badge.type);
+  }
+
+  isBadgeHidden(type: string): boolean {
+    return this.badges().some((badge) => badge.type === type && badge.hidden);
+  }
+
+  private loadBadges() {
+    this.badgesLoading.set(true);
+    this.api.get<SettingsBadge[]>('/api/settings/badges').subscribe({
+      next: (data) => {
+        this.badges.set(data ?? []);
+        this.badgesLoading.set(false);
+      },
+      error: () => {
+        this.badgesLoading.set(false);
+      },
+    });
+  }
+
+  toggleBadgeVisibility(type: string, hidden: boolean) {
+    this.api.post('/api/settings/badge-visibility', { badgeType: type, hidden }).subscribe({
+      next: () => {
+        this.badges.set(
+          this.badges().map((badge) => (badge.type === type ? { ...badge, hidden } : badge)),
+        );
+        this.toast.success('Badge visibility updated');
+      },
+      error: () => this.toast.error('Failed to update badge visibility'),
     });
   }
 }

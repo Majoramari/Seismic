@@ -1,10 +1,12 @@
-@if (auth.isLoggedIn()) {
+@if (showAuthenticatedShell()) {
   <app-sidebar />
   <div class="with-sidebar">
     <router-outlet></router-outlet>
   </div>
 } @else {
-  <app-navbar />
+  @if (showNavbar()) {
+    <app-navbar />
+  }
   <router-outlet></router-outlet>
 }
 

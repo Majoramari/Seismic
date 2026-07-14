@@ -326,3 +326,59 @@
   border-radius: var(--radius-sm);
   white-space: nowrap;
 }
+
+.profile-badge-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  border-style: solid;
+  border-width: 1px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  cursor: default;
+}
+
+.profile-badge-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  white-space: normal;
+  width: max-content;
+  max-width: 220px;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.profile-badge-pill:hover .profile-badge-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Keep tooltip from overflowing the left/right edges of the
+   viewport by anchoring the first badge's tooltip to the left
+   edge and the last one to the right edge instead of centering. */
+.profile-badges .profile-badge-pill:first-child .profile-badge-tooltip {
+  left: 0;
+  transform: none;
+}
+
+.profile-badges .profile-badge-pill:last-child .profile-badge-tooltip {
+  left: auto;
+  right: 0;
+  transform: none;
+}

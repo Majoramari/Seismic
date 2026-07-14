@@ -2,7 +2,7 @@
   <div class="pie-chart-container">
     <div class="pie-chart-wrapper">
       <svg viewBox="0 0 120 120" class="pie-chart-svg">
-        @for (slice of slices(); track slice.label) {
+        @for (slice of slices(); track slice.id) {
           <path
             [attr.d]="slice.pathD"
             [style.fill]="slice.color"
@@ -22,7 +22,7 @@
     </div>
 
     <div class="pie-chart-legend">
-      @for (slice of slices(); track slice.label) {
+      @for (slice of legendSlices(); track slice.id) {
         <div class="pie-legend-item">
           <span class="pie-legend-dot" [style.background]="slice.color"></span>
           {{ slice.label }}

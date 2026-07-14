@@ -335,7 +335,13 @@ func GetEditorBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string, 
 }
 
 type TimelineDay struct {
-	Date    string `json:"date"`
+	Date     string            `json:"date"`
+	Seconds  int               `json:"seconds"`
+	Projects []TimelineProject `json:"projects"`
+}
+
+type TimelineProject struct {
+	Project string `json:"project"`
 	Seconds int    `json:"seconds"`
 }
 
@@ -343,26 +349,77 @@ type TimelineDay struct {
 // used for the project timeline bar chart.
 func GetTimeline(ctx context.Context, pool *pgxpool.Pool, userID string, days int) ([]TimelineDay, error) {
 	rows, err := pool.Query(ctx, `
-		SELECT start_time::date as day, SUM(duration_seconds) as seconds
-		FROM sessions
-		WHERE user_id = $1 AND start_time >= CURRENT_DATE - make_interval(days => $2)
-		GROUP BY day
-		ORDER BY day ASC
+		WITH ordered_heartbeats AS (
+			SELECT
+				user_id,
+				COALESCE(NULLIF(project, ''), 'Unknown project') AS project,
+				to_timestamp(time / 1000.0) AS heartbeat_time,
+				time,
+				LAG(time) OVER (PARTITION BY user_id, project ORDER BY time) AS previous_time
+			FROM heartbeats
+			WHERE user_id = $1
+				AND to_timestamp(time / 1000.0) >= CURRENT_DATE - make_interval(days => $2) - INTERVAL '2 minutes'
+		),
+		project_durations AS (
+			SELECT
+				heartbeat_time::date AS day,
+				project,
+				CASE
+					WHEN previous_time IS NULL THEN 0
+					WHEN time - previous_time > 120000 THEN 0
+					ELSE ((time - previous_time) / 1000)::int
+				END AS seconds
+			FROM ordered_heartbeats
+			WHERE heartbeat_time >= CURRENT_DATE - make_interval(days => $2)
+		)
+		SELECT day, project, SUM(seconds)::int AS seconds
+		FROM project_durations
+		GROUP BY day, project
+		HAVING SUM(seconds) > 0
+		ORDER BY day ASC, seconds DESC
 	`, userID, days)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var timeline []TimelineDay
+	timelineByDate := make(map[string]*TimelineDay)
+	var orderedDates []string
+
 	for rows.Next() {
 		var day time.Time
+		var project string
 		var seconds int
-		if err := rows.Scan(&day, &seconds); err != nil {
+		if err := rows.Scan(&day, &project, &seconds); err != nil {
 			return nil, err
 		}
-		timeline = append(timeline, TimelineDay{Date: day.Format("2006-01-02"), Seconds: seconds})
+
+		date := day.Format("2006-01-02")
+		timelineDay, exists := timelineByDate[date]
+		if !exists {
+			timelineDay = &TimelineDay{
+				Date:     date,
+				Projects: []TimelineProject{},
+			}
+			timelineByDate[date] = timelineDay
+			orderedDates = append(orderedDates, date)
+		}
+
+		timelineDay.Seconds += seconds
+		timelineDay.Projects = append(timelineDay.Projects, TimelineProject{
+			Project: project,
+			Seconds: seconds,
+		})
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	timeline := make([]TimelineDay, 0, len(orderedDates))
+	for _, date := range orderedDates {
+		timeline = append(timeline, *timelineByDate[date])
+	}
+
 	return timeline, nil
 }
 

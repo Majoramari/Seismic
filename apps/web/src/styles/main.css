@@ -19,6 +19,7 @@
 @import "./layers/components/onboarding.css" layer(components);
 @import "./layers/components/pie-chart.css" layer(components);
 @import "./layers/components/profile.css" layer(components);
+@import "./layers/components/projects.css" layer(components);
 @import "./layers/components/project-bars.css" layer(components);
 @import "./layers/components/settings.css" layer(components);
 @import "./layers/components/sidebar.css" layer(components);

@@ -14,6 +14,11 @@
         <lucide-angular [img]="ShieldIcon" [size]="18" />
         Privacy & Security
       </button>
+      <button class="settings-sidebar-item" [class.active]="activeSection() === 'badges'"
+              (click)="setSection('badges')">
+        <lucide-angular [img]="AwardIcon" [size]="18" />
+        Badges
+      </button>
       <button class="settings-sidebar-item" [class.active]="activeSection() === 'goals'" (click)="setSection('goals')">
         <lucide-angular [img]="TargetIcon" [size]="18" />
         Goals
@@ -22,6 +27,11 @@
               (click)="setSection('account')">
         <lucide-angular [img]="UserIcon" [size]="18" />
         Account
+      </button>
+      <button class="settings-sidebar-item" [class.active]="activeSection() === 'imports'"
+              (click)="setSection('imports')">
+        <lucide-angular [img]="DownloadIcon" [size]="16" class="settings-sidebar-icon" />
+        Imports
       </button>
     </nav>
 
@@ -185,6 +195,50 @@
         </div>
       }
 
+      @if (activeSection() === 'badges') {
+        <div class="settings-pills">
+          <span class="settings-pill active">Badge visibility</span>
+        </div>
+
+        <div class="card">
+          <h2 class="settings-section-title">Badges</h2>
+          <p class="text-muted">Choose which of your earned badges are shown on your public profile.</p>
+
+          @if (badgesLoading()) {
+            <p class="text-muted mt-4">Loading badges...</p>
+          } @else if (sortedBadges().length > 0) {
+            @for (badge of sortedBadges(); track badge.type) {
+              <div class="privacy-row">
+                <div class="settings-badge-summary">
+	                  <span
+	                    class="profile-badge-pill"
+	                    [style.color]="settingsBadgeColor(badge)"
+	                    [style.background]="settingsBadgeColor(badge) + '1f'"
+	                    [style.border-color]="settingsBadgeColor(badge) + '66'"
+	                  >
+                    {{ badgeLabel(badge.type) }}
+                    <span class="profile-badge-tooltip">{{ badgeDescription(badge.type) }}</span>
+                  </span>
+                  <p class="text-muted text-sm">
+                    {{ badge.hidden ? 'Hidden from your public profile' : 'Shown on your public profile' }}
+                  </p>
+                </div>
+                <label class="switch">
+                  <input
+                    type="checkbox"
+                    [checked]="!badge.hidden"
+                    (change)="toggleBadgeVisibility(badge.type, !$any($event.target).checked)"
+                  />
+                  <span class="switch-track"></span>
+                </label>
+              </div>
+            }
+          } @else {
+            <p class="text-muted mt-4">You have not earned any badges yet.</p>
+          }
+        </div>
+      }
+
       @if (activeSection() === 'goals') {
         <div class="settings-pills">
           <span class="settings-pill active">Programming goals</span>
@@ -296,6 +350,81 @@
               >
                 Confirm deletion
               </button>
+            }
+          </div>
+        }
+      }
+
+      @if (activeSection() === 'imports') {
+        <div class="settings-pills">
+          <span class="settings-pill" [class.active]="importProvider === 'wakatime'"
+                (click)="importProvider = 'wakatime'">WakaTime</span>
+          <span class="settings-pill" [class.active]="importProvider === 'hackatime'"
+                (click)="importProvider = 'hackatime'">Hackatime</span>
+        </div>
+
+        @if (importProvider === 'wakatime') {
+          <div class="card">
+            <h2 class="settings-section-title mb-2">Import from WakaTime</h2>
+            <p class="text-muted">
+              Enter your WakaTime API key to import your full history directly, or upload an export file instead.
+            </p>
+
+            <input type="text" class="input mt-4" placeholder="WakaTime API key" [(ngModel)]="wakaTimeApiKey" />
+            <button class="btn-primary mt-2" [disabled]="importing()" (click)="startWakaTimeImport()">
+              {{ importing() ? 'Working...' : 'Start remote import' }}
+            </button>
+
+            <div class="import-divider">
+              <span>or upload a file</span>
+            </div>
+            <p class="text-muted text-sm mb-4">Export from wakatime.com → Settings → Export My Data → Heartbeats.</p>
+            <div class="import-file-row mt-3">
+              <label class="import-file-picker">
+                <input type="file" accept=".json" (change)="onFileSelected($event)" />
+                Choose file
+              </label>
+              <span class="import-file-name">{{ selectedFile?.name ?? 'No file selected' }}</span>
+            </div>
+
+            <button class="btn-primary mt-4" [disabled]="importing() || !selectedFile" (click)="importFromFile()">
+              {{ importing() ? 'Importing...' : 'Import file' }}
+
+            </button>
+          </div>
+        } @else {
+          <div class="card">
+            <h2 class="settings-section-title mb-2">Import from Hackatime</h2>
+            <p class="text-muted">
+              Export your data from
+              <a href="https://hackatime.hackclub.com/my/settings/imports_exports" target="_blank"
+                 rel="noopener noreferrer">
+                Hackatime
+              </a>
+              and upload it here.
+            </p>
+
+            <div class="import-file-row mt-4">
+              <label class="import-file-picker">
+                <input type="file" accept=".json,.zip" (change)="onFileSelected($event)" />
+                Choose file
+              </label>
+              <span class="import-file-name">{{ selectedFile?.name ?? 'No file selected' }}</span>
+            </div>
+
+            <button class="btn-primary mt-4" [disabled]="importing() || !selectedFile" (click)="importFromFile()">
+              {{ importing() ? 'Importing...' : 'Import file' }}
+            </button>
+
+            @if (importing() && importProgress()) {
+              <div class="import-progress mt-4">
+                <div class="import-progress-track">
+                  <div class="import-progress-fill"
+                       [style.width.%]="((importProgress()!.imported / importProgress()!.total) * 100) || 0"></div>
+                </div>
+                <p class="text-muted text-sm mt-2">{{ importProgress()!.imported }} / {{ importProgress()!.total }}
+                  heartbeats imported</p>
+              </div>
             }
           </div>
         }

@@ -1,22 +1,30 @@
-<div class="page flex-center">
-
+<div class="page flex-center onboarding-page">
   @if (loading()) {
     <p>Logging you in...</p>
   } @else if (error()) {
     <p class="text-danger">{{ error() }}</p>
   } @else if (isNewUser()) {
-    <div class="onboarding-card">
+    <div class="onboarding-card" [class.onboarding-card-wide]="step() === 'import'">
+      <div class="onboarding-brand">
+        <img ngSrc="images/seismic-logo.png" alt="Seismic" width="32" height="32" />
+      </div>
 
       <div class="onboarding-progress">
         <div class="progress-dot" [class.active]="step() === 'username'"></div>
         <div class="progress-dot" [class.active]="step() === 'profile'"></div>
+        <div class="progress-dot" [class.active]="step() === 'import'"></div>
       </div>
 
       @if (step() === 'username') {
+        <p class="onboarding-kicker">Step 1 of 3</p>
         <h1 class="onboarding-title">Welcome to Seismic</h1>
-        <p class="text-muted">{{ email() }}</p>
+        <p class="onboarding-copy">Claim a public username for your coding profile.</p>
 
         <div class="onboarding-field">
+          <label class="field-label">Email</label>
+          <div class="onboarding-readonly">{{ email() }}</div>
+
+          <label class="field-label mt-4">Username</label>
           <input
             type="text"
             class="input"
@@ -31,39 +39,44 @@
               <p class="field-hint text-muted">Checking...</p>
             }
             @case ('available') {
-              <p class="field-hint text-success">✓ Available</p>
+              <p class="field-hint text-success">Available</p>
             }
             @case ('taken') {
-              <p class="field-hint text-danger">✗ Already taken</p>
+              <p class="field-hint text-danger">Already taken</p>
             }
             @case ('invalid') {
-              <p class="field-hint text-danger">✗ 3-20 chars, start with a letter</p>
+              <p class="field-hint text-danger">3-20 chars, start with a letter</p>
             }
           }
         </div>
 
-        <button
-          class="step-next"
-          [disabled]="usernameStatus() !== 'available'"
-          (click)="goToProfileStep()"
-          aria-label="Continue"
-        >
-          →
-        </button>
+        <div class="onboarding-actions onboarding-actions-end">
+          <button
+            class="btn-primary"
+            [disabled]="usernameStatus() !== 'available'"
+            (click)="goToProfileStep()"
+          >
+            Continue
+          </button>
+        </div>
       }
 
       @if (step() === 'profile') {
-        <button class="btn-ghost step-back" (click)="backToUsernameStep()">← Back</button>
-
+        <p class="onboarding-kicker">Step 2 of 3</p>
         <h1 class="onboarding-title">Almost done</h1>
-        <p class="text-muted">&#64;{{ username() }}</p>
+        <p class="onboarding-copy">Add a display name, or keep your username for now.</p>
 
         <div class="onboarding-field">
+          <label class="field-label">Profile</label>
+          <div class="onboarding-readonly">&#64;{{ username() }}</div>
+
+          <label class="field-label mt-4">Display name</label>
           <input
             type="text"
             class="input"
             placeholder="Display name (optional)"
-            [(ngModel)]="displayName"
+            [ngModel]="displayName()"
+            (ngModelChange)="displayName.set($event)"
             (keydown.enter)="completeSignup()"
           />
         </div>
@@ -72,17 +85,162 @@
           <p class="text-danger text-sm">{{ signupError() }}</p>
         }
 
-        <button
-          class="step-next"
-          [disabled]="signupLoading()"
-          (click)="completeSignup()"
-          aria-label="Create account"
-        >
-          {{ signupLoading() ? '...' : '→' }}
-        </button>
+        <div class="onboarding-actions">
+          <button class="btn-ghost" [disabled]="signupLoading()" (click)="backToUsernameStep()">
+            Back
+          </button>
+          <button class="btn-primary" [disabled]="signupLoading()" (click)="completeSignup()">
+            {{ signupLoading() ? 'Creating...' : 'Create account' }}
+          </button>
+        </div>
       }
 
+      @if (step() === 'import') {
+        <p class="onboarding-kicker">Step 3 of 3</p>
+        <h1 class="onboarding-title">Bring your coding history</h1>
+        <p class="onboarding-copy">
+          Import existing data from WakaTime or Hackatime now. You can skip this and do it later
+          from Settings.
+        </p>
+
+        <div class="onboarding-import-grid">
+          <button
+            type="button"
+            class="onboarding-import-option"
+            [class.active]="selectedImportProvider() === 'wakatime'"
+            (click)="selectImportProvider('wakatime')"
+          >
+            <span class="onboarding-import-name">WakaTime</span>
+            <span class="onboarding-import-desc"
+              >Use your API key or upload a heartbeat export.</span
+            >
+          </button>
+
+          <button
+            type="button"
+            class="onboarding-import-option"
+            [class.active]="selectedImportProvider() === 'hackatime'"
+            (click)="selectImportProvider('hackatime')"
+          >
+            <span class="onboarding-import-name">Hackatime</span>
+            <span class="onboarding-import-desc">Upload your Hackatime JSON or ZIP export.</span>
+          </button>
+        </div>
+
+        @if (selectedImportProvider() === 'wakatime') {
+          <div class="onboarding-import-panel">
+            <label class="field-label">WakaTime API key</label>
+            <input
+              type="text"
+              class="input"
+              placeholder="Paste your WakaTime API key"
+              [(ngModel)]="wakaTimeApiKey"
+              (keydown.enter)="startWakaTimeImport()"
+            />
+
+            <button
+              class="btn-primary btn-full"
+              [disabled]="importing()"
+              (click)="startWakaTimeImport()"
+            >
+              {{ importing() ? 'Starting...' : 'Start WakaTime import' }}
+            </button>
+
+            <div class="onboarding-divider"><span>or upload an export</span></div>
+
+            <div class="onboarding-file-row">
+              <label class="onboarding-file-picker">
+                <input type="file" accept=".json" (change)="onImportFileSelected($event)" />
+                Choose file
+              </label>
+              <span class="onboarding-file-name">{{
+                selectedFile?.name ?? 'No file selected'
+              }}</span>
+            </div>
+
+            <button
+              class="btn-ghost btn-full mt-4"
+              [disabled]="importing() || !selectedFile"
+              (click)="importFromFile()"
+            >
+              {{ importing() ? 'Importing...' : 'Import uploaded file' }}
+            </button>
+          </div>
+        }
+
+        @if (selectedImportProvider() === 'hackatime') {
+          <div class="onboarding-import-panel">
+            <p class="text-muted text-sm">
+              Export from Hackatime, then upload the JSON or ZIP file here.
+              <a
+                href="https://hackatime.hackclub.com/my/settings/imports_exports"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Open Hackatime exports
+              </a>
+            </p>
+
+            <div class="onboarding-file-row mt-4">
+              <label class="onboarding-file-picker">
+                <input type="file" accept=".json,.zip" (change)="onImportFileSelected($event)" />
+                Choose file
+              </label>
+              <span class="onboarding-file-name">{{
+                selectedFile?.name ?? 'No file selected'
+              }}</span>
+            </div>
+
+            <button
+              class="btn-primary btn-full mt-4"
+              [disabled]="importing() || !selectedFile"
+              (click)="importFromFile()"
+            >
+              {{ importing() ? 'Importing...' : 'Import Hackatime file' }}
+            </button>
+          </div>
+        }
+
+        @if (importing() || importProgress()) {
+          <div class="onboarding-import-status">
+            <div class="onboarding-import-track">
+              <div class="onboarding-import-fill" [style.width.%]="importProgressPercent()"></div>
+            </div>
+            <p class="text-muted text-sm">
+              @if (importProgress()) {
+                {{ importProgress()!.imported }} / {{ importProgress()!.total }} heartbeats imported
+              } @else {
+                Preparing import...
+              }
+            </p>
+          </div>
+        }
+
+        @if (importStarted() && !importing() && !importError()) {
+          @if (importProgress()?.status === 'completed') {
+            <p class="text-success text-sm">
+              Import complete. Your dashboard will update with your history.
+            </p>
+          } @else {
+            <p class="text-success text-sm">
+              Import started. You can open the dashboard while Seismic processes your history.
+            </p>
+          }
+        }
+
+        @if (importError()) {
+          <p class="text-danger text-sm">{{ importError() }}</p>
+        }
+
+        <div class="onboarding-actions">
+          <button class="btn-ghost" [disabled]="importing()" (click)="finishOnboarding()">
+            Skip for now
+          </button>
+          <button class="btn-primary" [disabled]="importing()" (click)="finishOnboarding()">
+            Open dashboard
+          </button>
+        </div>
+      }
     </div>
   }
-
 </div>

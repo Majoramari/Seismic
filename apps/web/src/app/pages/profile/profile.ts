@@ -5,6 +5,7 @@ import { ApiService } from '../../core/api/api.service';
 import { ToastService } from '../../core/toast/toast.service';
 import { UserService } from '../../core/auth/user.service';
 import { Heatmap } from '../../shared/components/heatmap/heatmap';
+import { badgeInfo } from '../../shared/badges';
 
 interface HeatmapDay {
   date: string;
@@ -268,55 +269,16 @@ export class Profile implements OnInit {
     ['windows', 'Windows'],
   ]);
 
-  private readonly badgeLabels = new Map<string, string>([
-    ['first_heartbeat', 'First steps'],
-    ['week_streak', 'Week streak'],
-    ['month_streak', 'Month streak'],
-    ['night_owl', 'Night owl'],
-    ['early_bird', 'Early bird'],
-    ['polyglot', 'Polyglot'],
-    ['century', 'Century'],
-    ['supporter', 'Supporter'],
-    ['contributor', 'Contributor'],
-    ['maintainer', 'Maintainer'],
-  ]);
-
-  private readonly badgeColors = new Map<string, string>([
-    ['first_heartbeat', '#22c55e'], // green
-    ['week_streak', '#f59e0b'], // amber
-    ['month_streak', '#ef4444'], // red
-    ['night_owl', '#6366f1'], // indigo
-    ['early_bird', '#eab308'], // yellow
-    ['polyglot', '#06b6d4'], // cyan
-    ['century', '#d97757'], // accent/terracotta
-    ['supporter', '#ec4899'], // pink
-    ['contributor', '#8b5cf6'], // purple
-    ['maintainer', '#fbbf24'], // gold
-  ]);
-
-  private readonly badgeDescriptions = new Map<string, string>([
-    ['first_heartbeat', 'Every legend starts somewhere.'],
-    ['week_streak', 'Seven days without missing a beat.'],
-    ['month_streak', 'A month that speaks for itself.'],
-    ['night_owl', 'The stars witnessed every commit.'],
-    ['early_bird', 'Ahead of sunrise.'],
-    ['polyglot', 'No single language tells the whole story.'],
-    ['century', '100 hours of coding. Time well invested.'],
-    ['supporter', 'Keeping Seismic alive, one donation at a time.'],
-    ['contributor', 'Left a mark on Seismic.'],
-    ['maintainer', 'Maintaining what others help build.'],
-  ]);
-
   badgeDescription(type: string): string {
-    return this.badgeDescriptions.get(type) ?? '';
+    return badgeInfo(type).description;
   }
 
   badgeColor(type: string): string {
-    return this.badgeColors.get(type) ?? '#6b7280'; // gray fallback
+    return badgeInfo(type).color;
   }
 
   badgeLabel(type: string): string {
-    return this.badgeLabels.get(type) ?? type;
+    return badgeInfo(type).label;
   }
 
   formatDisplayLabel(value: string | null | undefined): string {

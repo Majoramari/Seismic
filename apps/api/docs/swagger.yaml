@@ -9,6 +9,11 @@ definitions:
       username:
         type: string
     type: object
+  handlers.importRequest:
+    properties:
+      apiKey:
+        type: string
+    type: object
   handlers.magicLinkRequest:
     properties:
       email:
@@ -464,6 +469,35 @@ paths:
       summary: Send a heartbeat
       tags:
       - heartbeat
+  /api/import/wakatime:
+    post:
+      consumes:
+      - application/json
+      description: Kicks off a background import of the user's full WakaTime heartbeat
+        history. Runs asynchronously; check back later for updated stats.
+      parameters:
+      - description: WakaTime API key
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.importRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Import heartbeats from WakaTime
+      tags:
+      - import
   /api/leaderboard:
     get:
       description: Returns ranked users by total coding time within a range. If authenticated,

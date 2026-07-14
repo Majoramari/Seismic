@@ -31,6 +31,18 @@ func (h *SettingsHandler) GetPrivacy(c *fiber.Ctx) error {
 	return helpers.Success(c, "Privacy settings retrieved", settings)
 }
 
+func (h *SettingsHandler) GetBadges(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+
+	ctx := c.Context()
+	badges, err := models.GetUserBadgeVisibility(ctx, h.Pool, userID)
+	if err != nil {
+		return helpers.Error(c, fiber.StatusInternalServerError, "Failed to load badges")
+	}
+
+	return helpers.Success(c, "Badges retrieved", badges)
+}
+
 // UpdatePrivacy godoc
 // @Summary      Update privacy settings
 // @Tags         settings

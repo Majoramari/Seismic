@@ -9,6 +9,7 @@ import {
   LogOut,
   Flame,
   BookOpen,
+  FolderGit2,
 } from 'lucide-angular';
 import { AuthService } from '../../../core/auth/auth.service';
 import { UserService } from '../../../core/auth/user.service';
@@ -30,6 +31,7 @@ export class Sidebar {
   readonly LogOutIcon = LogOut;
   readonly FlameIcon = Flame;
   readonly DocsIcon = BookOpen;
+  readonly ProjectsIcon = FolderGit2;
 
   streakTier(streak: number): string {
     if (streak >= 30) return 'streak-tier-legendary';

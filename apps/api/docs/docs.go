@@ -634,6 +634,51 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/import/wakatime": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Kicks off a background import of the user's full WakaTime heartbeat history. Runs asynchronously; check back later for updated stats.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "import"
+                ],
+                "summary": "Import heartbeats from WakaTime",
+                "parameters": [
+                    {
+                        "description": "WakaTime API key",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.importRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/leaderboard": {
             "get": {
                 "description": "Returns ranked users by total coding time within a range. If authenticated, includes the viewer's own rank.",
@@ -974,6 +1019,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.importRequest": {
+            "type": "object",
+            "properties": {
+                "apiKey": {
                     "type": "string"
                 }
             }

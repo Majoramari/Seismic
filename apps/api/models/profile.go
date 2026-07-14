@@ -58,6 +58,12 @@ type BadgeInfo struct {
 	EarnedAt time.Time `json:"earnedAt"`
 }
 
+type BadgeVisibilityInfo struct {
+	Type     string    `json:"type"`
+	EarnedAt time.Time `json:"earnedAt"`
+	Hidden   bool      `json:"hidden"`
+}
+
 // GetPublicProfile returns a user's public profile data, respecting
 // their privacy settings. viewerID is the currently authenticated
 // user's ID, or "" if the request is unauthenticated — used to
@@ -186,6 +192,18 @@ func GetPublicProfile(ctx context.Context, pool *pgxpool.Pool, username string, 
 	if err != nil {
 		return nil, err
 	}
+
+	hidden, err := GetHiddenBadgeTypes(ctx, pool, userID)
+	if err != nil {
+		return nil, err
+	}
+	var visible []BadgeInfo
+	for _, b := range badges {
+		if !hidden[b.Type] {
+			visible = append(visible, b)
+		}
+	}
+	badges = visible
 	p.Badges = badges
 
 	return &p, nil
@@ -222,4 +240,59 @@ func GetUserBadges(ctx context.Context, pool *pgxpool.Pool, userID string) ([]Ba
 		badges = append(badges, b)
 	}
 	return badges, nil
+}
+
+func GetUserBadgeVisibility(ctx context.Context, pool *pgxpool.Pool, userID string) ([]BadgeVisibilityInfo, error) {
+	rows, err := pool.Query(ctx, `
+		SELECT b.badge_type, b.earned_at, hb.user_id IS NOT NULL AS hidden
+		FROM badges b
+		LEFT JOIN hidden_badges hb
+			ON hb.user_id = b.user_id AND hb.badge_type = b.badge_type
+		WHERE b.user_id = $1
+		ORDER BY b.earned_at ASC
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var badges []BadgeVisibilityInfo
+	for rows.Next() {
+		var b BadgeVisibilityInfo
+		if err := rows.Scan(&b.Type, &b.EarnedAt, &b.Hidden); err != nil {
+			return nil, err
+		}
+		badges = append(badges, b)
+	}
+	return badges, nil
+}
+
+func GetHiddenBadgeTypes(ctx context.Context, pool *pgxpool.Pool, userID string) (map[string]bool, error) {
+	rows, err := pool.Query(ctx, `SELECT badge_type FROM hidden_badges WHERE user_id = $1`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	hidden := make(map[string]bool)
+	for rows.Next() {
+		var t string
+		if err := rows.Scan(&t); err != nil {
+			return nil, err
+		}
+		hidden[t] = true
+	}
+	return hidden, nil
+}
+
+func SetBadgeHidden(ctx context.Context, pool *pgxpool.Pool, userID, badgeType string, hidden bool) error {
+	if hidden {
+		_, err := pool.Exec(ctx, `
+			INSERT INTO hidden_badges (user_id, badge_type) VALUES ($1, $2)
+			ON CONFLICT (user_id, badge_type) DO NOTHING
+		`, userID, badgeType)
+		return err
+	}
+	_, err := pool.Exec(ctx, `DELETE FROM hidden_badges WHERE user_id = $1 AND badge_type = $2`, userID, badgeType)
+	return err
 }

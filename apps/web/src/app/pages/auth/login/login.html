@@ -1,8 +1,10 @@
 <div class="split-login">
-
   <div class="split-login-left">
     <div class="split-login-content">
-      <div class="split-login-logo">Seismic</div>
+      <div class="split-login-logo">
+        <img ngSrc="images/seismic-logo.png" alt="" width="28" height="28" />
+        <span>Seismic</span>
+      </div>
 
       @if (!sent()) {
         <h1 class="login-title">Log in</h1>
@@ -29,8 +31,7 @@
 
         <p class="login-footer">
           By continuing, you agree to Seismic's
-          <a routerLink="/terms">Terms</a> and
-          <a routerLink="/privacy">Privacy Policy</a>.
+          <a routerLink="/terms">Terms</a> and <a routerLink="/privacy">Privacy Policy</a>.
         </p>
       } @else {
         <div class="login-confirmation">
@@ -38,20 +39,15 @@
             <lucide-angular [img]="MailboxIcon" [size]="36" />
           </div>
           <h1 class="login-title">Check your email</h1>
-          <p class="login-subtitle">We sent a login link to<br><strong>{{ email() }}</strong></p>
+          <p class="login-subtitle">
+            We sent a login link to<br /><strong>{{ email() }}</strong>
+          </p>
         </div>
       }
     </div>
   </div>
 
   <div class="split-login-right">
-    <img
-      ngSrc="images/login-hero.png"
-      alt=""
-      fill=""
-      priority=""
-      class="split-hero-image"
-    />
+    <img ngSrc="images/login-hero.png" alt="" fill="" priority="" class="split-hero-image" />
   </div>
-
 </div>

@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"html"
 	"net/smtp"
 	"os"
 	"strings"
@@ -16,9 +17,16 @@ type EmailConfig struct {
 }
 
 func SendMagicLinkEmail(cfg EmailConfig, toEmail, token string) error {
-	link := fmt.Sprintf("%s/verify?token=%s", cfg.AppURL, token)
+	baseURL := appURL(cfg)
+	link := fmt.Sprintf("%s/verify?token=%s", baseURL, token)
 
-	htmlBody, err := buildMagicLinkHTML(link)
+	htmlBody, err := buildActionEmailHTML(
+		cfg,
+		"Let's get you signed in",
+		"Use the secure link below to continue to your Seismic dashboard.",
+		"Sign in to Seismic",
+		link,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to build email html: %w", err)
 	}
@@ -32,14 +40,29 @@ func SendMagicLinkEmail(cfg EmailConfig, toEmail, token string) error {
 	return smtp.SendMail(addr, auth, cfg.Username, []string{toEmail}, []byte(message))
 }
 
-func buildMagicLinkHTML(link string) (string, error) {
+func buildActionEmailHTML(cfg EmailConfig, title, body, ctaLabel, actionURL string) (string, error) {
 	content, err := os.ReadFile("services/templates/magic_link.html")
 	if err != nil {
 		return "", err
 	}
 
-	html := strings.ReplaceAll(string(content), "{{MAGIC_LINK_URL}}", link)
-	return html, nil
+	baseURL := appURL(cfg)
+	rendered := string(content)
+	rendered = strings.ReplaceAll(rendered, "{{APP_URL}}", html.EscapeString(baseURL))
+	rendered = strings.ReplaceAll(rendered, "{{LOGO_URL}}", html.EscapeString(logoURL(baseURL)))
+	rendered = strings.ReplaceAll(rendered, "{{EMAIL_TITLE}}", html.EscapeString(title))
+	rendered = strings.ReplaceAll(rendered, "{{EMAIL_BODY}}", html.EscapeString(body))
+	rendered = strings.ReplaceAll(rendered, "{{CTA_LABEL}}", html.EscapeString(ctaLabel))
+	rendered = strings.ReplaceAll(rendered, "{{ACTION_URL}}", html.EscapeString(actionURL))
+	return rendered, nil
+}
+
+func appURL(cfg EmailConfig) string {
+	return strings.TrimRight(cfg.AppURL, "/")
+}
+
+func logoURL(baseURL string) string {
+	return baseURL + "/images/seismic-logo.png"
 }
 
 func buildMIMEMessage(from, to, subject, htmlBody string) string {
@@ -55,21 +78,24 @@ func buildMIMEMessage(from, to, subject, htmlBody string) string {
 	)
 }
 
-func SendGoalReminderEmail(cfg EmailConfig, toEmail, goalLabel, progress, target, period string) error {
+func SendGoalReminderEmail(cfg EmailConfig, toEmail, goalLabel, progress, target string, progressPercent int, period string) error {
 	content, err := os.ReadFile("services/templates/goal_reminder.html")
 	if err != nil {
 		return err
 	}
 
-	html := string(content)
-	html = strings.ReplaceAll(html, "{{GOAL_LABEL}}", goalLabel)
-	html = strings.ReplaceAll(html, "{{PROGRESS}}", progress)
-	html = strings.ReplaceAll(html, "{{TARGET}}", target)
-	html = strings.ReplaceAll(html, "{{PERIOD}}", period)
-	html = strings.ReplaceAll(html, "{{APP_URL}}", cfg.AppURL)
+	rendered := string(content)
+	baseURL := appURL(cfg)
+	rendered = strings.ReplaceAll(rendered, "{{APP_URL}}", html.EscapeString(baseURL))
+	rendered = strings.ReplaceAll(rendered, "{{LOGO_URL}}", html.EscapeString(logoURL(baseURL)))
+	rendered = strings.ReplaceAll(rendered, "{{GOAL_LABEL}}", html.EscapeString(goalLabel))
+	rendered = strings.ReplaceAll(rendered, "{{PROGRESS}}", html.EscapeString(progress))
+	rendered = strings.ReplaceAll(rendered, "{{TARGET}}", html.EscapeString(target))
+	rendered = strings.ReplaceAll(rendered, "{{PROGRESS_PERCENT}}", html.EscapeString(fmt.Sprintf("%d", progressPercent)))
+	rendered = strings.ReplaceAll(rendered, "{{PERIOD}}", html.EscapeString(period))
 
 	subject := "You're falling behind on your Seismic goal"
-	message := buildMIMEMessage(cfg.Username, toEmail, subject, html)
+	message := buildMIMEMessage(cfg.Username, toEmail, subject, rendered)
 
 	auth := smtp.PlainAuth("", cfg.Username, cfg.Password, cfg.Host)
 	addr := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
@@ -78,9 +104,16 @@ func SendGoalReminderEmail(cfg EmailConfig, toEmail, goalLabel, progress, target
 }
 
 func SendEmailChangeConfirmation(cfg EmailConfig, newEmail, token string) error {
-	link := fmt.Sprintf("%s/confirm-email?token=%s", cfg.AppURL, token)
+	baseURL := appURL(cfg)
+	link := fmt.Sprintf("%s/confirm-email?token=%s", baseURL, token)
 
-	htmlBody, err := buildMagicLinkHTML(link) // reuse the same clean template
+	htmlBody, err := buildActionEmailHTML(
+		cfg,
+		"Confirm your new email",
+		"Confirm this address so Seismic can use it for future sign-ins.",
+		"Confirm email",
+		link,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to build email html: %w", err)
 	}

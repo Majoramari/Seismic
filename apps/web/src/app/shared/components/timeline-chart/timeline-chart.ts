@@ -34,7 +34,6 @@ interface DisplayBar extends TimelineDay {
 })
 export class TimelineChart {
   data = input.required<TimelineDay[]>();
-  projects = input<TimelineProject[]>([]);
 
   maxHours = computed(() => {
     const maximum = Math.max(...this.data().map((day) => day.seconds), 3600);
@@ -44,15 +43,9 @@ export class TimelineChart {
 
   bars = computed<DisplayBar[]>(() => {
     const maxSeconds = this.maxHours() * 3600;
-    const rangeProjects = this.projects();
-    const rangeTotal = rangeProjects.reduce((total, project) => total + project.seconds, 0);
-
-    const fallbackProjects = this.toDisplayProjects(rangeProjects, rangeTotal);
 
     return this.data().map((day) => {
       const dayProjects = this.toDisplayProjects(day.projects ?? [], day.seconds);
-
-      const displayedProjects = dayProjects.length > 0 ? dayProjects : fallbackProjects;
 
       return {
         ...day,
@@ -68,8 +61,8 @@ export class TimelineChart {
           year: 'numeric',
         }),
         formattedTime: this.formatSeconds(day.seconds),
-        displayProjects: displayedProjects,
-        hoverProjects: displayedProjects,
+        displayProjects: dayProjects,
+        hoverProjects: dayProjects,
       };
     });
   });

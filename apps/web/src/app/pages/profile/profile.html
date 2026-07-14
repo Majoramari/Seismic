@@ -59,10 +59,10 @@
                   [style.color]="badgeColor(badge.type)"
                   [style.background]="badgeColor(badge.type) + '1f'"
                   [style.border-color]="badgeColor(badge.type) + '66'"
-                  [title]="badgeDescription(badge.type)"
                 >
-                {{ badgeLabel(badge.type) }}
-              </span>
+                  {{ badgeLabel(badge.type) }}
+                  <span class="profile-badge-tooltip">{{ badgeDescription(badge.type) }}</span>
+                </span>
               }
             </div>
           }

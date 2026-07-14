@@ -7,6 +7,7 @@ export interface PieSlice {
 }
 
 interface ComputedSlice extends PieSlice {
+  id: string;
   percentage: number;
   color: string;
   pathD: string;
@@ -34,28 +35,46 @@ export class PieChart {
   data = input.required<PieSlice[]>();
   emptyLabel = input('No data yet');
   useLanguageColors = input(false);
+  legendLimit = input<number | null>(null);
   hoveredSlice = signal<ComputedSlice | null>(null);
 
-  totalSeconds = computed(() => this.data().reduce((sum, d) => sum + d.seconds, 0));
+  displayData = computed<PieSlice[]>(() => {
+    const data = this.data();
+    const limit = this.legendLimit();
+
+    if (!limit || data.length <= limit) return data;
+
+    const visibleCount = Math.max(0, limit - 1);
+    const visible = data.slice(0, visibleCount);
+    const hiddenSeconds = data.slice(visibleCount).reduce((sum, d) => sum + d.seconds, 0);
+
+    return [...visible, { label: 'Other', seconds: hiddenSeconds }];
+  });
+
+  totalSeconds = computed(() => this.displayData().reduce((sum, d) => sum + d.seconds, 0));
 
   slices = computed<ComputedSlice[]>(() => {
     const total = this.totalSeconds();
     if (total === 0) return [];
 
     let cumulativeAngle = 0;
-    return this.data().map((d, i) => {
+    return this.displayData().map((d, i) => {
       const percentage = (d.seconds / total) * 100;
       const angle = (d.seconds / total) * 360;
       const pathD = this.describeArc(cumulativeAngle, cumulativeAngle + angle);
       cumulativeAngle += angle;
 
-      const color = this.useLanguageColors()
-        ? getLanguageColor(d.label, i)
-        : GENERIC_COLORS[i % GENERIC_COLORS.length];
+      const color =
+        d.label === 'Other'
+          ? '#6b7280'
+          : this.useLanguageColors()
+            ? getLanguageColor(d.label, i)
+            : GENERIC_COLORS[i % GENERIC_COLORS.length];
 
       return {
         ...d,
-        label: this.useLanguageColors() ? this.capitalize(d.label) : d.label,
+        id: d.label === 'Other' ? 'other' : `${i}-${d.label}`,
+        label: this.useLanguageColors() && d.label !== 'Other' ? this.capitalize(d.label) : d.label,
         percentage: Math.round(percentage),
         color,
         pathD,
@@ -113,4 +132,6 @@ export class PieChart {
     if (hours > 0) return `${hours}h ${minutes}m`;
     return `${minutes}m`;
   }
+
+  legendSlices = computed(() => this.slices());
 }
