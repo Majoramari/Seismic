@@ -13,6 +13,7 @@
 @import "./layers/components/goal-modal.css" layer(components);
 @import "./layers/components/heatmap.css" layer(components);
 @import "./layers/components/inputs.css" layer(components);
+@import "./layers/components/landing.css" layer(components);
 @import "./layers/components/leaderboard.css" layer(components);
 @import "./layers/components/login.css" layer(components);
 @import "./layers/components/navbar.css" layer(components);
