@@ -4,7 +4,7 @@ local config = require("seismic.config")
 local detector = require("seismic.detector")
 local queue = require("seismic.queue")
 
-local TWO_MINUTES = 120
+local HEARTBEAT_INTERVAL_SECONDS = 30
 
 local last_heartbeat_time = 0
 local last_file = ""
@@ -86,7 +86,7 @@ function M.handle_activity(bufnr, forced)
 	local filename = vim.api.nvim_buf_get_name(bufnr)
 	local file_changed = filename ~= last_file
 
-	if not forced and not file_changed and (now - last_heartbeat_time) < TWO_MINUTES then
+	if not forced and not file_changed and (now - last_heartbeat_time) < HEARTBEAT_INTERVAL_SECONDS then
 		return
 	end
 

@@ -9,6 +9,9 @@ export interface HeartbeatPayload {
     language: string;
     editor: 'vscode';
     branch?: string;
+    repoUrl?: string;
+    websiteUrl?: string;
+    lastCommitAt?: number;
     os?: string;
     machine?: string;
     lines?: number;
@@ -18,7 +21,7 @@ export interface HeartbeatPayload {
     time: number;
 }
 
-const TWO_MINUTES = 2 * 60 * 1000;
+const HEARTBEAT_INTERVAL_MS = 30 * 1000;
 
 export class HeartbeatService {
     private queue = new HeartbeatQueue();
@@ -32,7 +35,7 @@ export class HeartbeatService {
     // these — it never triggers a network call directly. Only the
     // periodic tick() below decides when an actual heartbeat goes out,
     // so no matter how many times you switch tabs, save, or type, at
-    // most one heartbeat fires per TWO_MINUTES interval.
+    // most one heartbeat fires per 30-second interval.
     private pendingDocument: vscode.TextDocument | null = null;
     private hasPendingActivity = false;
 
@@ -61,7 +64,7 @@ export class HeartbeatService {
     start(): void {
         this.timer = setInterval(() => {
             void this.tick();
-        }, TWO_MINUTES);
+        }, HEARTBEAT_INTERVAL_MS);
     }
 
     dispose(): void {
@@ -83,12 +86,17 @@ export class HeartbeatService {
     private async buildPayload(document: vscode.TextDocument): Promise<HeartbeatPayload> {
         const editor = vscode.window.activeTextEditor;
 
+        const metadata = await detector.detectProjectMetadata(document);
+
         return {
             file: document.fileName,
             project: detector.detectProject(document),
             language: document.languageId,
             editor: 'vscode',
             branch: await detector.detectBranch(),
+            repoUrl: metadata.repoUrl,
+            websiteUrl: metadata.websiteUrl,
+            lastCommitAt: metadata.lastCommitAt,
             os: detector.detectOS(),
             machine: detector.detectMachine(),
             lines: document.lineCount,

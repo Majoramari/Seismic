@@ -101,7 +101,7 @@ The status text updates once per minute and shows:
 
 Heartbeats fire on:
 
-- Text changes (throttled to once per 2 minutes unless the file changed)
+- Text changes (throttled to once every 30 seconds unless the file changed)
 - Switching buffers
 - Saving a file
 - Regaining focus (subject to the same throttle)

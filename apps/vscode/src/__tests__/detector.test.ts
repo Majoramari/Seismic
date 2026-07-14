@@ -17,5 +17,5 @@ test('detectMachine returns a non-empty string', () => {
 
 test('detectTimezone returns a valid IANA timezone string', () => {
   const result = detectTimezone();
-  expect(result).toMatch(/^[A-Za-z]+\/[A-Za-z_]+$/);
+  expect(result).toMatch(/^[A-Za-z_]+(?:\/[A-Za-z_]+)*$/);
 });

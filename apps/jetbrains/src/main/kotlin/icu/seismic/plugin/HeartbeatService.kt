@@ -14,7 +14,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-private const val TWO_MINUTES_MS = 2 * 60 * 1000L
+private const val HEARTBEAT_INTERVAL_MS = 30 * 1000L
 private val JSON = "application/json".toMediaType()
 
 private const val MAX_KEYSTROKE_EDIT_LENGTH = 200
@@ -61,7 +61,7 @@ class HeartbeatService {
         // If we're not actually going to send a heartbeat, we must not
         // reset the counter — otherwise typing gets wiped out between
         // real sends and the total is always near zero.
-        if (!forced && !fileChanged && now - lastHeartbeatTime < TWO_MINUTES_MS) return
+        if (!forced && !fileChanged && now - lastHeartbeatTime < HEARTBEAT_INTERVAL_MS) return
 
         lastHeartbeatTime = now
         lastFile = file.path

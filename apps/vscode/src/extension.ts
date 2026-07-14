@@ -17,7 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Every one of these just records "something happened" — none of
     // them send a network request directly. heartbeat.start() below is
     // the only thing that actually fires a heartbeat, on a fixed
-    // 2-minute interval, so switching tabs or saving rapidly can't
+    // 30-second interval, so switching tabs or saving rapidly can't
     // cause a burst of requests anymore.
 
     // Typing: also tally characters inserted toward the keystroke count.
