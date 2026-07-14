@@ -11,6 +11,8 @@ import { Settings } from './pages/settings/settings';
 import { Docs } from './pages/docs/docs';
 import { ConfirmEmail } from './pages/confirm-email/confirm-email';
 import { Landing } from './pages/landing/landing';
+import { Privacy } from './pages/legal-pages/privacy/privacy';
+import { Terms } from './pages/legal-pages/terms/terms';
 
 export const routes: Routes = [
   { path: '', component: Landing, canActivate: [guestGuard], title: 'Seismic - Track your coding activity' },
@@ -28,6 +30,8 @@ export const routes: Routes = [
     component: Docs,
     title: 'Docs — Seismic',
   },
+  { path: 'privacy', component: Privacy, title: 'Privacy Policy — Seismic' },
+  { path: 'terms', component: Terms, title: 'Terms of Service — Seismic' },
   {
     path: 'projects',
     component: Projects,
