@@ -26,7 +26,6 @@ export const routes: Routes = [
   {
     path: 'docs',
     component: Docs,
-    canActivate: [authGuard],
     title: 'Docs — Seismic',
   },
   {

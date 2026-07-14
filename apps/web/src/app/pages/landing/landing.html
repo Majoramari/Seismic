@@ -1,72 +1,324 @@
 <div class="page landing-page">
-  <div class="container">
-    <section class="landing-hero">
+  <section class="landing-hero">
+    <div class="container">
       <svg class="landing-pulse" viewBox="0 0 800 100" preserveAspectRatio="none" aria-hidden="true">
         <path d="M0,50 L110,50 L135,15 L160,85 L185,50 L330,50 L355,25 L380,75 L405,50 L800,50" />
       </svg>
 
-      <span class="landing-eyebrow">Now tracking heartbeats</span>
-      <h1 class="landing-title">Your code has a pulse.<br />Seismic reads it.</h1>
+      <h1 class="landing-title">Your code speaks.<br />We listen.</h1>
       <p class="landing-subtitle">
-        A lightweight editor extension that turns every coding session into stats,
-        streaks, and a leaderboard you'll actually check.
+        Seismic turns your coding activity into private, useful stats across projects,
+        languages, editors, goals, and streaks.
       </p>
+
       <div class="landing-actions">
-        <a routerLink="/login" class="btn-primary">Get Started</a>
-        <a routerLink="/leaderboard" class="btn-ghost">Leaderboard</a>
+        <a routerLink="/login" class="btn-primary">Start tracking</a>
+        <a routerLink="/docs" class="btn-ghost">Read the docs</a>
       </div>
-    </section>
 
-    <section class="landing-section">
-      <h2 class="landing-section-title">Three parts. One signal.</h2>
-      <div class="landing-how-grid">
-        <div class="card">
-          <span class="landing-step-label">01 - Install</span>
-          <h3>Install the extension</h3>
-          <p class="text-muted">Add Seismic to VS Code or JetBrains and paste in your API key.</p>
+      <div class="landing-preview" aria-label="Dashboard preview">
+        <div class="landing-window-bar" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
         </div>
-        <div class="card">
-          <span class="landing-step-label">02 - Heartbeat</span>
-          <h3>Code as usual</h3>
-          <p class="text-muted">Every real file edit sends a quiet heartbeat with no setup and no noise.</p>
-        </div>
-        <div class="card">
-          <span class="landing-step-label">03 - Signal</span>
-          <h3>Watch the dashboard</h3>
-          <p class="text-muted">Heartbeats become stats, heatmaps, and leaderboard standing in real time.</p>
+        <div class="landing-preview-body">
+          <aside class="landing-preview-sidebar">
+            <div class="landing-preview-brand" aria-label="Seismic preview">
+              <img src="images/seismic-logo-small.png" alt="" />
+            </div>
+            @for (tab of previewTabs; track tab.id) {
+              <button
+                type="button"
+                [class.active]="activePreviewTab() === tab.id"
+                (click)="setPreviewTab(tab.id)"
+              >
+                {{ tab.label }}
+              </button>
+            }
+          </aside>
+          @if (easterEggActive()) {
+            <div class="landing-preview-main football-mode">
+              <div class="landing-football-scoreboard" aria-live="polite">
+                <span>Egypt</span>
+                <strong>
+                  <span class="landing-goal-score"><span class="landing-new-score">3</span></span>
+                  <span>3</span>
+                </strong>
+                <span>Argentina</span>
+              </div>
+              <div class="landing-football-field" aria-hidden="true">
+              </div>
+              <p class="landing-football-line">Don't win like Argentina; lose like Egypt.</p>
+            </div>
+          } @else {
+            <div class="landing-preview-main">
+              <p class="landing-preview-kicker">{{ preview().eyebrow }}</p>
+              <h2>{{ preview().title }}</h2>
+              <div class="landing-preview-grid">
+                @for (card of preview().cards; track card.label) {
+                  <div>
+                    <span>{{ card.label }}</span>
+                    <strong>{{ card.value }}</strong>
+                  </div>
+                }
+              </div>
+            </div>
+          }
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section class="landing-section">
-      <h2 class="landing-section-title">Everything the dashboard shows you</h2>
-      <div class="grid-2">
+  <section class="landing-band landing-band-split">
+    <div class="container landing-split">
+      <div>
+        <h2>Your coding data should belong to you</h2>
+        <p class="text-muted">
+          Seismic is built for developers who want insight without giving up control.
+          Keep it hosted, self-host it, or export your history when you need it.
+        </p>
+      </div>
+
+      <div class="landing-stack">
         <div class="card">
-          <h3>Stats that write themselves</h3>
-          <p class="text-muted">Daily, weekly, and per-language breakdowns without manual logging.</p>
+          <span class="landing-card-icon">
+            <lucide-angular [img]="DownloadIcon" [size]="18" />
+          </span>
+          <h3>No artificial lock-in</h3>
+          <p class="text-muted">Track across supported editors and keep your stats portable.</p>
         </div>
         <div class="card">
-          <h3>Streaks and heatmap</h3>
-          <p class="text-muted">See your activity at a glance, contribution-graph style.</p>
+          <span class="landing-card-icon">
+            <lucide-angular [img]="ShieldIcon" [size]="18" />
+          </span>
+          <h3>Privacy controls</h3>
+          <p class="text-muted">Hide projects, profile stats, badges, editors, and OS data from public views.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section">
+    <div class="container">
+      <h2 class="landing-section-title">Everything you need, nothing you don't.</h2>
+      <p class="landing-section-copy">
+        Detailed activity tracking for your development environment without manual timers.
+      </p>
+
+      <div class="landing-feature-grid">
+        <div class="card">
+          <span class="landing-card-icon">
+            <lucide-angular [img]="ClockIcon" [size]="18" />
+          </span>
+          <h3>Time tracking</h3>
+          <p class="text-muted">Automatic heartbeats start when you type and stop when you take a break.</p>
         </div>
         <div class="card">
-          <h3>Leaderboard</h3>
-          <p class="text-muted">Compare coding time with your team, friends, or the world.</p>
+          <span class="landing-card-icon">
+            <lucide-angular [img]="CodeIcon" [size]="18" />
+          </span>
+          <h3>Language stats</h3>
+          <p class="text-muted">See where your time goes across TypeScript, Go, Lua, Kotlin, and more.</p>
         </div>
         <div class="card">
+          <span class="landing-card-icon">
+            <lucide-angular [img]="ProjectIcon" [size]="18" />
+          </span>
+          <h3>Project insights</h3>
+          <p class="text-muted">Compare project time, repositories, recent commits, and last activity.</p>
+        </div>
+        <div class="card">
+          <span class="landing-card-icon">
+            <lucide-angular [img]="GoalIcon" [size]="18" />
+          </span>
           <h3>Goals</h3>
-          <p class="text-muted">Set a monthly coding goal and track your progress automatically.</p>
+          <p class="text-muted">Set daily, weekly, or monthly goals and track progress automatically.</p>
+        </div>
+        <div class="card">
+          <span class="landing-card-icon">
+            <lucide-angular [img]="TrophyIcon" [size]="18" />
+          </span>
+          <h3>Gamification</h3>
+          <p class="text-muted">Earn badges, build streaks, and make consistent coding feel visible.</p>
+        </div>
+        <div class="card">
+          <span class="landing-card-icon">
+            <lucide-angular [img]="OfflineIcon" [size]="18" />
+          </span>
+          <h3>Offline queueing</h3>
+          <p class="text-muted">Editor integrations retry failed heartbeats when the API is reachable again.</p>
+        </div>
+        <div class="card">
+          <span class="landing-card-icon">
+            <lucide-angular [img]="ChartIcon" [size]="18" />
+          </span>
+          <h3>Heatmaps and streaks</h3>
+          <p class="text-muted">See your coding rhythm over time with activity heatmaps and streak tracking.</p>
+        </div>
+        <div class="card">
+          <span class="landing-card-icon">
+            <lucide-angular [img]="TrophyIcon" [size]="18" />
+          </span>
+          <h3>Badges</h3>
+          <p class="text-muted">Unlock milestones for languages, time tracked, consistency, and profile progress.</p>
+        </div>
+        <div class="card">
+          <span class="landing-card-icon">
+            <lucide-angular [img]="MonitorIcon" [size]="18" />
+          </span>
+          <h3>Editor breakdowns</h3>
+          <p class="text-muted">Understand how your time splits across VS Code, JetBrains, Neovim, and more.</p>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section class="landing-cta">
-      <h2 class="landing-section-title">Start reading your own signal.</h2>
-      <p class="text-muted">Free, open, and running in under two minutes.</p>
-      <div class="landing-actions">
-        <a routerLink="/login" class="btn-primary">Get Started</a>
-        <a routerLink="/leaderboard" class="btn-ghost">Leaderboard</a>
+  <section class="landing-band">
+    <div class="container">
+      <h2 class="landing-section-title">Works where you work.</h2>
+      <p class="landing-section-copy">
+        Track time from the editors you already use.
+      </p>
+
+      <div class="landing-editor-grid">
+        <span>
+          <lucide-angular [img]="MonitorIcon" [size]="20" />
+          VS Code
+        </span>
+        <span>
+          <lucide-angular [img]="CodeIcon" [size]="20" />
+          JetBrains
+        </span>
+        <span>
+          <lucide-angular [img]="TerminalIcon" [size]="20" />
+          Neovim
+        </span>
       </div>
-    </section>
-  </div>
+    </div>
+  </section>
+
+  <section class="landing-section">
+    <div class="container">
+      <h2 class="landing-section-title">Start tracking in minutes.</h2>
+
+      <div class="landing-steps">
+        <div>
+          <span>
+            <lucide-angular [img]="ShieldIcon" [size]="16" />
+            01
+          </span>
+          <h3>Register</h3>
+          <p class="text-muted">Create an account and open your Seismic settings page.</p>
+        </div>
+        <div>
+          <span>
+            <lucide-angular [img]="DownloadIcon" [size]="16" />
+            02
+          </span>
+          <h3>Install an editor plugin</h3>
+          <p class="text-muted">Use VS Code, JetBrains, or Neovim and paste in your API key.</p>
+        </div>
+        <div>
+          <span>
+            <lucide-angular [img]="ChartIcon" [size]="16" />
+            03
+          </span>
+          <h3>Code normally</h3>
+          <p class="text-muted">Your dashboard fills in as real coding activity is recorded.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-band">
+    <div class="container">
+      <h2 class="landing-section-title">Frequently Asked Questions</h2>
+
+      <div class="landing-faq-grid">
+        <div>
+          <span class="landing-faq-icon">
+            <lucide-angular [img]="GithubIcon" [size]="16" />
+          </span>
+          <h3>Is this free?</h3>
+          <p class="text-muted">The project is open-source and can be self-hosted.</p>
+        </div>
+        <div>
+          <span class="landing-faq-icon">
+            <lucide-angular [img]="DownloadIcon" [size]="16" />
+          </span>
+          <h3>Can I import old data?</h3>
+          <p class="text-muted">Yes. Seismic includes WakaTime import support.</p>
+        </div>
+        <div>
+          <span class="landing-faq-icon">
+            <lucide-angular [img]="ShieldIcon" [size]="16" />
+          </span>
+          <h3>Is my code private?</h3>
+          <p class="text-muted">Seismic records activity metadata, not source code contents.</p>
+        </div>
+        <div>
+          <span class="landing-faq-icon">
+            <lucide-angular [img]="BookIcon" [size]="16" />
+          </span>
+          <h3>Can I self-host this?</h3>
+          <p class="text-muted">Yes. The API, web app, and editor integrations live in this repository.</p>
+        </div>
+        <div>
+          <span class="landing-faq-icon">
+            <lucide-angular [img]="TrophyIcon" [size]="16" />
+          </span>
+          <h3>How do badges work?</h3>
+          <p class="text-muted">Badges are awarded from activity milestones and can be hidden from your public profile.</p>
+        </div>
+        <div>
+          <span class="landing-faq-icon">
+            <lucide-angular [img]="MonitorIcon" [size]="16" />
+          </span>
+          <h3>Which editors are supported?</h3>
+          <p class="text-muted">Seismic currently supports VS Code, JetBrains IDEs, and Neovim.</p>
+        </div>
+        <div>
+          <span class="landing-faq-icon">
+            <lucide-angular [img]="OfflineIcon" [size]="16" />
+          </span>
+          <h3>What happens when I am offline?</h3>
+          <p class="text-muted">Editor integrations queue heartbeats and retry them later when the API is reachable.</p>
+        </div>
+        <div>
+          <span class="landing-faq-icon">
+            <lucide-angular [img]="GoalIcon" [size]="16" />
+          </span>
+          <h3>Can I set coding goals?</h3>
+          <p class="text-muted">Yes. Goals can target overall time, languages, or projects by day, week, or month.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-final-cta">
+    <div class="container">
+      <h2>Start tracking your code.</h2>
+      <p>Install an editor integration and let Seismic build your timeline automatically.</p>
+      <a routerLink="/login" class="btn-primary">Create free account</a>
+    </div>
+  </section>
+
+  <footer class="landing-footer">
+    <div class="container landing-footer-inner">
+      <div>
+        <strong class="landing-footer-brand">
+          <img src="images/seismic-logo-small.png" alt="" />
+          Seismic
+        </strong>
+        <p class="text-muted">Made with 🧡 in 🇪🇬.</p>
+      </div>
+
+      <nav aria-label="Footer navigation">
+        <a routerLink="/docs">Docs</a>
+        <a routerLink="/leaderboard">Leaderboard</a>
+        <a routerLink="/login">Sign in</a>
+      </nav>
+    </div>
+  </footer>
 </div>

@@ -91,26 +91,39 @@
       {{ selectedLink().label }}
     </a>
 
-    <div class="docs-key-box">
-      <div class="docs-key-label">
-        <lucide-angular [img]="KeyIcon" [size]="16" />
-        Your API key
+    @if (auth.isLoggedIn()) {
+      <div class="docs-key-box">
+        <div class="docs-key-label">
+          <lucide-angular [img]="KeyIcon" [size]="16" />
+          Your API key
+        </div>
+        <div class="docs-key-row">
+          <input
+            class="docs-key-input"
+            [type]="apiKeyVisible() ? 'text' : 'password'"
+            [value]="apiKey() || 'Loading...'"
+            readonly
+          />
+          <button type="button" class="docs-key-btn" (click)="toggleVisible()">
+            <lucide-angular [img]="apiKeyVisible() ? EyeOffIcon : EyeIcon" [size]="16" />
+          </button>
+          <button type="button" class="docs-key-btn" (click)="copyKey()">
+            <lucide-angular [img]="copied() ? CheckIcon : CopyIcon" [size]="16" />
+          </button>
+        </div>
+        <a routerLink="/settings" class="docs-key-link">Manage or regenerate your key in Settings -></a>
       </div>
-      <div class="docs-key-row">
-        <input
-          class="docs-key-input"
-          [type]="apiKeyVisible() ? 'text' : 'password'"
-          [value]="apiKey() || 'Loading…'"
-          readonly
-        />
-        <button type="button" class="docs-key-btn" (click)="toggleVisible()">
-          <lucide-angular [img]="apiKeyVisible() ? EyeOffIcon : EyeIcon" [size]="16" />
-        </button>
-        <button type="button" class="docs-key-btn" (click)="copyKey()">
-          <lucide-angular [img]="copied() ? CheckIcon : CopyIcon" [size]="16" />
-        </button>
+    } @else {
+      <div class="docs-key-box">
+        <div class="docs-key-label">
+          <lucide-angular [img]="KeyIcon" [size]="16" />
+          API key
+        </div>
+        <p class="docs-note docs-note-top">
+          Sign in to get your API key and connect your editor.
+        </p>
+        <a routerLink="/login" class="docs-key-link">Sign in to get your API key -></a>
       </div>
-      <a routerLink="/settings" class="docs-key-link">Manage or regenerate your key in Settings →</a>
-    </div>
+    }
   </div>
 </div>

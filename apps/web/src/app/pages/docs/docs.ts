@@ -14,6 +14,7 @@ import {
 import hljs from 'highlight.js/lib/core';
 import lua from 'highlight.js/lib/languages/lua';
 import { ApiService } from '../../core/api/api.service';
+import { AuthService } from '../../core/auth/auth.service';
 
 hljs.registerLanguage('lua', lua);
 
@@ -44,6 +45,7 @@ interface PluginLink {
 })
 export class Docs implements OnInit {
   private api = inject(ApiService);
+  readonly auth = inject(AuthService);
   private sanitizer = inject(DomSanitizer);
 
   readonly KeyIcon = KeyRound;
@@ -169,6 +171,8 @@ return {
   selectedLink = computed<PluginLink>(() => this.pluginLinks[this.selectedGroup()]);
 
   ngOnInit() {
+    if (!this.auth.isLoggedIn()) return;
+
     this.api.get<ApiKeyResponse>('/api/auth/apikey').subscribe({
       next: (data) => this.apiKey.set(data.apiKey),
       error: () => this.apiKey.set(''),
