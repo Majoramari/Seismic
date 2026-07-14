@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit
 class SeismicStartupActivity : ProjectActivity, DumbAware {
     override suspend fun execute(project: Project) {
         val heartbeat = HeartbeatService.getInstance()
+        heartbeat.syncProjectMetadata(project, forced = true)
 
         // Heartbeat on typing (subject to the 2 min rule). Uses a raw
         // AWT key listener rather than a DocumentListener, since

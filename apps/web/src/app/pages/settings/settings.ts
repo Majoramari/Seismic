@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { ToastService } from '../../core/toast/toast.service';
 import { CommonModule } from '@angular/common';
-import { KeyRound, LucideAngularModule, Shield, Target, User, Award, Download } from 'lucide-angular';
+import { Code2, KeyRound, LucideAngularModule, Shield, Target, User, Award, Download } from 'lucide-angular';
 import { badgeInfo } from '../../shared/badges';
 
 interface ApiKeyResponse {
@@ -18,6 +18,10 @@ interface PrivacySettings {
   hideEditor: boolean;
   hideLeaderboard: boolean;
   profilePublic: boolean;
+}
+
+interface EditorSettings {
+  useGitRootProjectName: boolean;
 }
 
 interface GoalData {
@@ -39,7 +43,7 @@ interface SettingsBadge {
   hidden: boolean;
 }
 
-type SettingsSection = 'apikey' | 'privacy' | 'goals' | 'badges' | 'account' | 'imports';
+type SettingsSection = 'apikey' | 'privacy' | 'editors' | 'goals' | 'badges' | 'account' | 'imports';
 type AccountSubTab = 'reset' | 'email' | 'delete';
 
 @Component({
@@ -58,6 +62,7 @@ export class Settings implements OnInit {
   readonly UserIcon = User;
   readonly AwardIcon = Award;
   readonly DownloadIcon = Download;
+  readonly CodeIcon = Code2;
 
   activeSection = signal<SettingsSection>('apikey');
   accountSubTab = signal<AccountSubTab>('email');
@@ -73,6 +78,9 @@ export class Settings implements OnInit {
   privacy = signal<PrivacySettings | null>(null);
   privacyDirty = signal(false);
   savingPrivacy = signal(false);
+
+  editorSettings = signal<EditorSettings | null>(null);
+  savingEditorSettings = signal(false);
 
   showDeleteConfirm = signal(false);
   deleteConfirmText = signal('');
@@ -108,6 +116,7 @@ export class Settings implements OnInit {
   ngOnInit() {
     this.loadApiKey();
     this.loadPrivacy();
+    this.loadEditorSettings();
     this.loadGoals();
     this.loadFilters();
     this.loadCurrentUser();
@@ -190,6 +199,33 @@ export class Settings implements OnInit {
       error: () => {
         this.savingPrivacy.set(false);
         this.toast.error('Failed to save settings');
+      },
+    });
+  }
+
+  private loadEditorSettings() {
+    this.api.get<EditorSettings>('/api/settings/editor').subscribe({
+      next: (data) => this.editorSettings.set(data),
+      error: () => this.toast.error('Failed to load editor settings'),
+    });
+  }
+
+  toggleEditorSetting(key: keyof EditorSettings, value: boolean) {
+    const current = this.editorSettings();
+    if (!current) return;
+
+    const next = { ...current, [key]: value };
+    this.editorSettings.set(next);
+    this.savingEditorSettings.set(true);
+    this.api.post('/api/settings/editor', next).subscribe({
+      next: () => {
+        this.savingEditorSettings.set(false);
+        this.toast.success('Editor settings saved');
+      },
+      error: () => {
+        this.editorSettings.set(current);
+        this.savingEditorSettings.set(false);
+        this.toast.error('Failed to save editor settings');
       },
     });
   }

@@ -40,8 +40,17 @@ type ProjectSync struct {
 	Commits      []ProjectCommitSync `json:"commits"`
 }
 
-func GetProjectOverviews(ctx context.Context, pool *pgxpool.Pool, userID string, archived bool, rangeSQL string) ([]ProjectOverview, error) {
+func GetProjectOverviews(ctx context.Context, pool *pgxpool.Pool, userID string, archived bool, rangeSQL string, limit int, offset int) ([]ProjectOverview, error) {
 	heartbeatRangeSQL := strings.ReplaceAll(rangeSQL, "start_time", "received_at")
+	if limit <= 0 {
+		limit = 12
+	}
+	if limit > 50 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
 
 	rows, err := pool.Query(ctx, `
 		WITH project_names AS (
@@ -88,7 +97,8 @@ func GetProjectOverviews(ctx context.Context, pool *pgxpool.Pool, userID string,
 			ON ps.user_id = $1 AND ps.project_name = pn.project
 		WHERE COALESCE(ps.archived, false) = $2
 		ORDER BY COALESCE(st.seconds, 0) DESC, COALESCE(st.last_worked_at, hm.last_heartbeat_at) DESC
-	`, userID, archived)
+		LIMIT $3 OFFSET $4
+	`, userID, archived, limit, offset)
 	if err != nil {
 		return nil, err
 	}

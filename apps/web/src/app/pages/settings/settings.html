@@ -19,6 +19,11 @@
         <lucide-angular [img]="AwardIcon" [size]="18" />
         Badges
       </button>
+      <button class="settings-sidebar-item" [class.active]="activeSection() === 'editors'"
+              (click)="setSection('editors')">
+        <lucide-angular [img]="CodeIcon" [size]="18" />
+        Editors
+      </button>
       <button class="settings-sidebar-item" [class.active]="activeSection() === 'goals'" (click)="setSection('goals')">
         <lucide-angular [img]="TargetIcon" [size]="18" />
         Goals
@@ -192,6 +197,33 @@
           >
             {{ savingPrivacy() ? 'Saving...' : 'Save changes' }}
           </button>
+        </div>
+      }
+
+      @if (activeSection() === 'editors' && editorSettings()) {
+        <div class="settings-pills">
+          <span class="settings-pill active">Project tracking</span>
+        </div>
+
+        <div class="card">
+          <h2 class="settings-section-title">Editors</h2>
+          <p class="text-muted">Control how editor extensions name and sync projects.</p>
+
+          <div class="privacy-row">
+            <div>
+              <p class="privacy-label">Use Git root project names</p>
+              <p class="text-muted text-sm">Group nested monorepo folders under the directory that contains .git</p>
+            </div>
+            <label class="switch">
+              <input
+                type="checkbox"
+                [checked]="editorSettings()!.useGitRootProjectName"
+                [disabled]="savingEditorSettings()"
+                (change)="toggleEditorSetting('useGitRootProjectName', $any($event.target).checked)"
+              />
+              <span class="switch-track"></span>
+            </label>
+          </div>
         </div>
       }
 

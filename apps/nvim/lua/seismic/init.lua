@@ -4,8 +4,13 @@ function M.setup(opts)
 	require("seismic.config").setup(opts)
 	require("seismic.commands").setup()
 
+	local config = require("seismic.config")
 	local heartbeat = require("seismic.heartbeat")
+	local project_sync = require("seismic.project_sync")
 	local augroup = vim.api.nvim_create_augroup("Seismic", { clear = true })
+
+	config.refresh_editor_settings()
+	project_sync.sync(true)
 
 	vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
 		group = augroup,
@@ -25,6 +30,7 @@ function M.setup(opts)
 		group = augroup,
 		callback = function(args)
 			heartbeat.handle_activity(args.buf, true)
+			project_sync.sync(false)
 		end,
 	})
 
@@ -32,6 +38,7 @@ function M.setup(opts)
 		group = augroup,
 		callback = function(args)
 			heartbeat.handle_activity(args.buf, true)
+			project_sync.sync(true)
 		end,
 	})
 

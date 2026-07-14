@@ -1,5 +1,6 @@
 .projects-page {
   max-width: 1180px;
+  margin: 0 auto;
 }
 
 .projects-header {
@@ -171,31 +172,57 @@
   font-size: var(--text-xl);
 }
 
-.project-card-loading {
+.projects-loading {
+  min-height: 360px;
   position: relative;
-  overflow: hidden;
+  display: grid;
+  place-items: center;
 }
 
-.project-card-loading::after {
-  content: "";
+.projects-loading-more {
+  min-height: var(--space-8);
+}
+
+.projects-load-more {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-6) 0 0;
+}
+
+.projects-loading img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  filter: grayscale(1) brightness(0.7);
+  opacity: 0.58;
+}
+
+.projects-loading span {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(
+  width: 72px;
+  height: 72px;
+  background-image: repeating-linear-gradient(
     90deg,
-    transparent,
-    color-mix(in srgb, var(--color-text) 6%, transparent),
-    transparent
+    transparent 0,
+    transparent 34%,
+    color-mix(in srgb, var(--color-accent-light) 28%, transparent) 46%,
+    transparent 58%,
+    transparent 100%
   );
-  animation: project-card-loading 1.2s infinite;
+  background-size: 220% 100%;
+  -webkit-mask: url("/images/seismic-logo.png") center / contain no-repeat;
+  mask: url("/images/seismic-logo.png") center / contain no-repeat;
+  animation: projects-logo-wave 1.35s linear infinite;
+  pointer-events: none;
 }
 
-@keyframes project-card-loading {
+@keyframes projects-logo-wave {
   from {
-    transform: translateX(-100%);
+    background-position: 0 0;
   }
 
   to {
-    transform: translateX(100%);
+    background-position: -220% 0;
   }
 }
 

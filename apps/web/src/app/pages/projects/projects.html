@@ -3,7 +3,7 @@
     <div>
       <h1>My Projects</h1>
       <p class="text-muted">
-        {{ formatSeconds(totalSeconds()) }} across {{ tab() }} projects.
+        Showing {{ formatSeconds(totalSeconds()) }} across {{ projects().length }} loaded {{ tab() }} projects.
       </p>
     </div>
 
@@ -34,10 +34,9 @@
   </div>
 
   @if (loading()) {
-    <div class="projects-grid">
-      @for (item of [1, 2, 3, 4]; track item) {
-        <div class="project-card project-card-loading"></div>
-      }
+    <div class="projects-loading">
+      <img src="images/seismic-logo.png" alt="" />
+      <span aria-hidden="true"></span>
     </div>
   } @else if (projects().length === 0) {
     <div class="projects-empty">
@@ -47,17 +46,17 @@
     </div>
   } @else {
     <div class="projects-grid">
-      @for (project of projects(); track project.project) {
+      @for (project of projects(); track project.project + '-' + $index) {
         <article class="project-card">
           <div class="project-card-top">
             <div class="project-title-row">
               <lucide-angular [img]="FolderGitIcon" [size]="18" />
-              <h2>{{ project.project }}</h2>
+              <h2>{{ projectName(project) }}</h2>
             </div>
             <strong>{{ formatSeconds(project.seconds) }}</strong>
           </div>
 
-          <div class="project-actions" [attr.aria-label]="project.project + ' links and actions'">
+          <div class="project-actions" [attr.aria-label]="projectName(project) + ' links and actions'">
             @if (project.repoUrl) {
               <a class="project-icon-button" [href]="project.repoUrl" target="_blank" rel="noreferrer" title="Open Git repository">
                 <lucide-angular [img]="GithubIcon" [size]="17" />
@@ -109,5 +108,15 @@
         </article>
       }
     </div>
+
+    @if (loadingMore()) {
+      <div class="projects-loading-more" aria-live="polite"></div>
+    } @else if (hasMore()) {
+      <div class="projects-load-more">
+        <button type="button" class="btn-ghost" (click)="loadProjects(false)">
+          Load more
+        </button>
+      </div>
+    }
   }
 </div>

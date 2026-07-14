@@ -21,7 +21,7 @@ local function build_payload(bufnr)
 
 	return {
 		file = vim.api.nvim_buf_get_name(bufnr),
-		project = detector.detect_project(),
+		project = detector.detect_project(config.use_git_root_project_name()),
 		language = detector.language_id(bufnr),
 		editor = "neovim",
 		branch = detector.detect_branch(),

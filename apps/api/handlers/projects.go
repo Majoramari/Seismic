@@ -13,16 +13,18 @@ type ProjectsHandler struct {
 }
 
 type ProjectArchiveRequest struct {
-	Project  string `json:"project"`
-	Archived bool   `json:"archived"`
+	Project  *string `json:"project"`
+	Archived bool    `json:"archived"`
 }
 
 func (h *ProjectsHandler) GetProjects(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(string)
 	rangeParam := c.Query("range", "all")
 	archived := c.Query("archived", "false") == "true"
+	limit := c.QueryInt("limit", 12)
+	offset := c.QueryInt("offset", 0)
 
-	projects, err := models.GetProjectOverviews(c.Context(), h.Pool, userID, archived, models.RangeSQL(rangeParam))
+	projects, err := models.GetProjectOverviews(c.Context(), h.Pool, userID, archived, models.RangeSQL(rangeParam), limit, offset)
 	if err != nil {
 		return helpers.Error(c, fiber.StatusInternalServerError, "Failed to fetch projects")
 	}
@@ -56,11 +58,11 @@ func (h *ProjectsHandler) SetArchived(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return helpers.Error(c, fiber.StatusBadRequest, "Invalid request body")
 	}
-	if req.Project == "" {
+	if req.Project == nil {
 		return helpers.Error(c, fiber.StatusBadRequest, "Project is required")
 	}
 
-	if err := models.SetProjectArchived(c.Context(), h.Pool, userID, req.Project, req.Archived); err != nil {
+	if err := models.SetProjectArchived(c.Context(), h.Pool, userID, *req.Project, req.Archived); err != nil {
 		return helpers.Error(c, fiber.StatusInternalServerError, "Failed to update project")
 	}
 

@@ -43,6 +43,32 @@ func (h *SettingsHandler) GetBadges(c *fiber.Ctx) error {
 	return helpers.Success(c, "Badges retrieved", badges)
 }
 
+func (h *SettingsHandler) GetEditorSettings(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+
+	settings, err := models.GetEditorSettings(c.Context(), h.Pool, userID)
+	if err != nil {
+		return helpers.Error(c, fiber.StatusInternalServerError, "Failed to load editor settings")
+	}
+
+	return helpers.Success(c, "Editor settings retrieved", settings)
+}
+
+func (h *SettingsHandler) UpdateEditorSettings(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+
+	var settings models.EditorSettings
+	if err := c.BodyParser(&settings); err != nil {
+		return helpers.Error(c, fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	if err := models.UpdateEditorSettings(c.Context(), h.Pool, userID, settings); err != nil {
+		return helpers.Error(c, fiber.StatusInternalServerError, "Failed to update editor settings")
+	}
+
+	return helpers.Success(c, "Editor settings updated", nil)
+}
+
 // UpdatePrivacy godoc
 // @Summary      Update privacy settings
 // @Tags         settings

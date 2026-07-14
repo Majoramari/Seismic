@@ -86,11 +86,12 @@ export class HeartbeatService {
     private async buildPayload(document: vscode.TextDocument): Promise<HeartbeatPayload> {
         const editor = vscode.window.activeTextEditor;
 
-        const metadata = await detector.detectProjectMetadata(document);
+        const useGitRootProjectName = config.useGitRootProjectName();
+        const metadata = await detector.detectProjectMetadata(document, useGitRootProjectName);
 
         return {
             file: document.fileName,
-            project: detector.detectProject(document),
+            project: await detector.detectProjectName(document, useGitRootProjectName),
             language: document.languageId,
             editor: 'vscode',
             branch: await detector.detectBranch(),

@@ -15,6 +15,7 @@ export interface TimelineDay {
 interface DisplayProject extends TimelineProject {
   percentage: number;
   color: string;
+  label: string;
 }
 
 interface DisplayBar extends TimelineDay {
@@ -91,6 +92,7 @@ export class TimelineChart {
         ...project,
         percentage: total > 0 ? (project.seconds / total) * 100 : 0,
         color: this.projectColor(project.project),
+        label: project.project.trim() || 'Unnamed project',
       }));
   }
 

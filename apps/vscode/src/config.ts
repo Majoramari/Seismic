@@ -16,6 +16,7 @@ import { readGlobalConfig, writeGlobalConfig } from './globalConfig';
 const SECTION = 'seismic';
 
 let defaultApiUrl = getDefaultApiUrl();
+let useGitRootProjectNameValue = true;
 
 export function configureDefaultApiUrl(isDevelopment: boolean): void {
   defaultApiUrl = getDefaultApiUrl(isDevelopment);
@@ -53,6 +54,34 @@ export function isEnabled(): boolean {
 
 export function isStatusBarEnabled(): boolean {
   return vscode.workspace.getConfiguration(SECTION).get<boolean>('statusBarEnabled', true);
+}
+
+export function useGitRootProjectName(): boolean {
+  return useGitRootProjectNameValue;
+}
+
+export async function refreshEditorSettings(): Promise<void> {
+  if (!hasApiKey()) return;
+
+  try {
+    const res = await fetch(`${getApiUrl()}/api/editor/settings`, {
+      headers: {
+        Authorization: `Bearer ${getApiKey()}`,
+      },
+    });
+    if (!res.ok) return;
+
+    const body = (await res.json()) as {
+      data?: {
+        useGitRootProjectName?: boolean;
+      };
+    };
+    if (typeof body.data?.useGitRootProjectName === 'boolean') {
+      useGitRootProjectNameValue = body.data.useGitRootProjectName;
+    }
+  } catch {
+    // Keep the last known/default value if settings cannot be loaded.
+  }
 }
 
 export function hasApiKey(): boolean {

@@ -47,9 +47,13 @@ func Setup(app *fiber.App, authHandler *handlers.AuthHandler, heartbeatHandler *
 	app.Get("/api/leaderboard", middleware.OptionalAuth(pool, jwtSecret), leaderboardHandler.GetLeaderboard)
 
 	settingsHandler := &handlers.SettingsHandler{Pool: pool}
+	app.Get("/api/editor/settings", middleware.RequireAPIKey(pool), settingsHandler.GetEditorSettings)
+
 	settings := app.Group("/api/settings", middleware.RequireAuth(jwtSecret))
 	settings.Get("/privacy", settingsHandler.GetPrivacy)
 	settings.Get("/badges", settingsHandler.GetBadges)
+	settings.Get("/editor", settingsHandler.GetEditorSettings)
+	settings.Post("/editor", settingsHandler.UpdateEditorSettings)
 	settings.Post("/privacy", settingsHandler.UpdatePrivacy)
 	settings.Post("/reset-timers", settingsHandler.ResetTimers)
 	settings.Post("/account", settingsHandler.DeleteAccount)

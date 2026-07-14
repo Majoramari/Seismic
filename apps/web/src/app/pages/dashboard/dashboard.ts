@@ -26,6 +26,8 @@ interface DashboardData {
   editors: { editor: string; seconds: number }[];
   os: { os: string; seconds: number }[];
   projects: ProjectStat[];
+  timeline: TimelineDay[];
+  goals: GoalData[];
 }
 
 interface HeatmapDay {
@@ -66,7 +68,6 @@ export class Dashboard implements OnInit {
 
   range = signal<RangeOption>('week');
   loading = signal(true);
-  timelineLoading = signal(true);
 
   stats = signal<StatsSummary | null>(null);
   heatmapData = signal<HeatmapDay[]>([]);
@@ -79,20 +80,11 @@ export class Dashboard implements OnInit {
 
   ngOnInit() {
     this.loadAll();
-    this.loadTimeline();
-    this.loadGoals();
   }
 
   setRange(range: RangeOption) {
     this.range.set(range);
     this.loadAll();
-  }
-
-  private loadGoals() {
-    this.api.get<GoalData[]>('/api/goals').subscribe({
-      next: (data) => this.goals.set(data ?? []),
-      error: () => {},
-    });
   }
 
   private loadAll() {
@@ -123,29 +115,13 @@ export class Dashboard implements OnInit {
             })),
           );
           this.projectData.set(data.projects ?? []);
+          this.timelineData.set(data.timeline ?? []);
+          this.goals.set(data.goals ?? []);
           this.loading.set(false);
         },
         error: (err) => {
           console.error('Failed to load dashboard after retries:', err);
           this.loading.set(false);
-        },
-      });
-  }
-
-  private loadTimeline() {
-    this.timelineLoading.set(true);
-    this.api
-      .get<TimelineDay[]>('/api/stats/timeline')
-      .pipe(retry({ count: 2, delay: (_, retryIndex) => timer(retryIndex * 500) }))
-      .subscribe({
-        next: (data) => {
-          this.timelineData.set(data ?? []);
-          this.timelineLoading.set(false);
-        },
-        error: (err) => {
-          console.error('Failed to load project timeline after retries:', err);
-          this.timelineData.set([]);
-          this.timelineLoading.set(false);
         },
       });
   }

@@ -8,6 +8,7 @@ export interface ProjectStat {
 interface DisplayBar extends ProjectStat {
   widthPercent: number;
   formattedTime: string;
+  label: string;
 }
 
 @Component({
@@ -28,6 +29,7 @@ export class ProjectBars {
       ...item,
       widthPercent: max > 0 ? (item.seconds / max) * 100 : 0,
       formattedTime: this.formatSeconds(item.seconds),
+      label: item.project.trim() || 'Unnamed project',
     }));
   });
 

@@ -352,7 +352,7 @@ func GetTimeline(ctx context.Context, pool *pgxpool.Pool, userID string, days in
 		WITH ordered_heartbeats AS (
 			SELECT
 				user_id,
-				COALESCE(NULLIF(project, ''), 'Unknown project') AS project,
+				project,
 				to_timestamp(time / 1000.0) AS heartbeat_time,
 				time,
 				LAG(time) OVER (PARTITION BY user_id, project ORDER BY time) AS previous_time

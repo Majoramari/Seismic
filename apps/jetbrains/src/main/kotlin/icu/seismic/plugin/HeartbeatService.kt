@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 private const val HEARTBEAT_INTERVAL_MS = 30 * 1000L
+private const val PROJECT_SYNC_INTERVAL_MS = 15 * 1000L
 private val JSON = "application/json".toMediaType()
 
 private const val MAX_KEYSTROKE_EDIT_LENGTH = 200
@@ -32,6 +33,9 @@ class HeartbeatService {
 
     @Volatile
     private var lastFile: String? = null
+
+    @Volatile
+    private var lastProjectSyncTime = 0L
 
     @Volatile
     private var hasShownInvalidKeyWarning = false
@@ -75,9 +79,13 @@ class HeartbeatService {
         val keystrokes = keystrokeCount.getAndSet(0)
 
         ApplicationManager.getApplication().executeOnPooledThread {
+            SeismicSettings.refreshEditorSettings(client, gson)
+            val useGitRootProjectName = SeismicSettings.useGitRootProjectName()
+            syncProjectMetadata(project, forced)
+
             val payload = HeartbeatPayload(
                 file = filePath,
-                project = Detector.detectProject(project),
+                project = Detector.detectProject(project, useGitRootProjectName),
                 language = Detector.languageId(file),
                 editor = Detector.detectEditorName(),
                 branch = Detector.detectBranch(project),
@@ -90,6 +98,34 @@ class HeartbeatService {
                 time = System.currentTimeMillis()
             )
             send(payload)
+        }
+    }
+
+    fun syncProjectMetadata(project: Project, forced: Boolean = false) {
+        if (!SeismicSettings.isEnabled()) return
+        if (!SeismicSettings.hasApiKey()) return
+
+        val now = System.currentTimeMillis()
+        if (!forced && now - lastProjectSyncTime < PROJECT_SYNC_INTERVAL_MS) return
+
+        SeismicSettings.refreshEditorSettings(client, gson)
+        val payload = Detector.detectProjectMetadata(project, SeismicSettings.useGitRootProjectName()) ?: return
+        if (payload.repoUrl == null && payload.websiteUrl == null && payload.commits.isEmpty()) return
+
+        lastProjectSyncTime = now
+        try {
+            val body = gson.toJson(payload).toRequestBody(JSON)
+            val request = Request.Builder()
+                .url("${SeismicSettings.getApiUrl()}/api/projects/sync")
+                .post(body)
+                .addHeader("Authorization", "Bearer ${SeismicSettings.getApiKey()}")
+                .build()
+
+            client.newCall(request).execute().use { response ->
+                if (response.code == 401) notifyInvalidKey()
+            }
+        } catch (_: Exception) {
+            // Project metadata sync is best-effort; heartbeat queue still handles time data.
         }
     }
 

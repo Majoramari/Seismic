@@ -39,7 +39,11 @@ export class ProjectSyncService {
     const lastSync = this.lastSyncByFolder.get(folderPath) ?? 0;
     if (!force && Date.now() - lastSync < MIN_SYNC_INTERVAL_MS) return;
 
-    const metadata = await detector.detectWorkspaceProjectMetadata(folder);
+    await config.refreshEditorSettings();
+    const metadata = await detector.detectWorkspaceProjectMetadata(
+      folder,
+      config.useGitRootProjectName(),
+    );
     const payload: ProjectSyncPayload = {
       project: metadata.project ?? folder.name,
       repoUrl: metadata.repoUrl,

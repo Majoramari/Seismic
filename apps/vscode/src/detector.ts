@@ -42,6 +42,19 @@ export function detectProject(document: vscode.TextDocument): string {
   return parts[parts.length - 1] || 'unknown';
 }
 
+export async function detectProjectName(
+  document: vscode.TextDocument,
+  useGitRootProjectName = false,
+): Promise<string> {
+  const folder = getVscode().workspace.getWorkspaceFolder(document.uri);
+  if (!folder) return detectProject(document);
+
+  if (!useGitRootProjectName) return folder.name;
+
+  const gitRoot = await detectGitRoot(folder.uri.fsPath);
+  return gitRoot ? path.basename(gitRoot) : folder.name;
+}
+
 export async function detectBranch(): Promise<string | undefined> {
   try {
     const gitExtension = getVscode().extensions.getExtension('vscode.git');
@@ -60,25 +73,49 @@ export async function detectBranch(): Promise<string | undefined> {
   }
 }
 
-export async function detectProjectMetadata(document: vscode.TextDocument): Promise<ProjectMetadata> {
+export async function detectProjectMetadata(
+  document: vscode.TextDocument,
+  useGitRootProjectName = false,
+): Promise<ProjectMetadata> {
   const workspaceFolder = getVscode().workspace.getWorkspaceFolder(document.uri);
   if (!workspaceFolder) return {};
 
-  return detectWorkspaceProjectMetadata(workspaceFolder);
+  return detectWorkspaceProjectMetadata(workspaceFolder, useGitRootProjectName);
 }
 
 export async function detectWorkspaceProjectMetadata(
   workspaceFolder: vscode.WorkspaceFolder,
+  useGitRootProjectName = false,
 ): Promise<ProjectMetadata> {
   const workspacePath = workspaceFolder.uri.fsPath;
+  const projectPath = useGitRootProjectName
+    ? (await detectGitRoot(workspacePath)) ?? workspacePath
+    : workspacePath;
+
   const [repoUrl, websiteUrl, commits] = await Promise.all([
-    detectRepoUrl(workspacePath),
-    detectWebsiteUrl(workspacePath),
-    detectRecentCommits(workspacePath),
+    detectRepoUrl(projectPath),
+    detectWebsiteUrl(projectPath),
+    detectRecentCommits(projectPath),
   ]);
   const lastCommitAt = commits[0]?.committedAt;
 
-  return { project: workspaceFolder.name, repoUrl, websiteUrl, lastCommitAt, commits };
+  return {
+    project: path.basename(projectPath) || workspaceFolder.name,
+    repoUrl,
+    websiteUrl,
+    lastCommitAt,
+    commits,
+  };
+}
+
+async function detectGitRoot(workspacePath: string): Promise<string | undefined> {
+  try {
+    const { stdout } = await execFileAsync('git', ['-C', workspacePath, 'rev-parse', '--show-toplevel']);
+    const gitRoot = stdout.trim();
+    return gitRoot || undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 async function detectRepoUrl(workspacePath: string): Promise<string | undefined> {

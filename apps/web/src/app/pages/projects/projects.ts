@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, HostListener, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   Archive,
@@ -48,6 +48,7 @@ const LABEL_OVERRIDES = new Map<string, string>([
   ['go', 'Go'],
   ['golang', 'Go'],
 ]);
+const PROJECT_PAGE_SIZE = 6;
 
 @Component({
   selector: 'app-projects',
@@ -71,6 +72,8 @@ export class Projects implements OnInit {
   range = signal<RangeOption>('all');
   tab = signal<ProjectTab>('active');
   loading = signal(true);
+  loadingMore = signal(false);
+  hasMore = signal(true);
   projects = signal<ProjectOverview[]>([]);
   updating = signal<string | null>(null);
 
@@ -85,12 +88,19 @@ export class Projects implements OnInit {
   setTab(tab: ProjectTab) {
     if (this.tab() === tab) return;
     this.tab.set(tab);
-    this.loadProjects();
+    this.loadProjects(true);
   }
 
   setRange(range: RangeOption) {
     this.range.set(range);
-    this.loadProjects();
+    this.loadProjects(true);
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll() {
+    const scrollPosition = window.scrollY + window.innerHeight;
+    const threshold = document.documentElement.scrollHeight - 600;
+    if (scrollPosition >= threshold) this.loadProjects(false);
   }
 
   toggleArchive(project: ProjectOverview) {
@@ -113,25 +123,53 @@ export class Projects implements OnInit {
       });
   }
 
-  loadProjects() {
-    this.loading.set(true);
+  projectName(project: ProjectOverview): string {
+    return project.project.trim() || 'Unnamed project';
+  }
+
+  loadProjects(reset = true) {
+    if (!reset && (!this.hasMore() || this.loading() || this.loadingMore())) return;
+
+    if (reset) {
+      this.projects.set([]);
+      this.hasMore.set(true);
+      this.loading.set(true);
+    } else {
+      this.loadingMore.set(true);
+    }
+
     this.api
       .get<ProjectOverview[]>('/api/projects', {
         range: this.range(),
         archived: this.tab() === 'archived' ? 'true' : 'false',
+        limit: String(PROJECT_PAGE_SIZE),
+        offset: String(reset ? 0 : this.projects().length),
       })
       .pipe(retry({ count: 2, delay: (_, retryIndex) => timer(retryIndex * 500) }))
       .subscribe({
         next: (projects) => {
-          this.projects.set(projects ?? []);
+          const nextProjects = projects ?? [];
+          this.projects.set(reset ? nextProjects : [...this.projects(), ...nextProjects]);
+          this.hasMore.set(nextProjects.length === PROJECT_PAGE_SIZE);
           this.loading.set(false);
+          this.loadingMore.set(false);
+          this.loadMoreIfPageDoesNotScroll();
         },
         error: () => {
-          this.projects.set([]);
+          if (reset) this.projects.set([]);
           this.loading.set(false);
+          this.loadingMore.set(false);
           this.toast.error('Could not load projects');
         },
       });
+  }
+
+  private loadMoreIfPageDoesNotScroll() {
+    window.setTimeout(() => {
+      if (!this.hasMore() || this.loading() || this.loadingMore()) return;
+      const pageDoesNotScroll = document.documentElement.scrollHeight <= window.innerHeight + 80;
+      if (pageDoesNotScroll) this.loadProjects(false);
+    });
   }
 
   formatSeconds(seconds: number): string {

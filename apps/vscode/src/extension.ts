@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as config from './config';
 import { HeartbeatService } from './heartbeat';
+import { ProjectSyncService } from './projectSync';
 import { StatusBarManager } from './statusbar';
 
 /**
@@ -12,7 +13,10 @@ export function activate(context: vscode.ExtensionContext) {
     config.configureDefaultApiUrl(context.extensionMode === vscode.ExtensionMode.Development);
 
     const heartbeat = new HeartbeatService();
+    const projectSync = new ProjectSyncService();
     const statusBar = new StatusBarManager();
+
+    void config.refreshEditorSettings().finally(() => projectSync.syncWorkspaceFolders(true));
 
     // Every one of these just records "something happened" — none of
     // them send a network request directly. heartbeat.start() below is
@@ -42,6 +46,15 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.workspace.onDidSaveTextDocument((doc) => {
             heartbeat.noteActivity(doc);
+            void projectSync.syncDocument(doc, true);
+        }),
+    );
+
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeWorkspaceFolders((event) => {
+            for (const folder of event.added) {
+                void projectSync.syncWorkspaceFolder(folder, true);
+            }
         }),
     );
 
@@ -64,8 +77,10 @@ export function activate(context: vscode.ExtensionContext) {
             });
             if (key) {
                 await config.setApiKey(key);
+                await config.refreshEditorSettings();
                 vscode.window.showInformationMessage('Seismic: API key saved!');
                 statusBar.refresh();
+                void projectSync.syncWorkspaceFolders(true);
             }
         }),
     );

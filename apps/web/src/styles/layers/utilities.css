@@ -25,3 +25,47 @@
 .mb-2 {
   margin-bottom: var(--space-2);
 }
+
+.seismic-logo-loader {
+  min-height: 280px;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.seismic-logo-loader img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  filter: grayscale(1) brightness(0.7);
+  opacity: 0.58;
+}
+
+.seismic-logo-loader span {
+  position: absolute;
+  width: 72px;
+  height: 72px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 34%,
+    color-mix(in srgb, var(--color-accent-light) 28%, transparent) 46%,
+    transparent 58%,
+    transparent 100%
+  );
+  background-size: 220% 100%;
+  -webkit-mask: url("/images/seismic-logo.png") center / contain no-repeat;
+  mask: url("/images/seismic-logo.png") center / contain no-repeat;
+  animation: seismic-logo-loader-wave 1.35s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes seismic-logo-loader-wave {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: -220% 0;
+  }
+}

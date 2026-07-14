@@ -1,7 +1,8 @@
 <div class="page profile-page">
   @if (loading()) {
-    <div class="card profile-message">
-      Loading profile...
+    <div class="seismic-logo-loader" aria-label="Loading profile">
+      <img src="images/seismic-logo.png" alt="" />
+      <span aria-hidden="true"></span>
     </div>
   } @else if (notFound() || !profile()) {
     <div class="card profile-message">

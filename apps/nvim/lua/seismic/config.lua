@@ -6,6 +6,7 @@ M.options = {
 	api_url = "https://correct-wolverine-majoramari-6049fd71.koyeb.app",
 	enabled = true,
 	statusline_enabled = true,
+	use_git_root_project_name = true,
 }
 
 function M.setup(opts)
@@ -34,6 +35,36 @@ end
 
 function M.is_enabled()
 	return M.options.enabled
+end
+
+function M.use_git_root_project_name()
+	return M.options.use_git_root_project_name
+end
+
+function M.refresh_editor_settings()
+	if not M.has_api_key() then
+		return
+	end
+
+	vim.system({
+		"curl",
+		"-s",
+		"-H",
+		"Authorization: Bearer " .. M.get_api_key(),
+		M.get_api_url() .. "/api/editor/settings",
+	}, { text = true }, function(result)
+		if result.code ~= 0 or result.stdout == "" then
+			return
+		end
+
+		local ok, body = pcall(vim.json.decode, result.stdout)
+		if not ok or type(body) ~= "table" or type(body.data) ~= "table" then
+			return
+		end
+		if type(body.data.useGitRootProjectName) == "boolean" then
+			M.options.use_git_root_project_name = body.data.useGitRootProjectName
+		end
+	end)
 end
 
 function M.set_enabled(value)

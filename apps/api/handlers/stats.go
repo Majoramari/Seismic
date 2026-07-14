@@ -20,6 +20,7 @@ type DashboardData struct {
 	OS        []models.OSStat       `json:"os"`
 	Projects  []models.ProjectStat  `json:"projects"`
 	Timeline  []models.TimelineDay  `json:"timeline"`
+	Goals     []models.Goal         `json:"goals"`
 }
 
 // GetSummary godoc
@@ -189,6 +190,11 @@ func (h *StatsHandler) GetDashboard(c *fiber.Ctx) error {
 		return helpers.Error(c, fiber.StatusInternalServerError, "Failed to fetch dashboard data")
 	}
 
+	goals, err := models.GetActiveGoalsWithProgress(ctx, h.Pool, userID)
+	if err != nil {
+		return helpers.Error(c, fiber.StatusInternalServerError, "Failed to fetch dashboard data")
+	}
+
 	return helpers.Success(c, "Dashboard data retrieved", DashboardData{
 		Summary:   summary,
 		Heatmap:   heatmap,
@@ -197,5 +203,6 @@ func (h *StatsHandler) GetDashboard(c *fiber.Ctx) error {
 		OS:        osStats,
 		Projects:  projects,
 		Timeline:  timeline,
+		Goals:     goals,
 	})
 }
