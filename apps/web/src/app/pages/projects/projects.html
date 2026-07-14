@@ -1,0 +1,113 @@
+<div class="page projects-page">
+  <div class="projects-header">
+    <div>
+      <h1>My Projects</h1>
+      <p class="text-muted">
+        {{ formatSeconds(totalSeconds()) }} across {{ tab() }} projects.
+      </p>
+    </div>
+
+    <div class="projects-controls">
+      <div class="segmented" aria-label="Project status">
+        <button class="segmented-option" [class.active]="tab() === 'active'" (click)="setTab('active')">
+          Active
+        </button>
+        <button
+          class="segmented-option"
+          [class.active]="tab() === 'archived'"
+          (click)="setTab('archived')"
+        >
+          Archived
+        </button>
+      </div>
+
+      <label class="projects-range">
+        <span>Date Range</span>
+        <select [ngModel]="range()" (ngModelChange)="setRange($event)">
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+          <option value="all">All Time</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="projects-grid">
+      @for (item of [1, 2, 3, 4]; track item) {
+        <div class="project-card project-card-loading"></div>
+      }
+    </div>
+  } @else if (projects().length === 0) {
+    <div class="projects-empty">
+      <lucide-angular [img]="FolderGitIcon" [size]="28" />
+      <h2>No {{ tab() }} projects</h2>
+      <p class="text-muted">Projects appear here after Seismic receives editor activity.</p>
+    </div>
+  } @else {
+    <div class="projects-grid">
+      @for (project of projects(); track project.project) {
+        <article class="project-card">
+          <div class="project-card-top">
+            <div class="project-title-row">
+              <lucide-angular [img]="FolderGitIcon" [size]="18" />
+              <h2>{{ project.project }}</h2>
+            </div>
+            <strong>{{ formatSeconds(project.seconds) }}</strong>
+          </div>
+
+          <div class="project-actions" [attr.aria-label]="project.project + ' links and actions'">
+            @if (project.repoUrl) {
+              <a class="project-icon-button" [href]="project.repoUrl" target="_blank" rel="noreferrer" title="Open Git repository">
+                <lucide-angular [img]="GithubIcon" [size]="17" />
+              </a>
+            } @else {
+              <span class="project-icon-button project-icon-button-disabled" title="No Git repository recorded">
+                <lucide-angular [img]="GithubIcon" [size]="17" />
+              </span>
+            }
+
+            @if (project.websiteUrl) {
+              <a class="project-icon-button" [href]="project.websiteUrl" target="_blank" rel="noreferrer" title="Open website">
+                <lucide-angular [img]="ExternalLinkIcon" [size]="17" />
+              </a>
+            } @else {
+              <span class="project-icon-button project-icon-button-disabled" title="No website recorded">
+                <lucide-angular [img]="ExternalLinkIcon" [size]="17" />
+              </span>
+            }
+
+            <button
+              type="button"
+              class="project-icon-button"
+              [disabled]="updating() === project.project"
+              [title]="project.archived ? 'Restore project' : 'Archive project'"
+              (click)="toggleArchive(project)"
+            >
+              <lucide-angular
+                [img]="project.archived ? ArchiveRestoreIcon : ArchiveIcon"
+                [size]="17"
+              />
+            </button>
+          </div>
+
+          <div class="project-meta">
+            <span class="project-chip">
+              <lucide-angular [img]="CodeIcon" [size]="14" />
+              {{ languageSummary(project) }}
+            </span>
+            <span class="project-chip">
+              <lucide-angular [img]="ClockIcon" [size]="14" />
+              Worked {{ relativeTime(project.lastWorkedAt) }}
+            </span>
+            <span class="project-chip">
+              <lucide-angular [img]="CommitIcon" [size]="14" />
+              Last commit {{ relativeTime(project.lastCommitAt) }}
+            </span>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>

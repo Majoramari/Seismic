@@ -1,0 +1,230 @@
+.projects-page {
+  max-width: 1180px;
+}
+
+.projects-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.projects-header h1 {
+  margin-bottom: var(--space-2);
+}
+
+.projects-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.projects-range {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.projects-range select {
+  min-width: 150px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  padding: var(--space-3);
+  font: inherit;
+  text-transform: none;
+  font-weight: 600;
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+.project-card {
+  min-height: 210px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.project-card:hover {
+  border-color: var(--color-border-strong);
+}
+
+.project-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.project-card-top strong {
+  color: var(--color-accent-light);
+  font-size: var(--text-lg);
+  white-space: nowrap;
+}
+
+.project-title-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.project-title-row h2 {
+  font-size: var(--text-xl);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-title-row svg {
+  color: var(--color-accent-light);
+  flex: 0 0 auto;
+}
+
+.project-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.project-icon-button {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.project-icon-button:hover:not(:disabled):not(.project-icon-button-disabled) {
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
+  background: var(--color-bg-hover);
+}
+
+.project-icon-button:disabled,
+.project-icon-button-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.project-meta {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.project-chip {
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-bg-secondary) 80%, black);
+  color: var(--color-text-secondary);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.project-chip svg {
+  flex: 0 0 auto;
+}
+
+.projects-empty {
+  min-height: 320px;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  text-align: center;
+}
+
+.projects-empty svg {
+  color: var(--color-accent-light);
+}
+
+.projects-empty h2 {
+  font-size: var(--text-xl);
+}
+
+.project-card-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.project-card-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-text) 6%, transparent),
+    transparent
+  );
+  animation: project-card-loading 1.2s infinite;
+}
+
+@keyframes project-card-loading {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (max-width: 900px) {
+  .projects-header {
+    flex-direction: column;
+  }
+
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .projects-controls,
+  .projects-range,
+  .projects-range select {
+    width: 100%;
+  }
+
+  .projects-controls .segmented {
+    width: 100%;
+  }
+
+  .projects-controls .segmented-option {
+    flex: 1;
+  }
+
+  .project-card-top {
+    flex-direction: column;
+  }
+}
