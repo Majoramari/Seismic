@@ -101,7 +101,7 @@ func (h *ImportHandler) StartWakaTimeImport(c *fiber.Ctx) error {
 
 		log.Printf("WakaTime import complete for user %s: %d heartbeats inserted", userID, inserted)
 
-		if err := services.ProcessSessions(ctx, h.Pool); err != nil {
+		if err := services.ReprocessUserSessions(ctx, h.Pool, userID); err != nil {
 			log.Printf("Session processing after import failed for user %s: %v", userID, err)
 		}
 	}()
@@ -183,6 +183,17 @@ func (h *ImportHandler) ImportFromFile(c *fiber.Ctx) error {
 	if len(heartbeats) == 0 {
 		return helpers.Error(c, fiber.StatusBadRequest, "No heartbeats found in that file")
 	}
+	if parsed.ExportInfo.TotalHeartbeats > 0 && len(heartbeats) < parsed.ExportInfo.TotalHeartbeats {
+		return helpers.Error(
+			c,
+			fiber.StatusBadRequest,
+			fmt.Sprintf(
+				"This export only contains %d of %d heartbeats. Download the full Hackatime export, not a paginated or preview file.",
+				len(heartbeats),
+				parsed.ExportInfo.TotalHeartbeats,
+			),
+		)
+	}
 
 	h.setProgress(userID, &importProgress{Status: "processing", Total: len(heartbeats)})
 
@@ -199,7 +210,7 @@ func (h *ImportHandler) ImportFromFile(c *fiber.Ctx) error {
 
 		h.setProgress(userID, &importProgress{Status: "completed", Imported: inserted, Total: len(heartbeats)})
 
-		if err := services.ProcessSessions(ctx, h.Pool); err != nil {
+		if err := services.ReprocessUserSessions(ctx, h.Pool, userID); err != nil {
 			log.Printf("Session processing after file import failed for user %s: %v", userID, err)
 		}
 	}()

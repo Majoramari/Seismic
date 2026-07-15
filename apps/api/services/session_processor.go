@@ -24,12 +24,46 @@ type rawHeartbeat struct {
 // ProcessSessions groups unprocessed heartbeats into sessions
 // and stores them. Meant to run periodically in the background.
 func ProcessSessions(ctx context.Context, pool *pgxpool.Pool) error {
+	return processSessions(ctx, pool, nil)
+}
+
+// ReprocessUserSessions rebuilds a user's sessions from their raw
+// heartbeats. Use after imports when session grouping rules may have
+// changed or when newly inserted heartbeats should merge with older ones.
+func ReprocessUserSessions(ctx context.Context, pool *pgxpool.Pool, userID string) error {
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	if _, err := tx.Exec(ctx, `DELETE FROM sessions WHERE user_id = $1`, userID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(ctx, `UPDATE heartbeats SET processed = false WHERE user_id = $1`, userID); err != nil {
+		return err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+
+	return processSessions(ctx, pool, &userID)
+}
+
+func processSessions(ctx context.Context, pool *pgxpool.Pool, userID *string) error {
+	args := []any{}
+	userFilter := ""
+	if userID != nil {
+		args = append(args, *userID)
+		userFilter = "AND user_id = $1"
+	}
+
 	rows, err := pool.Query(ctx, `
 		SELECT id, user_id, project, language, time
 		FROM heartbeats
-		WHERE processed = false
+		WHERE processed = false `+userFilter+`
 		ORDER BY user_id, time ASC, project, language
-	`)
+	`, args...)
 	if err != nil {
 		return err
 	}
@@ -147,15 +181,24 @@ func buildSessions(heartbeats []rawHeartbeat) []builtSession {
 
 	var current *builtSession
 
-	for _, h := range heartbeats {
+	for i, h := range heartbeats {
 		t := time.UnixMilli(h.TimeMs)
 		end := t.Add(heartbeatDuration)
+		if i+1 < len(heartbeats) && heartbeats[i+1].UserID == h.UserID {
+			next := time.UnixMilli(heartbeats[i+1].TimeMs)
+			if !next.Before(t) && next.Sub(t) <= sessionGap {
+				end = next
+			}
+		}
+		if !end.After(t) {
+			continue
+		}
 
 		startsNew := current == nil ||
 			current.UserID != h.UserID ||
 			current.Project != h.Project ||
 			current.Language != h.Language ||
-			t.Sub(current.End.Add(-heartbeatDuration)) > sessionGap
+			t.After(current.End)
 
 		if startsNew {
 			if current != nil {
