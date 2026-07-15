@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, input } from '@angular/core';
+import { Component, ElementRef, computed, effect, input, viewChild } from '@angular/core';
 
 export interface TimelineProject {
   project: string;
@@ -35,6 +35,8 @@ interface DisplayBar extends TimelineDay {
 })
 export class TimelineChart {
   data = input.required<TimelineDay[]>();
+
+  private timelineBars = viewChild<ElementRef<HTMLDivElement>>('timelineBars');
 
   maxHours = computed(() => {
     const maximum = Math.max(...this.data().map((day) => day.seconds), 3600);
@@ -83,6 +85,19 @@ export class TimelineChart {
 
     return labels.reverse();
   });
+
+  constructor() {
+    effect(() => {
+      this.bars();
+      const element = this.timelineBars()?.nativeElement;
+
+      if (!element) return;
+
+      window.setTimeout(() => {
+        element.scrollLeft = element.scrollWidth - element.clientWidth;
+      });
+    });
+  }
 
   private toDisplayProjects(projects: TimelineProject[], total: number): DisplayProject[] {
     return projects

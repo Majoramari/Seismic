@@ -12,7 +12,7 @@
       }
     </div>
 
-    <div class="timeline-bars" aria-label="Daily project activity">
+    <div class="timeline-bars" #timelineBars aria-label="Daily project activity">
       @for (bar of bars(); track bar.date) {
         <button
           type="button"
