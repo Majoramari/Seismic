@@ -57,7 +57,7 @@ func GetStatsSummary(ctx context.Context, pool *pgxpool.Pool, userID string, ran
 		SELECT LOWER(TRIM(language)) FROM sessions
 		WHERE user_id = $1 AND `+rangeSQL+`
 		GROUP BY LOWER(TRIM(language))
-		ORDER BY SUM(duration_seconds) DESC
+		ORDER BY SUM(duration_seconds) DESC, LOWER(TRIM(language)) ASC
 		LIMIT 1
 	`, userID).Scan(&s.TopLanguage)
 	if err != nil && err.Error() != "no rows in result set" {
@@ -68,7 +68,7 @@ func GetStatsSummary(ctx context.Context, pool *pgxpool.Pool, userID string, ran
 		SELECT project FROM sessions
 		WHERE user_id = $1 AND `+rangeSQL+`
 		GROUP BY project
-		ORDER BY SUM(duration_seconds) DESC
+		ORDER BY SUM(duration_seconds) DESC, project ASC
 		LIMIT 1
 	`, userID).Scan(&s.TopProject)
 	if err != nil && err.Error() != "no rows in result set" {
@@ -82,7 +82,7 @@ func GetStatsSummary(ctx context.Context, pool *pgxpool.Pool, userID string, ran
 		FROM sessions
 		WHERE user_id = $1 AND `+rangeSQL+`
 		GROUP BY COALESCE(NULLIF(os, ''), 'unknown')
-		ORDER BY SUM(duration_seconds) DESC
+		ORDER BY SUM(duration_seconds) DESC, COALESCE(NULLIF(os, ''), 'unknown') ASC
 		LIMIT 1
 	`, userID).Scan(&s.TopOS)
 	if err != nil && err.Error() != "no rows in result set" {
@@ -94,7 +94,7 @@ func GetStatsSummary(ctx context.Context, pool *pgxpool.Pool, userID string, ran
 		FROM sessions
 		WHERE user_id = $1 AND `+rangeSQL+`
 		GROUP BY COALESCE(NULLIF(editor, ''), 'unknown')
-		ORDER BY SUM(duration_seconds) DESC
+		ORDER BY SUM(duration_seconds) DESC, COALESCE(NULLIF(editor, ''), 'unknown') ASC
 		LIMIT 1
 	`, userID).Scan(&s.TopEditor)
 	if err != nil && err.Error() != "no rows in result set" {
@@ -144,7 +144,7 @@ func GetLanguageBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string
 			AND LOWER(TRIM(language)) NOT IN ('textmate', 'unknown', 'log')
 		GROUP BY LOWER(TRIM(language))
 		HAVING SUM(duration_seconds) > 0
-		ORDER BY seconds DESC
+		ORDER BY seconds DESC, language ASC
 	`, userID)
 	if err != nil {
 		return nil, err
@@ -291,7 +291,7 @@ func GetProjectBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string,
 		FROM sessions
 		WHERE user_id = $1 AND `+rangeSQL+`
 		GROUP BY project
-		ORDER BY seconds DESC
+		ORDER BY seconds DESC, project ASC
 	`, userID)
 	if err != nil {
 		return nil, err
@@ -323,7 +323,7 @@ func GetEditorBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string, 
 		WHERE user_id = $1 AND `+rangeSQL+`
 		GROUP BY COALESCE(NULLIF(editor, ''), 'unknown')
 		HAVING SUM(duration_seconds) > 0
-		ORDER BY seconds DESC
+		ORDER BY seconds DESC, editor ASC
 	`, userID)
 	if err != nil {
 		return nil, err
@@ -362,7 +362,7 @@ func GetTimeline(ctx context.Context, pool *pgxpool.Pool, userID string, days in
 			AND start_time >= CURRENT_DATE - make_interval(days => $2)
 		GROUP BY day, project
 		HAVING SUM(duration_seconds) > 0
-		ORDER BY day ASC, seconds DESC
+		ORDER BY day ASC, seconds DESC, project ASC
 	`, userID, days)
 	if err != nil {
 		return nil, err
@@ -417,7 +417,7 @@ func GetOSBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string, rang
 		WHERE user_id = $1 AND `+rangeSQL+`
 		GROUP BY COALESCE(NULLIF(os, ''), 'unknown')
 		HAVING SUM(duration_seconds) > 0
-		ORDER BY seconds DESC
+		ORDER BY seconds DESC, os ASC
 	`, userID)
 	if err != nil {
 		return nil, err

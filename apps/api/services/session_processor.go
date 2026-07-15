@@ -26,7 +26,17 @@ type rawHeartbeat struct {
 // ProcessSessions groups unprocessed heartbeats into sessions
 // and stores them. Meant to run periodically in the background.
 func ProcessSessions(ctx context.Context, pool *pgxpool.Pool) error {
-	return processSessions(ctx, pool, nil)
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	if err := processSessionsTx(ctx, tx, nil); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
 
 // ReprocessUserSessions rebuilds a user's sessions from their raw
@@ -45,14 +55,14 @@ func ReprocessUserSessions(ctx context.Context, pool *pgxpool.Pool, userID strin
 	if _, err := tx.Exec(ctx, `UPDATE heartbeats SET processed = false WHERE user_id = $1`, userID); err != nil {
 		return err
 	}
-	if err := tx.Commit(ctx); err != nil {
+	if err := processSessionsTx(ctx, tx, &userID); err != nil {
 		return err
 	}
 
-	return processSessions(ctx, pool, &userID)
+	return tx.Commit(ctx)
 }
 
-func processSessions(ctx context.Context, pool *pgxpool.Pool, userID *string) error {
+func processSessionsTx(ctx context.Context, tx pgx.Tx, userID *string) error {
 	args := []any{}
 	userFilter := ""
 	if userID != nil {
@@ -60,7 +70,7 @@ func processSessions(ctx context.Context, pool *pgxpool.Pool, userID *string) er
 		userFilter = "AND user_id = $1"
 	}
 
-	rows, err := pool.Query(ctx, `
+	rows, err := tx.Query(ctx, `
 		SELECT
 			id,
 			user_id,
@@ -71,7 +81,16 @@ func processSessions(ctx context.Context, pool *pgxpool.Pool, userID *string) er
 			time
 		FROM heartbeats
 		WHERE processed = false `+userFilter+`
-		ORDER BY user_id, time ASC, project, language
+		ORDER BY
+			user_id,
+			time ASC,
+			project,
+			language,
+			COALESCE(NULLIF(editor, ''), 'unknown'),
+			COALESCE(NULLIF(os, ''), 'unknown'),
+			file,
+			id
+		FOR UPDATE SKIP LOCKED
 	`, args...)
 	if err != nil {
 		return err
@@ -92,9 +111,9 @@ func processSessions(ctx context.Context, pool *pgxpool.Pool, userID *string) er
 	seenUsers := make(map[string]bool)
 	for _, s := range sessions {
 		if seenUsers[s.UserID] {
-			err = insertSession(ctx, pool, s)
+			err = insertSessionTx(ctx, tx, s)
 		} else {
-			err = saveSession(ctx, pool, s)
+			err = saveSessionTx(ctx, tx, s)
 			seenUsers[s.UserID] = true
 		}
 		if err != nil {
@@ -107,7 +126,7 @@ func processSessions(ctx context.Context, pool *pgxpool.Pool, userID *string) er
 		ids[i] = h.ID
 	}
 	if len(ids) > 0 {
-		_, err = pool.Exec(ctx, `UPDATE heartbeats SET processed = true WHERE id = ANY($1)`, ids)
+		_, err = tx.Exec(ctx, `UPDATE heartbeats SET processed = true WHERE id::text = ANY($1)`, ids)
 		if err != nil {
 			return err
 		}
@@ -138,11 +157,11 @@ type existingSession struct {
 	End      time.Time
 }
 
-func saveSession(ctx context.Context, pool *pgxpool.Pool, s builtSession) error {
-	latest, err := latestSession(ctx, pool, s.UserID)
+func saveSessionTx(ctx context.Context, tx pgx.Tx, s builtSession) error {
+	latest, err := latestSessionTx(ctx, tx, s.UserID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return insertSession(ctx, pool, s)
+			return insertSessionTx(ctx, tx, s)
 		}
 		return err
 	}
@@ -151,6 +170,7 @@ func saveSession(ctx context.Context, pool *pgxpool.Pool, s builtSession) error 
 		latest.Language == s.Language &&
 		latest.Editor == s.Editor &&
 		latest.OS == s.OS &&
+		!s.Start.Before(latest.Start) &&
 		s.Start.Sub(latest.End.Add(-heartbeatDuration)) <= sessionGap {
 		end := latest.End
 		if s.End.After(end) {
@@ -162,7 +182,7 @@ func saveSession(ctx context.Context, pool *pgxpool.Pool, s builtSession) error 
 			duration = maxSessionLength
 		}
 
-		_, err := pool.Exec(ctx, `
+		_, err := tx.Exec(ctx, `
 			UPDATE sessions
 			SET end_time = $1, duration_seconds = $2
 			WHERE id = $3
@@ -170,12 +190,12 @@ func saveSession(ctx context.Context, pool *pgxpool.Pool, s builtSession) error 
 		return err
 	}
 
-	return insertSession(ctx, pool, s)
+	return insertSessionTx(ctx, tx, s)
 }
 
-func latestSession(ctx context.Context, pool *pgxpool.Pool, userID string) (existingSession, error) {
+func latestSessionTx(ctx context.Context, tx pgx.Tx, userID string) (existingSession, error) {
 	var s existingSession
-	err := pool.QueryRow(ctx, `
+	err := tx.QueryRow(ctx, `
 		SELECT id, project, language, editor, os, start_time, end_time
 		FROM sessions
 		WHERE user_id = $1
@@ -185,10 +205,11 @@ func latestSession(ctx context.Context, pool *pgxpool.Pool, userID string) (exis
 	return s, err
 }
 
-func insertSession(ctx context.Context, pool *pgxpool.Pool, s builtSession) error {
-	_, err := pool.Exec(ctx, `
+func insertSessionTx(ctx context.Context, tx pgx.Tx, s builtSession) error {
+	_, err := tx.Exec(ctx, `
 		INSERT INTO sessions (user_id, project, language, editor, os, start_time, end_time, duration_seconds)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		ON CONFLICT DO NOTHING
 	`, s.UserID, s.Project, s.Language, s.Editor, s.OS, s.Start, s.End, s.DurationSeconds)
 	return err
 }

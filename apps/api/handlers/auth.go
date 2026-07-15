@@ -286,12 +286,17 @@ func (h *AuthHandler) RefreshAccessToken(c *fiber.Ctx) error {
 // Secure is disabled for local http testing, enabled in
 // production where everything runs over https.
 func setRefreshTokenCookie(c *fiber.Ctx, token string, secure bool) {
+	sameSite := "Lax"
+	if secure {
+		sameSite = "None"
+	}
+
 	c.Cookie(&fiber.Cookie{
 		Name:     "refresh_token",
 		Value:    token,
 		HTTPOnly: true,
 		Secure:   secure,
-		SameSite: "None",
+		SameSite: sameSite,
 		Path:     "/api/auth",
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})

@@ -59,8 +59,13 @@ func (h *ImportHandler) StartWakaTimeImport(c *fiber.Ctx) error {
 		return helpers.Error(c, fiber.StatusBadRequest, "WakaTime API key is required")
 	}
 
+	if !h.beginImport(userID, 0) {
+		return helpers.Error(c, fiber.StatusConflict, "An import is already running")
+	}
+
 	dumpID, err := services.RequestWakaTimeHeartbeatDump(body.APIKey)
 	if err != nil {
+		h.setProgress(userID, &importProgress{Status: "failed", Error: "Failed to start WakaTime export. Check your API key."})
 		return helpers.Error(c, fiber.StatusBadRequest, "Failed to start WakaTime export. Check your API key.")
 	}
 
@@ -71,13 +76,20 @@ func (h *ImportHandler) StartWakaTimeImport(c *fiber.Ctx) error {
 
 		downloadURL, err := services.PollWakaTimeDump(ctx, body.APIKey, dumpID)
 		if err != nil {
+			h.setProgress(userID, &importProgress{Status: "failed", Error: err.Error()})
 			log.Printf("WakaTime import failed for user %s: %v", userID, err)
 			return
 		}
 
 		heartbeats, err := services.DownloadWakaTimeDump(downloadURL)
 		if err != nil {
+			h.setProgress(userID, &importProgress{Status: "failed", Error: err.Error()})
 			log.Printf("WakaTime import download/parse failed for user %s: %v", userID, err)
+			return
+		}
+		heartbeats = models.NormalizeImportedHeartbeats(heartbeats)
+		if len(heartbeats) == 0 {
+			h.setProgress(userID, &importProgress{Status: "failed", Error: "No valid heartbeats found in WakaTime export"})
 			return
 		}
 
@@ -95,6 +107,7 @@ func (h *ImportHandler) StartWakaTimeImport(c *fiber.Ctx) error {
 			},
 		)
 		if err != nil {
+			h.setProgress(userID, &importProgress{Status: "failed", Imported: inserted, Total: len(heartbeats), Error: err.Error()})
 			log.Printf("WakaTime import insert failed for user %s: %v", userID, err)
 			return
 		}
@@ -120,6 +133,23 @@ func (h *ImportHandler) setProgress(userID string, p *importProgress) {
 		h.progress = make(map[string]*importProgress)
 	}
 	h.progress[userID] = p
+}
+
+func (h *ImportHandler) beginImport(userID string, total int) bool {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if h.progress == nil {
+		h.progress = make(map[string]*importProgress)
+	}
+	if existing, ok := h.progress[userID]; ok && isActiveImport(existing.Status) {
+		return false
+	}
+	h.progress[userID] = &importProgress{Status: "processing", Total: total}
+	return true
+}
+
+func isActiveImport(status string) bool {
+	return status == "processing" || status == "finalizing"
 }
 
 // GetImportStatus godoc
@@ -183,23 +213,30 @@ func (h *ImportHandler) ImportFromFile(c *fiber.Ctx) error {
 		return helpers.Error(c, fiber.StatusBadRequest, "Could not parse file — make sure it's a valid WakaTime or Hackatime export")
 	}
 
-	heartbeats := models.FlattenImportFile(parsed)
-	if len(heartbeats) == 0 {
+	rawHeartbeats := models.FlattenImportFile(parsed)
+	if len(rawHeartbeats) == 0 {
 		return helpers.Error(c, fiber.StatusBadRequest, "No heartbeats found in that file")
 	}
-	if parsed.ExportInfo.TotalHeartbeats > 0 && len(heartbeats) < parsed.ExportInfo.TotalHeartbeats {
+	if parsed.ExportInfo.TotalHeartbeats > 0 && len(rawHeartbeats) < parsed.ExportInfo.TotalHeartbeats {
 		return helpers.Error(
 			c,
 			fiber.StatusBadRequest,
 			fmt.Sprintf(
 				"This export only contains %d of %d heartbeats. Download the full Hackatime export, not a paginated or preview file.",
-				len(heartbeats),
+				len(rawHeartbeats),
 				parsed.ExportInfo.TotalHeartbeats,
 			),
 		)
 	}
 
-	h.setProgress(userID, &importProgress{Status: "processing", Total: len(heartbeats)})
+	heartbeats := models.NormalizeImportedHeartbeats(rawHeartbeats)
+	if len(heartbeats) == 0 {
+		return helpers.Error(c, fiber.StatusBadRequest, "No valid heartbeats found in that file")
+	}
+
+	if !h.beginImport(userID, len(heartbeats)) {
+		return helpers.Error(c, fiber.StatusConflict, "An import is already running")
+	}
 
 	go func() {
 		ctx := context.Background()

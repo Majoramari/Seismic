@@ -40,6 +40,8 @@
       <img src="images/seismic-logo.png" alt="" />
       <span aria-hidden="true"></span>
     </div>
+  } @else if (errorMessage()) {
+    <p class="text-muted">{{ errorMessage() }}</p>
   } @else if (stats()) {
     @if (goals().length > 0) {
       <div class="card goals-card mb-6">

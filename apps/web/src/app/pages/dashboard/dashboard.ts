@@ -70,6 +70,7 @@ export class Dashboard implements OnInit, OnDestroy {
 
   range = signal<RangeOption>('week');
   loading = signal(true);
+  errorMessage = signal<string | null>(null);
 
   stats = signal<StatsSummary | null>(null);
   heatmapData = signal<HeatmapDay[]>([]);
@@ -100,6 +101,7 @@ export class Dashboard implements OnInit, OnDestroy {
 
     this.dashboardRequest?.unsubscribe();
     this.loading.set(true);
+    this.errorMessage.set(null);
     this.dashboardRequest = this.api
       .get<DashboardData>('/api/stats/dashboard', { range: requestRange })
       .pipe(retry({ count: 2, delay: (_, retryIndex) => timer(retryIndex * 500) }))
@@ -108,12 +110,15 @@ export class Dashboard implements OnInit, OnDestroy {
           if (!this.isCurrentRequest(requestId, requestRange)) return;
 
           this.applyDashboardData(data);
+          this.errorMessage.set(null);
           this.loading.set(false);
         },
         error: (err) => {
           if (!this.isCurrentRequest(requestId, requestRange)) return;
 
           console.error('Failed to load dashboard after retries:', err);
+          this.clearDashboardData();
+          this.errorMessage.set('Could not load dashboard data. Try again.');
           this.loading.set(false);
         },
       });
@@ -147,6 +152,17 @@ export class Dashboard implements OnInit, OnDestroy {
     this.projectData.set(data.projects ?? []);
     this.timelineData.set(data.timeline ?? []);
     this.goals.set(data.goals ?? []);
+  }
+
+  private clearDashboardData(): void {
+    this.stats.set(null);
+    this.heatmapData.set([]);
+    this.languageData.set([]);
+    this.editorData.set([]);
+    this.osData.set([]);
+    this.projectData.set([]);
+    this.timelineData.set([]);
+    this.goals.set([]);
   }
 
   formatSeconds(seconds: number): string {

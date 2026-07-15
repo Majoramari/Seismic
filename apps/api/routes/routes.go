@@ -25,7 +25,7 @@ func Setup(app *fiber.App, authHandler *handlers.AuthHandler, heartbeatHandler *
 
 	app.Post("/api/heartbeat", middleware.HeartbeatRateLimit(), middleware.RequireAPIKey(pool), heartbeatHandler.Receive)
 
-	stats := app.Group("/api/stats", middleware.RequireAuthOrAPIKey(pool, jwtSecret))
+	stats := app.Group("/api/stats", middleware.NoStore(), middleware.RequireAuthOrAPIKey(pool, jwtSecret))
 	stats.Get("/summary", statsHandler.GetSummary)
 	stats.Get("/languages", statsHandler.GetLanguages)
 	stats.Get("/heatmap", statsHandler.GetHeatmap)

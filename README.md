@@ -4,6 +4,11 @@ Seismic is a coding activity tracker for developers who want a private, cross-ed
 
 It works across VS Code, JetBrains IDEs, and Neovim, so your stats stay unified even if you move between editors during the day.
 
+## Project Links
+
+- Live app: [https://seismic.icu](https://seismic.icu)
+- Contact: [hello@seismic.icu](mailto:hello@seismic.icu)
+
 ## Features
 
 - Coding time by day, week, month, year, and all time.
@@ -176,6 +181,15 @@ The Neovim plugin is distributed from this monorepo. Users install `majoramari/s
 ## Privacy
 
 Seismic records coding activity metadata such as file path, project name, language, editor, branch, OS, machine name, line count, cursor line, timezone, and keystroke count. Privacy settings let users hide profile stats, project stats, editor stats, OS stats, badges, and selected projects from public views.
+
+## Contributors
+
+- [Muhannad Elbolaky](https://muhannad.cc)
+- Ali Mustafa
+- Momen Aymann
+- Aya Mohamed
+- Amr Mousa
+- Basma Bahaa
 
 ## License
 

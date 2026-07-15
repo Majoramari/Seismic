@@ -15,8 +15,13 @@ export class ApiService {
   private baseUrl = environment.apiUrl;
 
   get<T>(path: string, params?: Record<string, string>) {
+    const requestParams = { ...(params ?? {}), _ts: Date.now().toString() };
+
     return this.http
-      .get<ApiResponse<T>>(`${this.baseUrl}${path}`, { params, withCredentials: true })
+      .get<ApiResponse<T>>(`${this.baseUrl}${path}`, {
+        params: requestParams,
+        withCredentials: true,
+      })
       .pipe(map((res) => res.data));
   }
 
