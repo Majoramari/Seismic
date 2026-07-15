@@ -25,7 +25,7 @@ class SeismicStartupActivity : ProjectActivity, DumbAware {
         val heartbeat = HeartbeatService.getInstance()
         heartbeat.syncProjectMetadata(project, forced = true)
 
-        // Heartbeat on typing (subject to the 2 min rule). Uses a raw
+        // Heartbeat on typing (subject to the 30-second throttle). Uses a raw
         // AWT key listener rather than a DocumentListener, since
         // DocumentEvent fires for ANY text change — auto-format,
         // code completion, auto-import, refactors — not just real

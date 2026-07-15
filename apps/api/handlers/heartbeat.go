@@ -17,7 +17,7 @@ type HeartbeatHandler struct {
 
 // Receive godoc
 // @Summary      Send a heartbeat
-// @Description  Called by editor plugins every 2 minutes to record coding activity. Requires an API key, not a JWT.
+// @Description  Called by editor plugins about every 30 seconds to record coding activity. Requires an API key, not a JWT.
 // @Tags         heartbeat
 // @Accept       json
 // @Produce      json

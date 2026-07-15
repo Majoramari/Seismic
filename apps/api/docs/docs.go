@@ -590,7 +590,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Called by editor plugins every 2 minutes to record coding activity. Requires an API key, not a JWT.",
+                "description": "Called by editor plugins about every 30 seconds to record coding activity. Requires an API key, not a JWT.",
                 "consumes": [
                     "application/json"
                 ],
