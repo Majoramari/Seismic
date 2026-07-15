@@ -24,7 +24,13 @@ type WakaTimeHeartbeat struct {
 	Time            string `json:"time"` // RFC3339
 }
 
+type ImportExportInfo struct {
+	TotalHeartbeats      int `json:"total_heartbeats"`
+	TotalDurationSeconds int `json:"total_duration_seconds"`
+}
+
 type ImportFile struct {
+	ExportInfo ImportExportInfo    `json:"export_info"`
 	Heartbeats []WakaTimeHeartbeat `json:"heartbeats"`
 	Days       []struct {
 		Heartbeats []WakaTimeHeartbeat `json:"heartbeats"`
@@ -63,15 +69,24 @@ func InsertImportedHeartbeats(ctx context.Context, pool *pgxpool.Pool, userID st
 			batch.Queue(`
 				INSERT INTO heartbeats
 					(user_id, file, project, language, editor, branch, os, machine, lines, cursor_line, time)
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+				SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+				WHERE NOT EXISTS (
+					SELECT 1 FROM heartbeats
+					WHERE user_id = $1
+						AND file = $2
+						AND project = $3
+						AND language = $4
+						AND editor = $5
+						AND time = $11
+				)
 			`, userID, hb.Entity, hb.Project, hb.Language, hb.Editor, hb.Branch,
 				hb.OperatingSystem, hb.Machine, lines, cursor, t)
 		}
 
 		br := pool.SendBatch(ctx, batch)
 		for range chunk {
-			if _, err := br.Exec(); err == nil {
-				inserted++
+			if tag, err := br.Exec(); err == nil {
+				inserted += int(tag.RowsAffected())
 			}
 		}
 		br.Close()
