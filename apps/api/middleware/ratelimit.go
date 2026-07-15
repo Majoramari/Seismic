@@ -9,13 +9,13 @@ import (
 	"github.com/majoramari/seismic/apps/api/helpers"
 )
 
-// HeartbeatRateLimit allows at most 1 heartbeat every 30
-// seconds per API key, matching the editor plugin's own
-// throttle so legitimate use is never blocked, but abuse is.
+// HeartbeatRateLimit allows normal editor activity, quick file
+// switches, and queued retry flushes. Duplicate heartbeat checks
+// handle noisy clients; this is only a broad abuse guard.
 func HeartbeatRateLimit() fiber.Handler {
 	return limiter.New(limiter.Config{
-		Max:        1,
-		Expiration: 30 * time.Second,
+		Max:        100,
+		Expiration: time.Minute,
 		KeyGenerator: func(c *fiber.Ctx) string {
 			return c.Get("Authorization") // rate limit per api key, not per IP
 		},
