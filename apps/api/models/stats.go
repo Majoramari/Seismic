@@ -39,6 +39,8 @@ type OSStat struct {
 	Seconds int    `json:"seconds"`
 }
 
+const estimatedHeartbeatSeconds = 30
+
 // GetStatsSummary calculates total time, top language, top
 // project, and daily average for a user within a date range.
 // rangeFilter is a SQL WHERE clause fragment for the range.
@@ -328,7 +330,7 @@ func GetEditorBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string, 
 		if err := rows.Scan(&e.Editor, &count); err != nil {
 			return nil, err
 		}
-		e.Seconds = count * 120
+		e.Seconds = count * estimatedHeartbeatSeconds
 		stats = append(stats, e)
 	}
 	return stats, nil
@@ -349,33 +351,12 @@ type TimelineProject struct {
 // used for the project timeline bar chart.
 func GetTimeline(ctx context.Context, pool *pgxpool.Pool, userID string, days int) ([]TimelineDay, error) {
 	rows, err := pool.Query(ctx, `
-		WITH ordered_heartbeats AS (
-			SELECT
-				user_id,
-				project,
-				to_timestamp(time / 1000.0) AS heartbeat_time,
-				time,
-				LAG(time) OVER (PARTITION BY user_id, project ORDER BY time) AS previous_time
-			FROM heartbeats
-			WHERE user_id = $1
-				AND to_timestamp(time / 1000.0) >= CURRENT_DATE - make_interval(days => $2) - INTERVAL '2 minutes'
-		),
-		project_durations AS (
-			SELECT
-				heartbeat_time::date AS day,
-				project,
-				CASE
-					WHEN previous_time IS NULL THEN 0
-					WHEN time - previous_time > 120000 THEN 0
-					ELSE ((time - previous_time) / 1000)::int
-				END AS seconds
-			FROM ordered_heartbeats
-			WHERE heartbeat_time >= CURRENT_DATE - make_interval(days => $2)
-		)
-		SELECT day, project, SUM(seconds)::int AS seconds
-		FROM project_durations
+		SELECT start_time::date AS day, project, SUM(duration_seconds)::int AS seconds
+		FROM sessions
+		WHERE user_id = $1
+			AND start_time >= CURRENT_DATE - make_interval(days => $2)
 		GROUP BY day, project
-		HAVING SUM(seconds) > 0
+		HAVING SUM(duration_seconds) > 0
 		ORDER BY day ASC, seconds DESC
 	`, userID, days)
 	if err != nil {
@@ -445,7 +426,7 @@ func GetOSBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string, rang
 		if err := rows.Scan(&s.OS, &count); err != nil {
 			return nil, err
 		}
-		s.Seconds = count * 120
+		s.Seconds = count * estimatedHeartbeatSeconds
 		stats = append(stats, s)
 	}
 	return stats, nil

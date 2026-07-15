@@ -120,9 +120,15 @@ func getGoalProgress(ctx context.Context, pool *pgxpool.Pool, userID string, g G
 
 	switch g.Scope {
 	case "language":
+		if g.ScopeValue == nil {
+			return 0, nil
+		}
 		scopeSQL = "AND language = $2"
 		args = append(args, *g.ScopeValue)
 	case "project":
+		if g.ScopeValue == nil {
+			return 0, nil
+		}
 		scopeSQL = "AND project = $2"
 		args = append(args, *g.ScopeValue)
 	}
