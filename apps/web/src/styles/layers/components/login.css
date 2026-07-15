@@ -75,7 +75,7 @@
   min-height: calc(100vh - 73px);
   display: grid;
   grid-template-columns: 1fr 1fr;
-  padding: var(--space-6);
+  padding: var(--space-10);
   gap: var(--space-6);
 }
 
