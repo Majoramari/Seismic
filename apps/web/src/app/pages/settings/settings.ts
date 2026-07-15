@@ -37,6 +37,13 @@ interface CurrentUserResponse {
   email: string;
 }
 
+interface ImportProgress {
+  status: 'idle' | 'processing' | 'finalizing' | 'completed' | 'failed';
+  imported: number;
+  total: number;
+  error?: string;
+}
+
 interface SettingsBadge {
   type: string;
   earnedAt: string;
@@ -102,7 +109,7 @@ export class Settings implements OnInit {
 
   wakaTimeApiKey = '';
   importing = signal(false);
-  importProgress = signal<{ status: string; imported: number; total: number } | null>(null);
+  importProgress = signal<ImportProgress | null>(null);
   importProvider: 'wakatime' | 'hackatime' = 'wakatime';
   selectedFile: File | null = null;
   private importPollInterval: ReturnType<typeof setInterval> | null = null;
@@ -462,7 +469,7 @@ export class Settings implements OnInit {
   private pollImportStatus() {
     this.importPollInterval = setInterval(() => {
       this.api
-        .get<{ status: string; imported: number; total: number }>('/api/import/status')
+        .get<ImportProgress>('/api/import/status')
         .subscribe({
           next: (status) => {
             this.importProgress.set(status);
@@ -474,7 +481,7 @@ export class Settings implements OnInit {
             } else if (status.status === 'failed') {
               this.stopPolling();
               this.importing.set(false);
-              this.toast.error('Import failed');
+              this.toast.error(status.error ?? 'Import failed');
             }
           },
           error: () => this.stopPolling(),
@@ -487,6 +494,13 @@ export class Settings implements OnInit {
       clearInterval(this.importPollInterval);
       this.importPollInterval = null;
     }
+  }
+
+  importProgressText(progress: ImportProgress): string {
+    if (progress.status === 'finalizing') {
+      return `Rebuilding stats from ${progress.imported} imported heartbeats...`;
+    }
+    return `${progress.imported} / ${progress.total} heartbeats imported`;
   }
 
   badgeLabel(type: string): string {

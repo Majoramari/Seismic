@@ -454,8 +454,7 @@
                   <div class="import-progress-fill"
                        [style.width.%]="((importProgress()!.imported / importProgress()!.total) * 100) || 0"></div>
                 </div>
-                <p class="text-muted text-sm mt-2">{{ importProgress()!.imported }} / {{ importProgress()!.total }}
-                  heartbeats imported</p>
+                <p class="text-muted text-sm mt-2">{{ importProgressText(importProgress()!) }}</p>
               </div>
             }
           </div>

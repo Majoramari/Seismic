@@ -26,7 +26,7 @@ type ImportHandler struct {
 }
 
 type importProgress struct {
-	Status   string `json:"status"` // "processing" | "completed" | "failed"
+	Status   string `json:"status"` // "processing" | "finalizing" | "completed" | "failed"
 	Imported int    `json:"imported"`
 	Total    int    `json:"total"`
 	Error    string `json:"error,omitempty"`
@@ -101,9 +101,13 @@ func (h *ImportHandler) StartWakaTimeImport(c *fiber.Ctx) error {
 
 		log.Printf("WakaTime import complete for user %s: %d heartbeats inserted", userID, inserted)
 
+		h.setProgress(userID, &importProgress{Status: "finalizing", Imported: inserted, Total: len(heartbeats)})
 		if err := services.ReprocessUserSessions(ctx, h.Pool, userID); err != nil {
+			h.setProgress(userID, &importProgress{Status: "failed", Imported: inserted, Total: len(heartbeats), Error: err.Error()})
 			log.Printf("Session processing after import failed for user %s: %v", userID, err)
+			return
 		}
+		h.setProgress(userID, &importProgress{Status: "completed", Imported: inserted, Total: len(heartbeats)})
 	}()
 
 	return helpers.Success(c, "Import started — this may take a few minutes depending on your history size", nil)
@@ -208,11 +212,13 @@ func (h *ImportHandler) ImportFromFile(c *fiber.Ctx) error {
 			return
 		}
 
-		h.setProgress(userID, &importProgress{Status: "completed", Imported: inserted, Total: len(heartbeats)})
-
+		h.setProgress(userID, &importProgress{Status: "finalizing", Imported: inserted, Total: len(heartbeats)})
 		if err := services.ReprocessUserSessions(ctx, h.Pool, userID); err != nil {
+			h.setProgress(userID, &importProgress{Status: "failed", Imported: inserted, Total: len(heartbeats), Error: err.Error()})
 			log.Printf("Session processing after file import failed for user %s: %v", userID, err)
+			return
 		}
+		h.setProgress(userID, &importProgress{Status: "completed", Imported: inserted, Total: len(heartbeats)})
 	}()
 
 	return helpers.Success(c, "Import started", fiber.Map{"total": len(heartbeats)})
