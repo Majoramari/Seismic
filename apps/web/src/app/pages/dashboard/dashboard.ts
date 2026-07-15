@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { Heatmap } from '../../shared/components/heatmap/heatmap';
@@ -6,7 +6,7 @@ import { PieChart, PieSlice } from '../../shared/components/pie-chart/pie-chart'
 import { ProjectBars, ProjectStat } from '../../shared/components/project-bars/project-bars';
 import { TimelineChart, TimelineDay } from '../../shared/components/timeline-chart/timeline-chart';
 import { GoalCard, GoalData } from '../../shared/components/goal-card/goal-card';
-import { retry, timer } from 'rxjs';
+import { retry, Subscription, timer } from 'rxjs';
 
 interface StatsSummary {
   totalSeconds: number;
@@ -63,8 +63,10 @@ const LABEL_OVERRIDES = new Map<string, string>([
   imports: [FormsModule, Heatmap, PieChart, ProjectBars, TimelineChart, GoalCard],
   templateUrl: './dashboard.html',
 })
-export class Dashboard implements OnInit {
+export class Dashboard implements OnInit, OnDestroy {
   private api = inject(ApiService);
+  private dashboardRequest?: Subscription;
+  private latestRequestId = 0;
 
   range = signal<RangeOption>('week');
   loading = signal(true);
@@ -82,48 +84,69 @@ export class Dashboard implements OnInit {
     this.loadAll();
   }
 
+  ngOnDestroy() {
+    this.dashboardRequest?.unsubscribe();
+  }
+
   setRange(range: RangeOption) {
+    if (this.range() === range) return;
     this.range.set(range);
     this.loadAll();
   }
 
   private loadAll() {
+    const requestRange = this.range();
+    const requestId = ++this.latestRequestId;
+
+    this.dashboardRequest?.unsubscribe();
     this.loading.set(true);
-    this.api
-      .get<DashboardData>('/api/stats/dashboard', { range: this.range() })
+    this.dashboardRequest = this.api
+      .get<DashboardData>('/api/stats/dashboard', { range: requestRange })
       .pipe(retry({ count: 2, delay: (_, retryIndex) => timer(retryIndex * 500) }))
       .subscribe({
         next: (data) => {
-          this.stats.set(data.summary);
-          this.heatmapData.set(data.heatmap ?? []);
-          this.languageData.set(
-            (data.languages ?? []).map((d) => ({
-              label: this.formatDisplayLabel(d.language),
-              seconds: d.seconds,
-            })),
-          );
-          this.editorData.set(
-            (data.editors ?? []).map((d) => ({
-              label: this.formatDisplayLabel(d.editor),
-              seconds: d.seconds,
-            })),
-          );
-          this.osData.set(
-            (data.os ?? []).map((d) => ({
-              label: this.formatDisplayLabel(d.os),
-              seconds: d.seconds,
-            })),
-          );
-          this.projectData.set(data.projects ?? []);
-          this.timelineData.set(data.timeline ?? []);
-          this.goals.set(data.goals ?? []);
+          if (!this.isCurrentRequest(requestId, requestRange)) return;
+
+          this.applyDashboardData(data);
           this.loading.set(false);
         },
         error: (err) => {
+          if (!this.isCurrentRequest(requestId, requestRange)) return;
+
           console.error('Failed to load dashboard after retries:', err);
           this.loading.set(false);
         },
       });
+  }
+
+  private isCurrentRequest(requestId: number, range: RangeOption): boolean {
+    return requestId === this.latestRequestId && range === this.range();
+  }
+
+  private applyDashboardData(data: DashboardData): void {
+    this.stats.set(data.summary);
+    this.heatmapData.set(data.heatmap ?? []);
+    this.languageData.set(
+      (data.languages ?? []).map((d) => ({
+        label: this.formatDisplayLabel(d.language),
+        seconds: d.seconds,
+      })),
+    );
+    this.editorData.set(
+      (data.editors ?? []).map((d) => ({
+        label: this.formatDisplayLabel(d.editor),
+        seconds: d.seconds,
+      })),
+    );
+    this.osData.set(
+      (data.os ?? []).map((d) => ({
+        label: this.formatDisplayLabel(d.os),
+        seconds: d.seconds,
+      })),
+    );
+    this.projectData.set(data.projects ?? []);
+    this.timelineData.set(data.timeline ?? []);
+    this.goals.set(data.goals ?? []);
   }
 
   formatSeconds(seconds: number): string {
