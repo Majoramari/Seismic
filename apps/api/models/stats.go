@@ -39,8 +39,6 @@ type OSStat struct {
 	Seconds int    `json:"seconds"`
 }
 
-const estimatedHeartbeatSeconds = 30
-
 // GetStatsSummary calculates total time, top language, top
 // project, and daily average for a user within a date range.
 // rangeFilter is a SQL WHERE clause fragment for the range.
@@ -80,18 +78,48 @@ func GetStatsSummary(ctx context.Context, pool *pgxpool.Pool, userID string, ran
 	heartbeatRangeSQL := strings.ReplaceAll(rangeSQL, "start_time", "received_at")
 
 	err = pool.QueryRow(ctx, `
-		SELECT os FROM heartbeats
-		WHERE user_id = $1 AND `+heartbeatRangeSQL+` AND os IS NOT NULL
-		GROUP BY os ORDER BY COUNT(*) DESC LIMIT 1
+		SELECT COALESCE(NULLIF(meta.os, ''), 'unknown') AS os
+		FROM sessions s
+		LEFT JOIN LATERAL (
+			SELECT h.os
+			FROM heartbeats h
+			WHERE h.user_id = s.user_id
+				AND to_timestamp(h.time / 1000.0) >= s.start_time - INTERVAL '1 second'
+				AND to_timestamp(h.time / 1000.0) < s.end_time
+				AND h.os IS NOT NULL
+				AND h.os <> ''
+			GROUP BY h.os
+			ORDER BY COUNT(*) DESC
+			LIMIT 1
+		) meta ON true
+		WHERE s.user_id = $1 AND `+rangeSQL+`
+		GROUP BY COALESCE(NULLIF(meta.os, ''), 'unknown')
+		ORDER BY SUM(s.duration_seconds) DESC
+		LIMIT 1
 	`, userID).Scan(&s.TopOS)
 	if err != nil && err.Error() != "no rows in result set" {
 		return nil, err
 	}
 
 	err = pool.QueryRow(ctx, `
-		SELECT editor FROM heartbeats
-		WHERE user_id = $1 AND `+heartbeatRangeSQL+`
-		GROUP BY editor ORDER BY COUNT(*) DESC LIMIT 1
+		SELECT COALESCE(NULLIF(meta.editor, ''), 'unknown') AS editor
+		FROM sessions s
+		LEFT JOIN LATERAL (
+			SELECT h.editor
+			FROM heartbeats h
+			WHERE h.user_id = s.user_id
+				AND to_timestamp(h.time / 1000.0) >= s.start_time - INTERVAL '1 second'
+				AND to_timestamp(h.time / 1000.0) < s.end_time
+				AND h.editor IS NOT NULL
+				AND h.editor <> ''
+			GROUP BY h.editor
+			ORDER BY COUNT(*) DESC
+			LIMIT 1
+		) meta ON true
+		WHERE s.user_id = $1 AND `+rangeSQL+`
+		GROUP BY COALESCE(NULLIF(meta.editor, ''), 'unknown')
+		ORDER BY SUM(s.duration_seconds) DESC
+		LIMIT 1
 	`, userID).Scan(&s.TopEditor)
 	if err != nil && err.Error() != "no rows in result set" {
 		return nil, err
@@ -305,18 +333,29 @@ type EditorStat struct {
 	Seconds int    `json:"seconds"`
 }
 
-// GetEditorBreakdown returns time spent per editor. Uses
-// heartbeats directly since sessions don't currently store
-// which editor was used.
+// GetEditorBreakdown returns time spent per editor by assigning each
+// session to the editor that appears most often in its heartbeats.
 func GetEditorBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string, rangeSQL string) ([]EditorStat, error) {
-	heartbeatRangeSQL := strings.ReplaceAll(rangeSQL, "start_time", "received_at")
-
 	rows, err := pool.Query(ctx, `
-		SELECT editor, COUNT(*) as heartbeat_count
-		FROM heartbeats
-		WHERE user_id = $1 AND `+heartbeatRangeSQL+`
-		GROUP BY editor
-		ORDER BY heartbeat_count DESC
+		SELECT COALESCE(NULLIF(meta.editor, ''), 'unknown') AS editor,
+			SUM(s.duration_seconds)::int AS seconds
+		FROM sessions s
+		LEFT JOIN LATERAL (
+			SELECT h.editor
+			FROM heartbeats h
+			WHERE h.user_id = s.user_id
+				AND to_timestamp(h.time / 1000.0) >= s.start_time - INTERVAL '1 second'
+				AND to_timestamp(h.time / 1000.0) < s.end_time
+				AND h.editor IS NOT NULL
+				AND h.editor <> ''
+			GROUP BY h.editor
+			ORDER BY COUNT(*) DESC
+			LIMIT 1
+		) meta ON true
+		WHERE s.user_id = $1 AND `+rangeSQL+`
+		GROUP BY COALESCE(NULLIF(meta.editor, ''), 'unknown')
+		HAVING SUM(s.duration_seconds) > 0
+		ORDER BY seconds DESC
 	`, userID)
 	if err != nil {
 		return nil, err
@@ -326,11 +365,9 @@ func GetEditorBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string, 
 	var stats []EditorStat
 	for rows.Next() {
 		var e EditorStat
-		var count int
-		if err := rows.Scan(&e.Editor, &count); err != nil {
+		if err := rows.Scan(&e.Editor, &e.Seconds); err != nil {
 			return nil, err
 		}
-		e.Seconds = count * estimatedHeartbeatSeconds
 		stats = append(stats, e)
 	}
 	return stats, nil
@@ -405,14 +442,26 @@ func GetTimeline(ctx context.Context, pool *pgxpool.Pool, userID string, days in
 }
 
 func GetOSBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string, rangeSQL string) ([]OSStat, error) {
-	heartbeatRangeSQL := strings.ReplaceAll(rangeSQL, "start_time", "received_at")
-
 	rows, err := pool.Query(ctx, `
-		SELECT COALESCE(os, 'unknown'), COUNT(*) as heartbeat_count
-		FROM heartbeats
-		WHERE user_id = $1 AND `+heartbeatRangeSQL+`
-		GROUP BY os
-		ORDER BY heartbeat_count DESC
+		SELECT COALESCE(NULLIF(meta.os, ''), 'unknown') AS os,
+			SUM(s.duration_seconds)::int AS seconds
+		FROM sessions s
+		LEFT JOIN LATERAL (
+			SELECT h.os
+			FROM heartbeats h
+			WHERE h.user_id = s.user_id
+				AND to_timestamp(h.time / 1000.0) >= s.start_time - INTERVAL '1 second'
+				AND to_timestamp(h.time / 1000.0) < s.end_time
+				AND h.os IS NOT NULL
+				AND h.os <> ''
+			GROUP BY h.os
+			ORDER BY COUNT(*) DESC
+			LIMIT 1
+		) meta ON true
+		WHERE s.user_id = $1 AND `+rangeSQL+`
+		GROUP BY COALESCE(NULLIF(meta.os, ''), 'unknown')
+		HAVING SUM(s.duration_seconds) > 0
+		ORDER BY seconds DESC
 	`, userID)
 	if err != nil {
 		return nil, err
@@ -422,11 +471,9 @@ func GetOSBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string, rang
 	var stats []OSStat
 	for rows.Next() {
 		var s OSStat
-		var count int
-		if err := rows.Scan(&s.OS, &count); err != nil {
+		if err := rows.Scan(&s.OS, &s.Seconds); err != nil {
 			return nil, err
 		}
-		s.Seconds = count * estimatedHeartbeatSeconds
 		stats = append(stats, s)
 	}
 	return stats, nil
