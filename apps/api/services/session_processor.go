@@ -18,6 +18,8 @@ type rawHeartbeat struct {
 	UserID   string
 	Project  string
 	Language string
+	Editor   string
+	OS       string
 	TimeMs   int64
 }
 
@@ -59,7 +61,14 @@ func processSessions(ctx context.Context, pool *pgxpool.Pool, userID *string) er
 	}
 
 	rows, err := pool.Query(ctx, `
-		SELECT id, user_id, project, language, time
+		SELECT
+			id,
+			user_id,
+			project,
+			language,
+			COALESCE(NULLIF(editor, ''), 'unknown'),
+			COALESCE(NULLIF(os, ''), 'unknown'),
+			time
 		FROM heartbeats
 		WHERE processed = false `+userFilter+`
 		ORDER BY user_id, time ASC, project, language
@@ -72,7 +81,7 @@ func processSessions(ctx context.Context, pool *pgxpool.Pool, userID *string) er
 	var heartbeats []rawHeartbeat
 	for rows.Next() {
 		var h rawHeartbeat
-		if err := rows.Scan(&h.ID, &h.UserID, &h.Project, &h.Language, &h.TimeMs); err != nil {
+		if err := rows.Scan(&h.ID, &h.UserID, &h.Project, &h.Language, &h.Editor, &h.OS, &h.TimeMs); err != nil {
 			return err
 		}
 		heartbeats = append(heartbeats, h)
@@ -80,8 +89,15 @@ func processSessions(ctx context.Context, pool *pgxpool.Pool, userID *string) er
 
 	sessions := buildSessions(heartbeats)
 
+	seenUsers := make(map[string]bool)
 	for _, s := range sessions {
-		if err := saveSession(ctx, pool, s); err != nil {
+		if seenUsers[s.UserID] {
+			err = insertSession(ctx, pool, s)
+		} else {
+			err = saveSession(ctx, pool, s)
+			seenUsers[s.UserID] = true
+		}
+		if err != nil {
 			return err
 		}
 	}
@@ -105,6 +121,8 @@ type builtSession struct {
 	UserID          string
 	Project         string
 	Language        string
+	Editor          string
+	OS              string
 	Start           time.Time
 	End             time.Time
 	DurationSeconds int
@@ -114,6 +132,8 @@ type existingSession struct {
 	ID       string
 	Project  string
 	Language string
+	Editor   string
+	OS       string
 	Start    time.Time
 	End      time.Time
 }
@@ -129,6 +149,8 @@ func saveSession(ctx context.Context, pool *pgxpool.Pool, s builtSession) error 
 
 	if latest.Project == s.Project &&
 		latest.Language == s.Language &&
+		latest.Editor == s.Editor &&
+		latest.OS == s.OS &&
 		s.Start.Sub(latest.End.Add(-heartbeatDuration)) <= sessionGap {
 		end := latest.End
 		if s.End.After(end) {
@@ -154,20 +176,20 @@ func saveSession(ctx context.Context, pool *pgxpool.Pool, s builtSession) error 
 func latestSession(ctx context.Context, pool *pgxpool.Pool, userID string) (existingSession, error) {
 	var s existingSession
 	err := pool.QueryRow(ctx, `
-		SELECT id, project, language, start_time, end_time
+		SELECT id, project, language, editor, os, start_time, end_time
 		FROM sessions
 		WHERE user_id = $1
 		ORDER BY end_time DESC
 		LIMIT 1
-	`, userID).Scan(&s.ID, &s.Project, &s.Language, &s.Start, &s.End)
+	`, userID).Scan(&s.ID, &s.Project, &s.Language, &s.Editor, &s.OS, &s.Start, &s.End)
 	return s, err
 }
 
 func insertSession(ctx context.Context, pool *pgxpool.Pool, s builtSession) error {
 	_, err := pool.Exec(ctx, `
-		INSERT INTO sessions (user_id, project, language, start_time, end_time, duration_seconds)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`, s.UserID, s.Project, s.Language, s.Start, s.End, s.DurationSeconds)
+		INSERT INTO sessions (user_id, project, language, editor, os, start_time, end_time, duration_seconds)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	`, s.UserID, s.Project, s.Language, s.Editor, s.OS, s.Start, s.End, s.DurationSeconds)
 	return err
 }
 
@@ -198,6 +220,8 @@ func buildSessions(heartbeats []rawHeartbeat) []builtSession {
 			current.UserID != h.UserID ||
 			current.Project != h.Project ||
 			current.Language != h.Language ||
+			current.Editor != h.Editor ||
+			current.OS != h.OS ||
 			t.After(current.End)
 
 		if startsNew {
@@ -208,6 +232,8 @@ func buildSessions(heartbeats []rawHeartbeat) []builtSession {
 				UserID:   h.UserID,
 				Project:  h.Project,
 				Language: h.Language,
+				Editor:   h.Editor,
+				OS:       h.OS,
 				Start:    t,
 				End:      end,
 			}

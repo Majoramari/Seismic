@@ -78,23 +78,11 @@ func GetStatsSummary(ctx context.Context, pool *pgxpool.Pool, userID string, ran
 	heartbeatRangeSQL := strings.ReplaceAll(rangeSQL, "start_time", "received_at")
 
 	err = pool.QueryRow(ctx, `
-		SELECT COALESCE(NULLIF(meta.os, ''), 'unknown') AS os
-		FROM sessions s
-		LEFT JOIN LATERAL (
-			SELECT h.os
-			FROM heartbeats h
-			WHERE h.user_id = s.user_id
-				AND to_timestamp(h.time / 1000.0) >= s.start_time - INTERVAL '1 second'
-				AND to_timestamp(h.time / 1000.0) < s.end_time
-				AND h.os IS NOT NULL
-				AND h.os <> ''
-			GROUP BY h.os
-			ORDER BY COUNT(*) DESC
-			LIMIT 1
-		) meta ON true
-		WHERE s.user_id = $1 AND `+rangeSQL+`
-		GROUP BY COALESCE(NULLIF(meta.os, ''), 'unknown')
-		ORDER BY SUM(s.duration_seconds) DESC
+		SELECT COALESCE(NULLIF(os, ''), 'unknown') AS os
+		FROM sessions
+		WHERE user_id = $1 AND `+rangeSQL+`
+		GROUP BY COALESCE(NULLIF(os, ''), 'unknown')
+		ORDER BY SUM(duration_seconds) DESC
 		LIMIT 1
 	`, userID).Scan(&s.TopOS)
 	if err != nil && err.Error() != "no rows in result set" {
@@ -102,23 +90,11 @@ func GetStatsSummary(ctx context.Context, pool *pgxpool.Pool, userID string, ran
 	}
 
 	err = pool.QueryRow(ctx, `
-		SELECT COALESCE(NULLIF(meta.editor, ''), 'unknown') AS editor
-		FROM sessions s
-		LEFT JOIN LATERAL (
-			SELECT h.editor
-			FROM heartbeats h
-			WHERE h.user_id = s.user_id
-				AND to_timestamp(h.time / 1000.0) >= s.start_time - INTERVAL '1 second'
-				AND to_timestamp(h.time / 1000.0) < s.end_time
-				AND h.editor IS NOT NULL
-				AND h.editor <> ''
-			GROUP BY h.editor
-			ORDER BY COUNT(*) DESC
-			LIMIT 1
-		) meta ON true
-		WHERE s.user_id = $1 AND `+rangeSQL+`
-		GROUP BY COALESCE(NULLIF(meta.editor, ''), 'unknown')
-		ORDER BY SUM(s.duration_seconds) DESC
+		SELECT COALESCE(NULLIF(editor, ''), 'unknown') AS editor
+		FROM sessions
+		WHERE user_id = $1 AND `+rangeSQL+`
+		GROUP BY COALESCE(NULLIF(editor, ''), 'unknown')
+		ORDER BY SUM(duration_seconds) DESC
 		LIMIT 1
 	`, userID).Scan(&s.TopEditor)
 	if err != nil && err.Error() != "no rows in result set" {
@@ -338,28 +314,15 @@ type EditorStat struct {
 	Seconds int    `json:"seconds"`
 }
 
-// GetEditorBreakdown returns time spent per editor by assigning each
-// session to the editor that appears most often in its heartbeats.
+// GetEditorBreakdown returns time spent per editor.
 func GetEditorBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string, rangeSQL string) ([]EditorStat, error) {
 	rows, err := pool.Query(ctx, `
-		SELECT COALESCE(NULLIF(meta.editor, ''), 'unknown') AS editor,
-			SUM(s.duration_seconds)::int AS seconds
-		FROM sessions s
-		LEFT JOIN LATERAL (
-			SELECT h.editor
-			FROM heartbeats h
-			WHERE h.user_id = s.user_id
-				AND to_timestamp(h.time / 1000.0) >= s.start_time - INTERVAL '1 second'
-				AND to_timestamp(h.time / 1000.0) < s.end_time
-				AND h.editor IS NOT NULL
-				AND h.editor <> ''
-			GROUP BY h.editor
-			ORDER BY COUNT(*) DESC
-			LIMIT 1
-		) meta ON true
-		WHERE s.user_id = $1 AND `+rangeSQL+`
-		GROUP BY COALESCE(NULLIF(meta.editor, ''), 'unknown')
-		HAVING SUM(s.duration_seconds) > 0
+		SELECT COALESCE(NULLIF(editor, ''), 'unknown') AS editor,
+			SUM(duration_seconds)::int AS seconds
+		FROM sessions
+		WHERE user_id = $1 AND `+rangeSQL+`
+		GROUP BY COALESCE(NULLIF(editor, ''), 'unknown')
+		HAVING SUM(duration_seconds) > 0
 		ORDER BY seconds DESC
 	`, userID)
 	if err != nil {
@@ -448,24 +411,12 @@ func GetTimeline(ctx context.Context, pool *pgxpool.Pool, userID string, days in
 
 func GetOSBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string, rangeSQL string) ([]OSStat, error) {
 	rows, err := pool.Query(ctx, `
-		SELECT COALESCE(NULLIF(meta.os, ''), 'unknown') AS os,
-			SUM(s.duration_seconds)::int AS seconds
-		FROM sessions s
-		LEFT JOIN LATERAL (
-			SELECT h.os
-			FROM heartbeats h
-			WHERE h.user_id = s.user_id
-				AND to_timestamp(h.time / 1000.0) >= s.start_time - INTERVAL '1 second'
-				AND to_timestamp(h.time / 1000.0) < s.end_time
-				AND h.os IS NOT NULL
-				AND h.os <> ''
-			GROUP BY h.os
-			ORDER BY COUNT(*) DESC
-			LIMIT 1
-		) meta ON true
-		WHERE s.user_id = $1 AND `+rangeSQL+`
-		GROUP BY COALESCE(NULLIF(meta.os, ''), 'unknown')
-		HAVING SUM(s.duration_seconds) > 0
+		SELECT COALESCE(NULLIF(os, ''), 'unknown') AS os,
+			SUM(duration_seconds)::int AS seconds
+		FROM sessions
+		WHERE user_id = $1 AND `+rangeSQL+`
+		GROUP BY COALESCE(NULLIF(os, ''), 'unknown')
+		HAVING SUM(duration_seconds) > 0
 		ORDER BY seconds DESC
 	`, userID)
 	if err != nil {
