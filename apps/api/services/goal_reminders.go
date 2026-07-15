@@ -170,10 +170,10 @@ func getGoalProgressPublic(ctx context.Context, pool *pgxpool.Pool, userID, scop
 	args := []any{userID}
 
 	if scope == "language" && scopeValue != nil {
-		scopeSQL = "AND language = $2"
+		scopeSQL = "AND LOWER(TRIM(language)) = LOWER(TRIM($2))"
 		args = append(args, *scopeValue)
 	} else if scope == "project" && scopeValue != nil {
-		scopeSQL = "AND project = $2"
+		scopeSQL = "AND LOWER(TRIM(project)) = LOWER(TRIM($2))"
 		args = append(args, *scopeValue)
 	}
 

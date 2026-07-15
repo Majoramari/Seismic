@@ -54,9 +54,9 @@ func GetStatsSummary(ctx context.Context, pool *pgxpool.Pool, userID string, ran
 	}
 
 	err = pool.QueryRow(ctx, `
-		SELECT language FROM sessions
+		SELECT LOWER(TRIM(language)) FROM sessions
 		WHERE user_id = $1 AND `+rangeSQL+`
-		GROUP BY language
+		GROUP BY LOWER(TRIM(language))
 		ORDER BY SUM(duration_seconds) DESC
 		LIMIT 1
 	`, userID).Scan(&s.TopLanguage)
@@ -162,11 +162,11 @@ func RangeSQL(rangeParam string) string {
 // GetLanguageBreakdown returns time spent per language.
 func GetLanguageBreakdown(ctx context.Context, pool *pgxpool.Pool, userID string, rangeSQL string) ([]LanguageStat, error) {
 	rows, err := pool.Query(ctx, `
-		SELECT language, SUM(duration_seconds) as seconds
+		SELECT LOWER(TRIM(language)) AS language, SUM(duration_seconds) as seconds
 		FROM sessions
 		WHERE user_id = $1 AND `+rangeSQL+`
-			AND language NOT IN ('textmate', 'unknown', 'log')
-		GROUP BY language
+			AND LOWER(TRIM(language)) NOT IN ('textmate', 'unknown', 'log')
+		GROUP BY LOWER(TRIM(language))
 		HAVING SUM(duration_seconds) > 0
 		ORDER BY seconds DESC
 	`, userID)
@@ -263,7 +263,12 @@ func GetCurrentStreak(ctx context.Context, pool *pgxpool.Pool, userID string) (i
 // coded in, used to populate goal filter dropdowns.
 func GetDistinctLanguages(ctx context.Context, pool *pgxpool.Pool, userID string) ([]string, error) {
 	rows, err := pool.Query(ctx, `
-		SELECT DISTINCT language FROM sessions WHERE user_id = $1 ORDER BY language ASC
+		SELECT LOWER(TRIM(language)) AS language
+		FROM sessions
+		WHERE user_id = $1
+			AND TRIM(language) <> ''
+		GROUP BY LOWER(TRIM(language))
+		ORDER BY language ASC
 	`, userID)
 	if err != nil {
 		return nil, err

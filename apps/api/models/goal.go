@@ -123,13 +123,13 @@ func getGoalProgress(ctx context.Context, pool *pgxpool.Pool, userID string, g G
 		if g.ScopeValue == nil {
 			return 0, nil
 		}
-		scopeSQL = "AND language = $2"
+		scopeSQL = "AND LOWER(TRIM(language)) = LOWER(TRIM($2))"
 		args = append(args, *g.ScopeValue)
 	case "project":
 		if g.ScopeValue == nil {
 			return 0, nil
 		}
-		scopeSQL = "AND project = $2"
+		scopeSQL = "AND LOWER(TRIM(project)) = LOWER(TRIM($2))"
 		args = append(args, *g.ScopeValue)
 	}
 
