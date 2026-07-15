@@ -58,6 +58,7 @@ func RunMigrations(pool *pgxpool.Pool) error {
 			return fmt.Errorf("failed to read %s: %w", filename, err)
 		}
 
+		log.Printf("Applying migration %s", filename)
 		_, err = pool.Exec(ctx, string(content))
 		if err != nil {
 			return fmt.Errorf("failed to apply %s: %w", filename, err)
