@@ -90,15 +90,46 @@ func UpdatePrivacySettings(ctx context.Context, pool *pgxpool.Pool, userID strin
 	return nil
 }
 
-// ResetUserTimers deletes all heartbeats and sessions for a
-// user, giving them a completely fresh start.
+// ResetUserTimers deletes all tracked coding activity and activity-earned badges
+// for a user, giving them a fresh start while preserving manually granted role badges.
 func ResetUserTimers(ctx context.Context, pool *pgxpool.Pool, userID string) error {
-	_, err := pool.Exec(ctx, `DELETE FROM sessions WHERE user_id = $1`, userID)
+	tx, err := pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
-	_, err = pool.Exec(ctx, `DELETE FROM heartbeats WHERE user_id = $1`, userID)
-	return err
+	defer tx.Rollback(ctx)
+
+	preservedBadges := []string{"supporter", "contributor", "maintainer"}
+
+	_, err = tx.Exec(ctx, `
+		DELETE FROM hidden_badges
+		WHERE user_id = $1
+			AND badge_type <> ALL($2)
+	`, userID, preservedBadges)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(ctx, `
+		DELETE FROM badges
+		WHERE user_id = $1
+			AND badge_type <> ALL($2)
+	`, userID, preservedBadges)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(ctx, `DELETE FROM sessions WHERE user_id = $1`, userID)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(ctx, `DELETE FROM heartbeats WHERE user_id = $1`, userID)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
 
 // DeleteUserAccount soft-deletes an account by anonymizing
