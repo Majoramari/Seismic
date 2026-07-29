@@ -15,8 +15,18 @@ import { Privacy } from './pages/legal-pages/privacy/privacy';
 import { Terms } from './pages/legal-pages/terms/terms';
 
 export const routes: Routes = [
-  { path: '', component: Landing, canActivate: [guestGuard], title: 'Seismic - Track your coding activity' },
-  { path: 'login', component: Login, canActivate: [guestGuard], title: 'Log in — Seismic' },
+  {
+    path: '',
+    component: Landing,
+    canActivate: [guestGuard],
+    title: 'Seismic - Track your coding activity',
+  },
+  {
+    path: 'login',
+    component: Login,
+    canActivate: [guestGuard],
+    title: 'Log in — Seismic',
+  },
   { path: 'verify', component: Verify, title: 'Verifying — Seismic' },
   {
     path: 'dashboard',
@@ -24,7 +34,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
     title: 'Dashboard — Seismic',
   },
-  { path: 'leaderboard', component: Leaderboard, title: 'Leaderboard — Seismic' },
+  {
+    path: 'leaderboard',
+    component: Leaderboard,
+    title: 'Leaderboard — Seismic',
+  },
   {
     path: 'docs',
     component: Docs,
