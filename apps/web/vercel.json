@@ -1,6 +1,18 @@
 {
   "buildCommand": "ng build --configuration production",
   "outputDirectory": "dist/web/browser",
+  "redirects": [
+    {
+      "source": "/repository",
+      "destination": "https://github.com/Majoramari/Seismic",
+      "permanent": true
+    },
+    {
+      "source": "/repository/",
+      "destination": "https://github.com/Majoramari/Seismic",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",
